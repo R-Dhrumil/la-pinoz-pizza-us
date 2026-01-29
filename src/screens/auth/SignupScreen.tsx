@@ -34,7 +34,7 @@ const SignupScreen = () => {
         style={{ flex: 1 }}
       >
         <ScrollView 
-          contentContainerStyle={styles.scrollContent}
+          // contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
         >
           {/* Mobile Header / Logo Area */}
@@ -159,9 +159,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
-  scrollContent: {
-    paddingBottom: 30,
-  },
+  // scrollContent: {
+  //   paddingBottom: 30,
+  // },
   headerContainer: {
     paddingHorizontal: 24,
     paddingTop: 50,
