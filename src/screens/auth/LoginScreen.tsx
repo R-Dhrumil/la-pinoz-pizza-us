@@ -33,7 +33,7 @@ const LoginScreen = () => {
         {/* Hero Section */}
         <View style={styles.heroContainer}>
             <ImageBackground
-                source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAT_fev5pujj6i0YT_eyZYIUHLELxKcfyctsEIE0c6kNS3wvf3BeEcMmJKbF6alICfoXEeGtr0zoxpvAXuKR4oDFKRYApwD7OgJiYEtKFxlR21rwF4B4EkWJ1u1ldPiew5Rc7ShjLIDvev0dbAmvRICE52WyFSZXb7rryWmj5V9k2k9IWKKRzET2IWl7aTWWHT67AfNJbM0UIo3BJ9YKVDYfA8k4wfO1Gryg6UIpB2P441wJoqs4t5jclhbnWbbaCpMXabf1zRpaEVE' }} // Using the pizza image from the HTML snippet you provided earlier
+                source={require('../../assets/images/heroImage.png')}
                 style={styles.heroImage}
                 resizeMode="cover"
             >
