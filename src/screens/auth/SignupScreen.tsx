@@ -24,8 +24,7 @@ const SignupScreen = () => {
 
   return (
     <View style={styles.mainContainer}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
-      
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent={true} />
       {/* 
         Using KeyboardAvoidingView to ensure inputs are visible when keyboard is open.
         Platform-specific behavior is needed.
@@ -34,7 +33,10 @@ const SignupScreen = () => {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
       >
-    
+        <ScrollView 
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
           {/* Mobile Header / Logo Area */}
           <View style={styles.headerContainer}>
              {/* New Header Layout: Row with Brand on Left, Login Button on Right */}
@@ -141,8 +143,12 @@ const SignupScreen = () => {
             </Text>
 
 
+
+            {/* Back to Login */}
+           
+
           </View>
-        
+        </ScrollView>
       </KeyboardAvoidingView>
     </View>
   );
@@ -153,11 +159,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
-
+  scrollContent: {
+    paddingBottom: 30,
+  },
   headerContainer: {
     paddingHorizontal: 24,
-    paddingTop: 20,
-    paddingBottom: 24,
+    paddingTop: 50,
+    paddingBottom: 30,
   },
   logoRow: {
     flexDirection: 'row',

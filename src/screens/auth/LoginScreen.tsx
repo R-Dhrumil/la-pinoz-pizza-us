@@ -25,11 +25,10 @@ const LoginScreen = () => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent={true} />
+    
       
       {/* Top Header Bar */}
-
-
       <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
         {/* Hero Section */}
         <View style={styles.heroContainer}>
@@ -96,7 +95,7 @@ const LoginScreen = () => {
             <TouchableOpacity style={styles.signInButton} onPress={() => navigation.replace('Home')}>
                 <Text style={styles.signInButtonText}>Sign In</Text>
             </TouchableOpacity>
-            
+
              {/* Optional: Add Sign Up link since the plan mentioned connecting "Sign Up" */}
              <TouchableOpacity style={{alignSelf: 'center', marginTop: 20}} onPress={() => navigation.navigate('Signup')}>
                 <Text style={{color: '#6b7280', fontSize: 14, fontWeight: '600'}}>
@@ -105,7 +104,7 @@ const LoginScreen = () => {
             </TouchableOpacity>
 
         </View>
-      </ScrollView>
+    </ScrollView>
 
     </View>
   );
@@ -153,7 +152,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    padding: 24,
+    padding: 25,
     flex: 1,
   },
   welcomeTitle: {
@@ -161,13 +160,13 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#1b0d0e',
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: 15,
   },
   welcomeSubtitle: {
     fontSize: 14,
     color: '#6b7280',
     textAlign: 'center',
-    marginBottom: 32,
+    marginBottom: 40,
   },
   inputGroup: {
     marginBottom: 20,

@@ -8,7 +8,8 @@ const HomeScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar
+      barStyle="light-content" backgroundColor="transparent" translucent={true}/>
       <View style={styles.content}>
         <Text style={styles.title}>Welcome to La Pino'z!</Text>
         <Text style={styles.subtitle}>You have successfully logged in.</Text>
