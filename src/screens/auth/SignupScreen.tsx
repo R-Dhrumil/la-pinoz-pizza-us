@@ -24,7 +24,7 @@ const SignupScreen = () => {
 
   return (
     <View style={styles.mainContainer}>
-      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent={true} />
+      <StatusBar barStyle="light-content" backgroundColor="#3c7d48" />
       {/* 
         Using KeyboardAvoidingView to ensure inputs are visible when keyboard is open.
         Platform-specific behavior is needed.

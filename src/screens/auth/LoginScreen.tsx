@@ -25,7 +25,7 @@ const LoginScreen = () => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent={true} />
+      <StatusBar barStyle="light-content" backgroundColor="#3c7d48" />
     
       
       {/* Top Header Bar */}
