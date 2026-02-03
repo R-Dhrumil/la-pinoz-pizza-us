@@ -13,6 +13,8 @@ import {
   ImageBackground,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { AuthStackParamList } from '../navigation/AuthNavigator';
 import {
   Pizza,
   User,
@@ -22,46 +24,30 @@ import {
   UtensilsCrossed,
   Utensils,
   Martini,
-  Home,
-  Menu,
-  Tag,
+  Soup,
   ChefHat,
   Leaf,
-  Soup,
-  Smartphone
 } from 'lucide-react-native';
+
+import { useCart } from '../context/CartContext';
+import PageLayout from '../components/PageLayout';
 
 const { width } = Dimensions.get('window');
 
 const HomeScreen = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
+  const { totalItems } = useCart();
+  const [deliveryMode, setDeliveryMode] = React.useState<'delivery' | 'pickup'>('delivery');
 
   return (
-    <SafeAreaView style={styles.container}>
+    <PageLayout style={styles.container}>
       <StatusBar
         barStyle="light-content"
         backgroundColor="#3c7d48"
       />
       
       {/* Navbar - Fixed Bottom */}
-      <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem}>
-          <Home size={24} color="#3c7d48" />
-          <Text style={[styles.navText, { color: '#3c7d48' }]}>Home</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <UtilsMenuIcon size={24} color="#9ca3af" />
-          <Text style={styles.navText}>Menu</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Tag size={24} color="#9ca3af" />
-          <Text style={styles.navText}>Offers</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <User size={24} color="#9ca3af" />
-          <Text style={styles.navText}>Profile</Text>
-        </TouchableOpacity>
-      </View>
+      {/* Navbar - Handled by TabNavigator now */}
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Header */}
@@ -73,13 +59,10 @@ const HomeScreen = () => {
             <Text style={styles.brandName}>LA PINO'Z</Text>
           </View>
           <View style={styles.headerRight}>
-            <TouchableOpacity style={styles.iconButton}>
-              <User size={24} color="#374151" />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.iconButton}>
+            <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Cart')}>
               <ShoppingCart size={24} color="#374151" />
               <View style={styles.badge}>
-                <Text style={styles.badgeText}>0</Text>
+                <Text style={styles.badgeText}>{totalItems}</Text>
               </View>
             </TouchableOpacity>
           </View>
@@ -106,11 +89,17 @@ const HomeScreen = () => {
         <View style={styles.searchSectionWrapper}>
             <View style={styles.searchContainer}>
                 <View style={styles.toggleContainer}>
-                    <TouchableOpacity style={[styles.toggleButton, styles.toggleActive]}>
-                        <Text style={[styles.toggleText, styles.toggleTextActive]}>Delivery</Text>
+                    <TouchableOpacity 
+                        style={[styles.toggleButton, deliveryMode === 'delivery' && styles.toggleActive]}
+                        onPress={() => setDeliveryMode('delivery')}
+                    >
+                        <Text style={[styles.toggleText, deliveryMode === 'delivery' && styles.toggleTextActive]}>Delivery</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.toggleButton}>
-                        <Text style={styles.toggleText}>Pickup</Text>
+                    <TouchableOpacity 
+                        style={[styles.toggleButton, deliveryMode === 'pickup' && styles.toggleActive]}
+                        onPress={() => setDeliveryMode('pickup')}
+                    >
+                        <Text style={[styles.toggleText, deliveryMode === 'pickup' && styles.toggleTextActive]}>Pickup</Text>
                     </TouchableOpacity>
                 </View>
                 <View style={styles.inputContainer}>
@@ -228,38 +217,13 @@ const HomeScreen = () => {
         </View>
         
         {/* App Banner */}
-        <View style={[styles.section, { marginBottom: 30 }]}>
-            <View style={styles.appBanner}>
-                 <View style={styles.appContent}>
-                     <Text style={styles.appTitle}>Get The App</Text>
-                     <Text style={styles.appDesc}>Exclusive offers and lightning fast delivery at your fingertips.</Text>
-                     <View style={styles.appButtons}>
-                         <View style={styles.appBtn}>
-                              {/* Use text/icon due to missing assets */}
-                              <Text style={styles.appBtnText}>App Store</Text>
-                         </View>
-                         <View style={styles.appBtn}>
-                              <Text style={styles.appBtnText}>Google Play</Text>
-                         </View>
-                     </View>
-                 </View>
-                 <Image 
-                    source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDN28MTuRBjzdRNM12t3MxlSAOe3tH8nD3B552PSzxZuMBNtK1AmoiI9QbnaqPhTVVJzZZe6BFITReuFAKrBXSLdg4rOhxPNrJIBMvZlWS6VlAEU7u-7HugxRk8C1P1MysnauKkYVCP6Ahr9PL9fCVRRZcCvXfWnc5V2tdPP_erJcXu7tewlK_BnBOEXKMC42ew8A-7xxqNGoNmWK5LpJrMg8I03Dtg0SltjlZyEpqv678Pchg8ufsKxVzY37AYAR55-yVDy1oYawav' }}
-                    style={styles.appImage}
-                    resizeMode="cover"
-                 />
-            </View>
-        </View>
-
+        
       </ScrollView>
-    </SafeAreaView>
+    </PageLayout>
   );
 };
 
 // Helper Components
-const UtilsMenuIcon = ({size, color}: {size: number, color: string}) => (
-    <Menu size={size} color={color} />
-);
 
 const CategoryItem = ({icon, name, active}: {icon: React.ReactNode, name: string, active?: boolean}) => (
     <View style={styles.categoryItem}>
@@ -756,34 +720,6 @@ const styles = StyleSheet.create({
       width: 140,
       height: 180,
       transform: [{rotate: '-5deg'}],
-  },
-  bottomNav: {
-      position: 'absolute',
-      bottom: 0,
-      left: 0,
-      right: 0,
-      backgroundColor: '#fff',
-      borderTopWidth: 1,
-      borderTopColor: '#f3f4f6',
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      paddingHorizontal: 24,
-      paddingVertical: 12,
-      paddingBottom: 20, // safe area padding
-      zIndex: 100,
-      shadowColor: '#000',
-      shadowOpacity: 0.1,
-      shadowRadius: 10,
-      elevation: 20,
-  },
-  navItem: {
-      alignItems: 'center',
-      gap: 4,
-  },
-  navText: {
-      fontSize: 10,
-      fontWeight: 'bold',
-      color: '#9ca3af',
   },
 });
 

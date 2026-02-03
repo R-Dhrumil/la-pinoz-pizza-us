@@ -1,13 +1,18 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import HomeScreen from '../screens/HomeScreen';
+import TabNavigator from './TabNavigator';
 import LoginScreen from '../screens/auth/LoginScreen';
 import SignupScreen from '../screens/auth/SignupScreen';
+import CartScreen from '../screens/CartScreen';
+
+import ProductDetailScreen from '../screens/ProductDetailScreen';
 
 export type AuthStackParamList = {
   Login: undefined;
   Signup: undefined;
-  Home: undefined;
+  MainTabs: undefined; // Replaces 'Home'
+  ProductDetail: { item: any };
+  Cart: undefined;
 };
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
@@ -23,7 +28,17 @@ const AuthNavigator = () => {
     >
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Signup" component={SignupScreen} />
-      <Stack.Screen name="Home" component={HomeScreen} />
+      <Stack.Screen name="MainTabs" component={TabNavigator} />
+      <Stack.Screen 
+        name="ProductDetail" 
+        component={ProductDetailScreen} 
+        options={{ animation: 'slide_from_bottom' }} 
+      />
+      <Stack.Screen 
+        name="Cart" 
+        component={CartScreen} 
+        options={{ animation: 'slide_from_bottom' }} 
+      />
     </Stack.Navigator>
   );
 };

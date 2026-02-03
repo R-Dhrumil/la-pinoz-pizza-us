@@ -11,7 +11,7 @@ import {
   KeyboardAvoidingView,
   Dimensions,
 } from 'react-native';
-import { Pizza, User, Mail, Phone, Lock, Eye, EyeOff, Check, LogIn } from 'lucide-react-native';
+import { Pizza, User, Mail, Phone, Lock, Eye, EyeOff } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../navigation/AuthNavigator';
@@ -130,7 +130,7 @@ const SignupScreen = () => {
             {/* Create Account Button */}
             <TouchableOpacity 
               style={styles.mainButton}
-              onPress={() => navigation.replace('Home')}
+              onPress={() => navigation.replace('MainTabs')}
             >
               <Text style={styles.mainButtonText}>Create Account</Text>
             </TouchableOpacity>
