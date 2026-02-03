@@ -77,14 +77,7 @@ const HomeScreen = () => {
             </View>
             <Text style={styles.brandName}>LA PINO'Z</Text>
           </View>
-          <View style={styles.headerRight}>
-            <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Cart')}>
-              <ShoppingCart size={24} color="#374151" />
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>{totalItems}</Text>
-              </View>
-            </TouchableOpacity>
-          </View>
+         
         </View>
 
         {/* Hero Section */}
@@ -97,7 +90,7 @@ const HomeScreen = () => {
              <View style={styles.heroContent}>
                 <Text style={styles.heroTitle}>Serving Over</Text>
                 <Text style={[styles.heroTitle, { color: '#3c7d48' }]}>600+ Locations.</Text>
-                <TouchableOpacity style={styles.orderButton}>
+                <TouchableOpacity style={styles.orderButton} onPress={() => navigation.navigate('Menu' as any)}>
                   <Text style={styles.orderButtonText}>Order Now</Text>
                 </TouchableOpacity>
              </View>

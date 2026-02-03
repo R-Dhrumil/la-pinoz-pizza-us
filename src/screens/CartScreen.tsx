@@ -35,7 +35,7 @@ const CartScreen = () => {
             />
             <Text style={styles.emptyTitle}>Your cart is empty</Text>
             <Text style={styles.emptyDesc}>Looks like you haven't added any pizza yet.</Text>
-            <TouchableOpacity style={styles.browseBtn} onPress={() => navigation.goBack()}>
+            <TouchableOpacity style={styles.browseBtn} onPress={() => navigation.navigate('Menu' as any)}>
                 <Text style={styles.browseBtnText}>BROWSE AGENTIC PIZZA</Text>
             </TouchableOpacity>
         </View>
