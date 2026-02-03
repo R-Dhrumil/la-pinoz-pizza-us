@@ -34,9 +34,28 @@ import PageLayout from '../components/PageLayout';
 
 const { width } = Dimensions.get('window');
 
+const BEST_SELLERS = [
+  {
+    id: 'bs1',
+    name: 'Cheesy-7 Pizza',
+    description: 'Signature 7-cheese blend pizza',
+    price: 14.99,
+    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuB6pTGSpLBLr94GFO6UieWNSuzx4M7rLNKcSBn9GY-mpw72PfVSI1xJqkh1Lh9tFngkY18Ot8ZUv9SltfMbzFQTJc75L2h3ART5VLGWujpfkZ1RcRxSMVVFAxHnTVnnCceRQ2OGqoAgWQQ2HjshfCN-ElTRLv2aZAuMz4SQV5jW08fS8uGsKX9hZXeOMXQe4ufUolLb7T6T1P8jBi9GMgyPgHSGtkGRL7NpbAZq9EtMjjl7OdD6_3Ft-NKe9st04ypYkaySSSXgAouQ",
+    isVeg: true,
+  },
+  {
+    id: 'bs2',
+    name: 'Paneer Tikka Special',
+    description: 'Authentic fusion spices',
+    price: 16.99,
+    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuD-1D4AbD5Oh2Ct2N9-IL56XKpH6gzhbt99mf9upCAHdWA7hmj0i1JcUHhKasMBJ78ksxKDPNej86mRwnHCpNFrL9Uc2uITcL31T4qmchJcxvr8tb5boock07lyEfUxy-hJm88rxEM8Ehyr3g8Rs8sKt-xwz0EgWV2akQg4a3-OYZR4jLjhx0AiPLSy7b9FissOsbUJqDpKidYnH0KNrKWprZCrT6LOZBgc4zQ7zG-VngP2Hh_BQATTzMpKIcUrhfIeGtOF5sJs_iB6",
+    isVeg: true,
+  }
+];
+
 const HomeScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
-  const { totalItems } = useCart();
+  const { totalItems, addToCart } = useCart();
   const [deliveryMode, setDeliveryMode] = React.useState<'delivery' | 'pickup'>('delivery');
 
   return (
@@ -134,18 +153,13 @@ const HomeScreen = () => {
                 </TouchableOpacity>
             </View>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.bestSellerScroll}>
-                <BestSellerCard 
-                    image="https://lh3.googleusercontent.com/aida-public/AB6AXuB6pTGSpLBLr94GFO6UieWNSuzx4M7rLNKcSBn9GY-mpw72PfVSI1xJqkh1Lh9tFngkY18Ot8ZUv9SltfMbzFQTJc75L2h3ART5VLGWujpfkZ1RcRxSMVVFAxHnTVnnCceRQ2OGqoAgWQQ2HjshfCN-ElTRLv2aZAuMz4SQV5jW08fS8uGsKX9hZXeOMXQe4ufUolLb7T6T1P8jBi9GMgyPgHSGtkGRL7NpbAZq9EtMjjl7OdD6_3Ft-NKe9st04ypYkaySSSXgAouQ"
-                    name="Cheesy-7 Pizza"
-                    desc="Signature 7-cheese blend pizza"
-                    price="$14.99"
-                />
-                <BestSellerCard 
-                    image="https://lh3.googleusercontent.com/aida-public/AB6AXuD-1D4AbD5Oh2Ct2N9-IL56XKpH6gzhbt99mf9upCAHdWA7hmj0i1JcUHhKasMBJ78ksxKDPNej86mRwnHCpNFrL9Uc2uITcL31T4qmchJcxvr8tb5boock07lyEfUxy-hJm88rxEM8Ehyr3g8Rs8sKt-xwz0EgWV2akQg4a3-OYZR4jLjhx0AiPLSy7b9FissOsbUJqDpKidYnH0KNrKWprZCrT6LOZBgc4zQ7zG-VngP2Hh_BQATTzMpKIcUrhfIeGtOF5sJs_iB6"
-                    name="Paneer Tikka Special"
-                    desc="Authentic fusion spices"
-                    price="$16.99"
-                />
+                {BEST_SELLERS.map((item) => (
+                    <BestSellerCard 
+                        key={item.id}
+                        item={item}
+                        onAdd={() => addToCart(item)}
+                    />
+                ))}
             </ScrollView>
         </View>
 
@@ -234,15 +248,15 @@ const CategoryItem = ({icon, name, active}: {icon: React.ReactNode, name: string
     </View>
 );
 
-const BestSellerCard = ({image, name, desc, price}: {image: string, name: string, desc: string, price: string}) => (
+const BestSellerCard = ({item, onAdd}: {item: any, onAdd: () => void}) => (
     <View style={styles.bestSellerCard}>
-        <Image source={{uri: image}} style={styles.bsImage} />
+        <Image source={{uri: item.image}} style={styles.bsImage} />
         <View style={styles.bsContent}>
-            <Text style={styles.bsName}>{name}</Text>
-            <Text style={styles.bsDesc} numberOfLines={1}>{desc}</Text>
+            <Text style={styles.bsName}>{item.name}</Text>
+            <Text style={styles.bsDesc} numberOfLines={1}>{item.description}</Text>
             <View style={styles.bsFooter}>
-                <Text style={styles.bsPrice}>{price}</Text>
-                <TouchableOpacity style={styles.addButton}>
+                <Text style={styles.bsPrice}>${item.price}</Text>
+                <TouchableOpacity style={styles.addButton} onPress={onAdd}>
                     <Text style={styles.addButtonText}>Add</Text>
                 </TouchableOpacity>
             </View>
