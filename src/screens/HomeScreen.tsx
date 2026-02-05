@@ -1,4 +1,4 @@
-import React from 'react';
+
 import {
   View,
   Text,
@@ -11,7 +11,9 @@ import {
   Dimensions,
   TextInput,
   ImageBackground,
+  FlatList,
 } from 'react-native';
+import React, { useRef, useEffect, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../navigation/AuthNavigator';
@@ -50,13 +52,50 @@ const BEST_SELLERS = [
     price: 16.99,
     image: "https://lh3.googleusercontent.com/aida-public/AB6AXuD-1D4AbD5Oh2Ct2N9-IL56XKpH6gzhbt99mf9upCAHdWA7hmj0i1JcUHhKasMBJ78ksxKDPNej86mRwnHCpNFrL9Uc2uITcL31T4qmchJcxvr8tb5boock07lyEfUxy-hJm88rxEM8Ehyr3g8Rs8sKt-xwz0EgWV2akQg4a3-OYZR4jLjhx0AiPLSy7b9FissOsbUJqDpKidYnH0KNrKWprZCrT6LOZBgc4zQ7zG-VngP2Hh_BQATTzMpKIcUrhfIeGtOF5sJs_iB6",
     isVeg: true,
+  },
+  {
+    id: 'bs3',
+    name: 'Farm Villa Pizza',
+    description: 'Fresh farm veggies',
+    price: 13.49,
+    image: "https://lapinozpizza.in/assets/w_300,h_300/img/menus/farm-villa-pizza.jpg",
+    isVeg: true,
+  },
+  {
+    id: 'bs4',
+    name: 'Burn To Hell Pizza',
+    description: 'Spicy hot delight',
+    price: 15.99,
+    image: "https://lapinozpizza.in/assets/w_300,h_300/img/menus/burn-to-hell-pizza.jpg",
+    isVeg: true,
   }
 ];
+
+const CARD_WIDTH = 240;
+const SPACING = 16;
 
 const HomeScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
   const { totalItems, addToCart } = useCart();
-  const [deliveryMode, setDeliveryMode] = React.useState<'delivery' | 'pickup'>('delivery');
+  const [deliveryMode, setDeliveryMode] = useState<'delivery' | 'pickup'>('delivery');
+  
+  const flatListRef = useRef<FlatList<any>>(null);
+  const scrollIndexRes = useRef(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (flatListRef.current) {
+         let nextIndex = scrollIndexRes.current + 1;
+         if (nextIndex >= BEST_SELLERS.length) {
+            nextIndex = 0;
+         }
+         flatListRef.current.scrollToIndex({ index: nextIndex, animated: true });
+         scrollIndexRes.current = nextIndex;
+      }
+    }, 2000); // 2 seconds
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <PageLayout style={styles.container}>
@@ -145,15 +184,23 @@ const HomeScreen = () => {
                      <Text style={styles.viewAll}>View All</Text>
                 </TouchableOpacity>
             </View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.bestSellerScroll}>
-                {BEST_SELLERS.map((item) => (
+
+            <FlatList
+                ref={flatListRef}
+                data={BEST_SELLERS}
+                keyExtractor={(item) => item.id}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.bestSellerScroll}
+                renderItem={({ item }) => (
                     <BestSellerCard 
-                        key={item.id}
                         item={item}
                         onAdd={() => addToCart(item)}
                     />
-                ))}
-            </ScrollView>
+                )}
+                snapToInterval={CARD_WIDTH + SPACING}
+                decelerationRate="fast"
+            />
         </View>
 
         {/* Explore Menu */}
@@ -166,6 +213,7 @@ const HomeScreen = () => {
                     subtitle="Feed the whole crew"
                     buttonText="Order Now"
                     btnStyle="primary"
+                    onPress={() => navigation.navigate('Menu' as any)}
                 />
                 <ExplorationCard 
                     image="https://lh3.googleusercontent.com/aida-public/AB6AXuCFRPEE383icBhG-V4GYSUUQnMLKDprJWxIofXROC2729fGb6cNkYmxhApOv3eXbEihTl_5eSO8k6-V8EekzrVwjVZO9PHMmNyhyrbaeK3cER7wrGKdufJx6NhS_87BfWpKFbaw3xLdJRqFnSpVrtUI7T5IcLYVOxb7xS3DJtlR0Gzp8w7CTvQvOnBEsh0PswkLa6p81aaMHDkdtwnEA79cKJjY1nqSuu8CeqbC9n80pb98tCvejQYVCWdFKBpIRL1_bco4voFiZ6g3"
@@ -173,6 +221,7 @@ const HomeScreen = () => {
                     subtitle="Solo hunger pangs fixed"
                     buttonText="Order Now"
                     btnStyle="white"
+                    onPress={() => navigation.navigate('Menu' as any)}
                 />
             </View>
         </View>
@@ -257,14 +306,16 @@ const BestSellerCard = ({item, onAdd}: {item: any, onAdd: () => void}) => (
     </View>
 );
 
-const ExplorationCard = ({image, title, subtitle, buttonText, btnStyle}: any) => (
+const ExplorationCard = ({image, title, subtitle, buttonText, btnStyle, onPress}: any) => (
     <View style={styles.exploreCard}>
         <ImageBackground source={{uri: image}} style={styles.exploreBg}>
              <View style={styles.exploreOverlay}>
                  <View style={styles.exploreContent}>
                      <Text style={styles.exploreTitle}>{title}</Text>
                      <Text style={styles.exploreSubtitle}>{subtitle}</Text>
-                     <TouchableOpacity style={[
+                     <TouchableOpacity 
+                         onPress={onPress}
+                         style={[
                          styles.exploreBtn, 
                          btnStyle === 'white' ? styles.exploreBtnWhite : styles.exploreBtnPrimary
                      ]}>

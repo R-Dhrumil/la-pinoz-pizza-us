@@ -4,16 +4,10 @@ import { View, Text, StyleSheet } from 'react-native';
 import HomeScreen from '../screens/HomeScreen';
 import MenuScreen from '../screens/MenuScreen';
 import CartScreen from '../screens/CartScreen';
+import ProfileScreen from '../screens/ProfileScreen';
 import { Home, Menu, ShoppingCart, User } from 'lucide-react-native';
 
 const Tab = createBottomTabNavigator();
-
-// Placeholder screens for now
-const ProfileScreen = () => (
-  <View style={styles.center}>
-    <Text>Profile Screen</Text>
-  </View>
-);
 
 const TabNavigator = () => {
   return (
