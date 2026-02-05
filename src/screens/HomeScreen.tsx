@@ -271,9 +271,6 @@ const HomeScreen = () => {
                 />
              </View>
         </View>
-        
-        {/* App Banner */}
-        
       </ScrollView>
     </PageLayout>
   );
