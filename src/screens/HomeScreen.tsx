@@ -345,7 +345,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fbfbfb',
   },
   scrollContent: {
-    paddingBottom: 80, // Space for bottom nav
+    paddingBottom: 20, // Reduced from 80
   },
   header: {
     flexDirection: 'row',
@@ -495,7 +495,7 @@ const styles = StyleSheet.create({
   },
   section: {
     paddingHorizontal: 16,
-    marginBottom: 32,
+    marginBottom: 16,
   },
   sectionTitle: {
     fontSize: 18,
