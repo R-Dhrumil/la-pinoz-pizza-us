@@ -7,12 +7,15 @@ import CartScreen from '../screens/CartScreen';
 
 import ProductDetailScreen from '../screens/ProductDetailScreen';
 
+import WeeklyTaskDashboard from '../PracticeScreen';
+
 export type AuthStackParamList = {
   Login: undefined;
   Signup: undefined;
   MainTabs: undefined; // Replaces 'Home'
   ProductDetail: { item: any };
   Cart: undefined;
+  WeeklyTaskDashboard: undefined;
 };
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
@@ -37,6 +40,11 @@ const AuthNavigator = () => {
       <Stack.Screen 
         name="Cart" 
         component={CartScreen} 
+        options={{ animation: 'slide_from_bottom' }} 
+      />
+      <Stack.Screen 
+        name="WeeklyTaskDashboard" 
+        component={WeeklyTaskDashboard} 
         options={{ animation: 'slide_from_bottom' }} 
       />
     </Stack.Navigator>

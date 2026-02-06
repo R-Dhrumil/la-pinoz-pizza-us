@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import {
   View,
+  TextInput,
   Text,
   StyleSheet,
   TouchableOpacity,
@@ -252,7 +253,10 @@ const styles = StyleSheet.create({
       gap: 12,
   },
   iconBtn: {
-      padding: 8,
+      padding: 10,
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
       backgroundColor: '#f3f4f6',
       borderRadius: 20,
   },

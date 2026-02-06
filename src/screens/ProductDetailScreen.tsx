@@ -75,7 +75,7 @@ const ProductDetailScreen = () => {
     return (total * quantity).toFixed(2);
   };
 
-  const handleAddToCart = () => {
+  const handleAddToCart = (redirect: boolean) => {
     // Construct a custom item based on selections
     const customItem = {
       ...item,
@@ -90,7 +90,12 @@ const ProductDetailScreen = () => {
     for(let i=0; i<quantity; i++) {
         addToCart(customItem);
     }
-    navigation.navigate('Cart');
+    
+    if (redirect) {
+        navigation.navigate('Cart');
+    } else {
+        navigation.goBack();
+    }
   };
 
   return (
@@ -217,9 +222,21 @@ const ProductDetailScreen = () => {
             </View>
         </View>
 
-        <TouchableOpacity style={styles.addToCartBtn} onPress={handleAddToCart}>
-          <Text style={styles.addToCartText}>ADD TO CART</Text>
-        </TouchableOpacity>
+        <View style={styles.actionButtons}>
+            <TouchableOpacity 
+                style={[styles.btn, styles.btnSecondary]} 
+                onPress={() => handleAddToCart(false)}
+            >
+              <Text style={styles.btnTextSecondary}>ADD TO CART</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+                style={[styles.btn, styles.btnPrimary]} 
+                onPress={() => handleAddToCart(true)}
+            >
+              <Text style={styles.btnTextPrimary}>BUY NOW</Text>
+            </TouchableOpacity>
+        </View>
       </View>
     </PageLayout>
   );
@@ -455,21 +472,38 @@ const styles = StyleSheet.create({
     minWidth: 20,
     textAlign: 'center',
   },
-  addToCartBtn: {
-    width: '100%',
+  actionButtons: {
+      flexDirection: 'row',
+      gap: 12,
+  },
+  btn: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#3c7d48',
     borderRadius: 16,
     height: 56,
+  },
+  btnPrimary: {
+    backgroundColor: '#3c7d48',
     shadowColor: '#3c7d48',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 4,
   },
-  addToCartText: {
+  btnSecondary: {
+    backgroundColor: '#fff',
+    borderWidth: 1.5,
+    borderColor: '#3c7d48',
+  },
+  btnTextPrimary: {
     color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
+  },
+  btnTextSecondary: {
+    color: '#3c7d48',
     fontSize: 16,
     fontWeight: 'bold',
     letterSpacing: 0.5,
