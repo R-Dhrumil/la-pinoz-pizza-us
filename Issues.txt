@@ -1,0 +1,1 @@
+eslint version conflict while installing the react-native-geolocation-service
