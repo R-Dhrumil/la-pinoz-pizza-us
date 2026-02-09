@@ -24,7 +24,7 @@ const Stack = createNativeStackNavigator<AuthStackParamList>();
 const AuthNavigator = () => {
   return (
     <Stack.Navigator
-      initialRouteName="Practice"
+      initialRouteName="Login"
       screenOptions={{
         headerShown: false,
         animation: 'slide_from_right'

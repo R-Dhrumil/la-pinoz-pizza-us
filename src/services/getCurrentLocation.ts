@@ -1,9 +1,9 @@
-import Geolocation from 'react-native-geolocation-service';
+import geolocation from "react-native-geolocation-service"
 
 export default function getCurrentLocation() {
   return new Promise<{ latitude: number; longitude: number }>(
     (resolve, reject) => {
-      Geolocation.getCurrentPosition(
+      geolocation.getCurrentPosition(
         position => {
           resolve({
             latitude: position.coords.latitude,
