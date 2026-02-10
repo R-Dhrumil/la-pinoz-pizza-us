@@ -96,7 +96,16 @@ const ProfileScreen = () => {
             {menuItems.map((item, index) => {
                 const Icon = item.icon;
                 return (
-                    <TouchableOpacity key={item.id} style={[styles.menuItem, index !== menuItems.length - 1 && styles.menuItemBorder]}>
+                    <TouchableOpacity 
+                        key={item.id} 
+                        style={[styles.menuItem, index !== menuItems.length - 1 && styles.menuItemBorder]}
+                        onPress={() => {
+                            if (item.id === 'address') {
+                                navigation.navigate('ManageAddress');
+                            }
+                            // Add other navigation cases here if needed
+                        }}
+                    >
                         <View style={styles.menuLeft}>
                             <View style={styles.iconBox}>
                                 <Icon size={20} color="#3c7d48" />

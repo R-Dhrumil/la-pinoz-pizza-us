@@ -29,6 +29,9 @@ import {
   Soup,
   ChefHat,
   Leaf,
+  Trophy,
+  Users,
+  ArrowRight,
 } from 'lucide-react-native';
 
 import { useCart } from '../context/CartContext';
@@ -228,23 +231,55 @@ const HomeScreen = () => {
 
         {/* Our Story */}
         <View style={styles.section}>
-            <View style={styles.storyContainer}>
-                <Text style={styles.eyebrow}>OUR STORY</Text>
-                <Text style={styles.storyTitle}>India's Fastest Growing Pizza Chain</Text>
-                <Text style={styles.storyText}>
-                    Bringing authentic taste and premium quality since 2011. Now conquering the USA.
-                </Text>
-                <View style={styles.statsRow}>
-                    <View style={styles.statBox}>
-                        <Text style={styles.statNumber}>600+</Text>
-                        <Text style={styles.statLabel}>OUTLETS</Text>
+            <ImageBackground 
+                source={{ uri: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=1000&auto=format&fit=crop' }}
+                style={styles.storyContainer}
+                imageStyle={{ borderRadius: 24, opacity: 0.15 }}
+            >
+                <View style={styles.storyOverlay}>
+                    <View style={styles.storyHeaderRow}>
+                        <View style={styles.storyHeader}>
+                            <Trophy size={18} color="#ffbe33" />
+                            <Text style={styles.eyebrow}>OUR STORY</Text>
+                        </View>
+                        <View style={styles.estBadge}>
+                            <Text style={styles.estText}>Since 2011</Text>
+                        </View>
                     </View>
-                    <View style={styles.statBox}>
-                        <Text style={styles.statNumber}>10M+</Text>
-                        <Text style={styles.statLabel}>CUSTOMERS</Text>
+                    
+                    <Text style={styles.storyTitle}>Our journey from one small outlet to <Text style={{ color: '#ffbe33' }}>Global Icon.</Text></Text>
+                    
+                    <Text style={styles.storyText}>
+                        We started with a simple promise: to serve the freshest, tastiest pizzas. Today, we're proud to be India's favorite.
+                    </Text>
+
+                    <View style={styles.statsRow}>
+                        <View style={styles.statBox}>
+                            <View style={styles.statIconContainer}>
+                                <MapPin size={22} color="#3c7d48" />
+                            </View>
+                            <View>
+                                <Text style={styles.statNumber}>600+</Text>
+                                <Text style={styles.statLabel}>OUTLETS</Text>
+                            </View>
+                        </View>
+                        <View style={styles.statBox}>
+                            <View style={[styles.statIconContainer, { backgroundColor: '#fff7ed' }]}>
+                                <Users size={22} color="#f97316" />
+                            </View>
+                            <View>
+                                <Text style={[styles.statNumber, { color: '#f97316' }]}>10M+</Text>
+                                <Text style={styles.statLabel}>CUSTOMERS</Text>
+                            </View>
+                        </View>
                     </View>
+
+                    <TouchableOpacity style={styles.learnMoreRow}>
+                        <Text style={styles.learnMoreText}>Read our full story</Text>
+                        <ArrowRight size={16} color="#ffbe33" />
+                    </TouchableOpacity>
                 </View>
-            </View>
+            </ImageBackground>
         </View>
         
         {/* Our Promise */}
@@ -646,54 +681,106 @@ const styles = StyleSheet.create({
       fontWeight: 'bold',
   },
   storyContainer: {
-      backgroundColor: 'rgba(60, 125, 72, 0.05)',
-      borderRadius: 16,
-      padding: 24,
-      borderWidth: 1,
-      borderColor: 'rgba(60, 125, 72, 0.1)',
+      backgroundColor: '#1a472a', // Even deeper, more premium green
+      borderRadius: 24,
+      overflow: 'hidden',
+  },
+  storyOverlay: {
+    padding: 24,
+    backgroundColor: 'rgba(60, 125, 72, 0.6)', // Forest green overlay
+  },
+  storyHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  estBadge: {
+    backgroundColor: 'rgba(255,190,51,0.2)',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255,190,51,0.4)',
+  },
+  estText: {
+    color: '#ffbe33',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  storyHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   eyebrow: {
-      fontSize: 10,
+      fontSize: 12,
       fontWeight: 'bold',
-      color: '#3c7d48',
+      color: '#ffbe33', // Golden color
       textTransform: 'uppercase',
-      letterSpacing: 1,
-      marginBottom: 8,
+      letterSpacing: 1.5,
   },
   storyTitle: {
-      fontSize: 20,
-      fontWeight: 'bold',
-      color: '#000',
+      fontSize: 26,
+      fontWeight: '900',
+      color: '#fff',
       marginBottom: 12,
+      lineHeight: 32,
+      letterSpacing: -0.5,
   },
   storyText: {
       fontSize: 14,
-      color: '#4b5563',
-      lineHeight: 20,
+      color: 'rgba(255,255,255,0.9)',
+      lineHeight: 22,
       marginBottom: 24,
   },
   statsRow: {
       flexDirection: 'row',
-      gap: 16,
+      gap: 12,
+      marginBottom: 24,
   },
   statBox: {
       flex: 1,
       backgroundColor: '#fff',
-      padding: 12,
+      padding: 10,
+      borderRadius: 16,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      shadowColor: '#000',
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+  },
+  statIconContainer: {
+      width: 36,
+      height: 36,
       borderRadius: 12,
-      borderWidth: 1,
-      borderColor: '#f3f4f6',
+      backgroundColor: '#f0fdf4',
+      justifyContent: 'center',
+      alignItems: 'center',
   },
   statNumber: {
-      fontSize: 24,
+      fontSize: 20,
       fontWeight: '900',
       color: '#3c7d48',
   },
   statLabel: {
-      fontSize: 10,
+      fontSize: 9,
       fontWeight: 'bold',
       color: '#6b7280',
       textTransform: 'uppercase',
+  },
+  learnMoreRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  learnMoreText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+    textDecorationLine: 'underline',
+    textDecorationColor: '#ffbe33',
   },
   centerHeader: {
       alignItems: 'center',

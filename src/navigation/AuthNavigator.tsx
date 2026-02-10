@@ -6,8 +6,11 @@ import SignupScreen from '../screens/auth/SignupScreen';
 import CartScreen from '../screens/CartScreen';
 
 import ProductDetailScreen from '../screens/ProductDetailScreen';
+import ManageAddressScreen from '../screens/ManageAddressScreen';
 
 import PracticeScreen from '../PracticeScreen';
+
+import AddNewAddressScreen from '../screens/AddNewAddressScreen';
 
 
 export type AuthStackParamList = {
@@ -16,6 +19,8 @@ export type AuthStackParamList = {
   MainTabs: undefined; // Replaces 'Home'
   ProductDetail: { item: any };
   Cart: undefined;
+  ManageAddress: undefined;
+  AddNewAddress: undefined;
   Practice: undefined;
 };
 
@@ -38,10 +43,20 @@ const AuthNavigator = () => {
         component={ProductDetailScreen} 
         options={{ animation: 'slide_from_bottom' }} 
       />
+      <Stack.Screen
+      name='AddNewAddress'
+      component={AddNewAddressScreen}
+      options={{ animation: 'slide_from_bottom' }} 
+      />
       <Stack.Screen 
         name="Cart" 
         component={CartScreen} 
         options={{ animation: 'slide_from_bottom' }} 
+      />
+      <Stack.Screen 
+        name="ManageAddress" 
+        component={ManageAddressScreen} 
+        options={{ animation: 'slide_from_right' }} 
       />
       <Stack.Screen 
         name="Practice" 

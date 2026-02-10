@@ -21,12 +21,12 @@ const { width } = Dimensions.get('window');
 
 // Mock data for variants and toppings since they aren't in the main data yet
 const VARIANTS = [
-  { id: 'v1', name: 'Slice', price: 4.99 },
+ 
   { id: 'v2', name: 'Regular', price: 12.99 },
   { id: 'v3', name: 'Medium', price: 18.99 },
   { id: 'v4', name: 'Large', price: 24.99 },
   { id: 'v5', name: 'Giant', price: 32.99 },
-  { id: 'v6', name: 'Monster', price: 45.99 },
+ 
 ];
 
 const TOPPINGS = [
