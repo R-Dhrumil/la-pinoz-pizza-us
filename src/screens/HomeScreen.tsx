@@ -290,19 +290,22 @@ const HomeScreen = () => {
              </View>
              <View style={{ gap: 16, marginTop: 16 }}>
                 <PromiseItem 
-                    icon={<ChefHat size={24} color="#3c7d48" />}
+                    icon={<ChefHat size={24} color="#d97706" />}
                     title="Freshly Kneaded Dough"
                     desc="Prepared fresh in-store, every single morning."
+                    iconBgColor="#fffbeb"
                 />
                 <PromiseItem 
-                    icon={<Leaf size={24} color="#3c7d48" />}
+                    icon={<Leaf size={24} color="#16a34a" />}
                     title="Farm Fresh Toppings"
                     desc="Locally sourced vegetables for high taste."
+                    iconBgColor="#dcfce7"
                 />
                 <PromiseItem 
-                    icon={<Soup size={24} color="#3c7d48" />}
+                    icon={<Soup size={24} color="#dc2626" />}
                     title="Signature Sauces"
                     desc="Secret blend of herbs and zest."
+                    iconBgColor="#fee2e2"
                 />
              </View>
         </View>
@@ -362,12 +365,12 @@ const ExplorationCard = ({image, title, subtitle, buttonText, btnStyle, onPress}
     </View>
 );
 
-const PromiseItem = ({icon, title, desc}: any) => (
+const PromiseItem = ({icon, title, desc, iconBgColor}: any) => (
     <View style={styles.promiseCard}>
-        <View style={styles.promiseIconBox}>
+        <View style={[styles.promiseIconBox, { backgroundColor: iconBgColor || '#f0fdf4' }]}>
             {icon}
         </View>
-        <View>
+        <View style={{flex: 1}}>
             <Text style={styles.promiseTitle}>{title}</Text>
             <Text style={styles.promiseDesc}>{desc}</Text>
         </View>
@@ -498,11 +501,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   toggleActive: {
-    backgroundColor: '#fff',
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    backgroundColor: '#3c7d48',
+    shadowColor: '#3c7d48',
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
   toggleText: {
     fontSize: 14,
@@ -510,7 +513,7 @@ const styles = StyleSheet.create({
     color: '#6b7280',
   },
   toggleTextActive: {
-    color: '#3c7d48',
+    color: '#fff',
   },
   inputContainer: {
     flexDirection: 'row',

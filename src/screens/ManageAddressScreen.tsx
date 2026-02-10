@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   ScrollView,
   SafeAreaView,
   StatusBar,
+  RefreshControl,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -23,7 +24,12 @@ interface Address {
 const DUMMY_ADDRESSES: Address[] = [
     {
         id: '1',
-        type: 'Hotel RK in',
+        type: 'home',
+        details: '208, Hotel RK in tarsali , Vijay Nagar,Tarsali, Vadodara',
+        isDeliverable: false,
+    }, {
+        id: '2',
+        type: 'work',
         details: '208, Hotel RK in tarsali , Vijay Nagar,Tarsali, Vadodara',
         isDeliverable: false,
     },
@@ -32,6 +38,16 @@ const DUMMY_ADDRESSES: Address[] = [
 const ManageAddressScreen = () => {
     const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
     const [addresses, setAddresses] = useState<Address[]>(DUMMY_ADDRESSES);
+    const [refreshing, setRefreshing] = useState(false);
+
+    const onRefresh = useCallback(() => {
+        setRefreshing(true);
+        // Simulate a network request
+        setTimeout(() => {
+            // In a real app, you would fetch new data here
+            setRefreshing(false);
+        }, 2000);
+    }, []);
     
 
   return (
@@ -53,6 +69,9 @@ const ManageAddressScreen = () => {
         <ScrollView 
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3c7d48']} />
+          }
         >
           {addresses.map((address) => (
             <View key={address.id} style={styles.addressCard}>
