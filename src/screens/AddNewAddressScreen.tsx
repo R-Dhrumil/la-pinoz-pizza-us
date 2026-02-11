@@ -35,7 +35,7 @@ const AddNewAddressScreen = () => {
     
     // Map State
     const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
-    const [mapRegion, setMapRegion] = useState({ lat: 20.5937, lng: 78.9629, zoom: 5 }); // Default India
+    const [mapRegion, setMapRegion] = useState({ lat: 39.8283, lng: -98.5795, zoom: 4 }); // Default USA (Geographic Center)
 
     useEffect(() => {
         requestLocationPermission();

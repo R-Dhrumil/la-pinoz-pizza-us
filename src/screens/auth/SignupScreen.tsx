@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
   // },
   headerContainer: {
     paddingHorizontal: 24,
-    paddingTop: 50,
+    paddingTop: 20,
     paddingBottom: 30,
   },
   logoRow: {
