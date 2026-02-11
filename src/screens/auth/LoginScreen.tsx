@@ -10,7 +10,11 @@ import {
   Dimensions,
   KeyboardAvoidingView,
   ScrollView,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { authService } from '../../services/authService';
 import { Pizza, AtSign, Lock, Eye, EyeOff } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 
@@ -21,7 +25,49 @@ const { width, height } = Dimensions.get('window');
 
 const LoginScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
-  const [passwordVisible, setPasswordVisible] = useState(false);
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [passwordVisible, setPasswordVisible] = useState(false);
+    const [loading, setLoading] = useState(false);
+
+    const handleLogin = async () => {
+        if (!email || !password) {
+            Alert.alert('Error', 'Please enter both email and password');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const response = await authService.login({ email, password });
+            
+            // API response contains: id, email, name, role, points, isElite, token
+            if (response && response.token) {
+                // Store the authentication token
+                await AsyncStorage.setItem('userToken', response.token);
+                
+                // Store user details
+                const userInfo = {
+                    id: response.id,
+                    email: response.email,
+                    name: response.name,
+                    role: response.role,
+                    points: response.points,
+                    isElite: response.isElite,
+                };
+                await AsyncStorage.setItem('userInfo', JSON.stringify(userInfo));
+                
+                // Navigate to main app
+                navigation.replace('MainTabs');
+            } else {
+                Alert.alert('Login Failed', 'Invalid response from server');
+            }
+        } catch (error: any) {
+            console.error(error);
+            Alert.alert('Login Failed', error.response?.data?.message || 'Invalid credentials or server error');
+        } finally {
+            setLoading(false);
+        }
+    };
 
   return (
     <View style={styles.container}>
@@ -63,6 +109,8 @@ const LoginScreen = () => {
                         style={styles.input}
                         keyboardType="email-address"
                         autoCapitalize="none"
+                        value={email}
+                        onChangeText={setEmail}
                     />
                 </View>
             </View>
@@ -77,6 +125,8 @@ const LoginScreen = () => {
                         placeholderTextColor="#9ca3af"
                         style={styles.input}
                         secureTextEntry={!passwordVisible}
+                        value={password}
+                        onChangeText={setPassword}
                     />
                     <TouchableOpacity onPress={() => setPasswordVisible(!passwordVisible)} style={styles.eyeIcon}>
                         {passwordVisible ? (
@@ -92,8 +142,16 @@ const LoginScreen = () => {
                 <Text style={styles.forgotText}>Forgot your password?</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.signInButton} onPress={() => navigation.replace('MainTabs')}>
-                <Text style={styles.signInButtonText}>Sign In</Text>
+            <TouchableOpacity 
+                style={[styles.signInButton, loading && { opacity: 0.7 }]} 
+                onPress={handleLogin}
+                disabled={loading}
+            >
+                {loading ? (
+                    <ActivityIndicator color="#fff" />
+                ) : (
+                    <Text style={styles.signInButtonText}>Sign In</Text>
+                )}
             </TouchableOpacity>
 
              {/* Optional: Add Sign Up link since the plan mentioned connecting "Sign Up" */}
