@@ -14,30 +14,13 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../navigation/AuthNavigator';
 import { ChevronLeft, MapPin, Trash2, AlertTriangle } from 'lucide-react-native';
 
-interface Address {
-    id: string;
-    type: string;
-    details: string;
-    isDeliverable: boolean;
-}
+import { useAddress, Address } from '../context/AddressContext';
 
-const DUMMY_ADDRESSES: Address[] = [
-    {
-        id: '1',
-        type: 'home',
-        details: '208, Hotel RK in tarsali , Vijay Nagar,Tarsali, Vadodara',
-        isDeliverable: false,
-    }, {
-        id: '2',
-        type: 'work',
-        details: '208, Hotel RK in tarsali , Vijay Nagar,Tarsali, Vadodara',
-        isDeliverable: false,
-    },
-];
+
 
 const ManageAddressScreen = () => {
     const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
-    const [addresses, setAddresses] = useState<Address[]>(DUMMY_ADDRESSES);
+    const { addresses, deleteAddress } = useAddress();
     const [refreshing, setRefreshing] = useState(false);
 
     const onRefresh = useCallback(() => {
@@ -81,9 +64,9 @@ const ManageAddressScreen = () => {
                 </View>
                 <View style={styles.addressDetails}>
                   <Text style={styles.addressType}>{address.type}</Text>
-                  <Text style={styles.addressText}>{address.details}</Text>
+                  <Text style={styles.addressText}>{`${address.houseNo}, ${address.street}, ${address.landmark}, ${address.city} - ${address.pincode}`}</Text>
                 </View>
-                <TouchableOpacity style={styles.deleteButton}>
+                <TouchableOpacity style={styles.deleteButton} onPress={() => deleteAddress(address.id)}>
                   <Trash2 size={20} color="#ef4444" />
                 </TouchableOpacity>
               </View>
