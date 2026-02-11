@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const BASE_URL = 'https://api.lapinozusa.com/api';
 
@@ -10,8 +10,6 @@ const apiClient = axios.create({
     },
     timeout: 10000,
 });
-
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Request Interceptor
 apiClient.interceptors.request.use(
