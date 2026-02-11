@@ -13,6 +13,7 @@ import {
   Alert,
 } from 'react-native';
 import { Pizza, User, Mail, Phone, Lock, Eye, EyeOff } from 'lucide-react-native';
+
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../navigation/AuthNavigator';
@@ -167,6 +168,7 @@ const SignupScreen = () => {
                   value={password}
                   onChangeText={setPassword}
                 />
+                
                 <TouchableOpacity onPress={() => setSecure(!secure)} style={styles.eyeIcon}>
                   {secure ? (
                       <EyeOff size={20} color="#9ca3af" />

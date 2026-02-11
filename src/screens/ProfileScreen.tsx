@@ -30,6 +30,7 @@ import {
 const ProfileScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
   const { user, logout } = useAuth();
+  
 
   // Default user data if not logged in
   const displayUser = {
@@ -48,10 +49,8 @@ const ProfileScreen = () => {
   };
 
   const menuItems: MenuItem[] = [
-    { id: 'info', label: 'Personal Information', icon: User, badge: null },
     { id: 'orders', label: 'My Orders', icon: Receipt, badge: '2 Active', badgeColor: '#3c7d48' },
     { id: 'address', label: 'Manage Address', icon: MapPin, badge: null },
-    
     { id: 'refund', label: 'Track My Refund', icon: BadgeDollarSign, badge: null },
     { id: 'concern', label: 'Raise a Concern', icon: MessageCircle, badge: null },
     { id: 'faqs', label: 'FAQs', icon: HelpCircle, badge: null },
