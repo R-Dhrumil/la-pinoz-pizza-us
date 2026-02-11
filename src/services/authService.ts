@@ -8,10 +8,10 @@ interface LoginParams {
 }
 
 interface SignupParams {
-    name: string;
+    fullName: string;
     email: string;
-    phone: string;
-    password?: string;
+    phoneNumber: string;
+    password: string;
 }
 
 export const authService = {
@@ -25,8 +25,8 @@ export const authService = {
         return response.data;
     },
 
-    signup: async (userData: SignupParams) => {
-        const response = await apiClient.post('/auth/signup', userData);
+    register: async (userData: SignupParams) => {
+        const response = await apiClient.post('/Auth/register', userData);
         return response.data;
     },
 

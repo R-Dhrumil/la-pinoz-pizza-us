@@ -11,6 +11,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../navigation/AuthNavigator';
+import { useAuth } from '../context/AuthContext';
 import {
   User,
   Receipt,
@@ -28,11 +29,13 @@ import {
 
 const ProfileScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
+  const { user, logout } = useAuth();
 
-  const user = {
-    name: 'David Smith',
-    phone: '+1(555) 012-3456',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAT_fev5pujj6i0YT_eyZYIUHLELxKcfyctsEIE0c6kNS3wvf3BeEcMmJKbF6alICfoXEeGtr0zoxpvAXuKR4oDFKRYApwD7OgJiYEtKFxlR21rwF4B4EkWJ1u1ldPiew5Rc7ShjLIDvev0dbAmvRICE52WyFSZXb7rryWmj5V9k2k9IWKKRzET2IWl7aTWWHT67AfNJbM0UIo3BJ9YKVDYfA8k4wfO1Gryg6UIpB2P441wJoqs4t5jclhbnWbbaCpMXabf1zRpaEVE', // Using hero image as placeholder avatar
+  // Default user data if not logged in
+  const displayUser = {
+    name: user?.fullName || 'Guest User',
+    phone: user?.phoneNumber || 'Not provided',
+    image: user?.image || 'https://lh3.googleusercontent.com/aida-public/AB6AXuAT_fev5pujj6i0YT_eyZYIUHLELxKcfyctsEIE0c6kNS3wvf3BeEcMmJKbF6alICfoXEeGtr0zoxpvAXuKR4oDFKRYApwD7OgJiYEtKFxlR21rwF4B4EkWJ1u1ldPiew5Rc7ShjLIDvev0dbAmvRICE52WyFSZXb7rryWmj5V9k2k9IWKKRzET2IWl7aTWWHT67AfNJbM0UIo3BJ9YKVDYfA8k4wfO1Gryg6UIpB2P441wJoqs4t5jclhbnWbbaCpMXabf1zRpaEVE',
   };
 
   type MenuItem = {
@@ -57,6 +60,7 @@ const ProfileScreen = () => {
   ];
 
   const handleLogout = () => {
+    logout();
     navigation.reset({
       index: 0,
       routes: [{ name: 'Login' }],
@@ -79,10 +83,10 @@ const ProfileScreen = () => {
         </View>
         
         <View style={styles.profileSection}>
-            <Image source={{ uri: user.image }} style={styles.avatar} />
+            <Image source={{ uri: displayUser.image }} style={styles.avatar} />
             <View style={styles.userInfo}>
-                <Text style={styles.userName}>{user.name}</Text>
-                <Text style={styles.userPhone}>{user.phone}</Text>
+                <Text style={styles.userName}>{displayUser.name}</Text>
+                <Text style={styles.userPhone}>{displayUser.phone}</Text>
             </View>
         </View>
       </View>

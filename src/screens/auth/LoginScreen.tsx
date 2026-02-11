@@ -18,6 +18,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { authService } from '../../services/authService';
 import { Pizza, AtSign, Lock, Eye, EyeOff } from 'lucide-react-native';
+import { useAuth } from '../../context/AuthContext';
 
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../navigation/AuthNavigator';
@@ -26,6 +27,7 @@ const { width, height } = Dimensions.get('window');
 
 const LoginScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
+  const { setUser } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [passwordVisible, setPasswordVisible] = useState(false);
@@ -56,6 +58,14 @@ const LoginScreen = () => {
                     isElite: response.isElite,
                 };
                 await AsyncStorage.setItem('userInfo', JSON.stringify(userInfo));
+                
+                // Store user data in AuthContext
+                setUser({
+                    id: response.id,
+                    fullName: response.name,
+                    email: response.email,
+                    phoneNumber: response.phone || '',
+                });
                 
                 // Navigate to main app
                 navigation.replace('MainTabs');

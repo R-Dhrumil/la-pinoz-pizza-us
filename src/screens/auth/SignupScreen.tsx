@@ -10,17 +10,61 @@ import {
   Platform,
   KeyboardAvoidingView,
   Dimensions,
+  Alert,
 } from 'react-native';
 import { Pizza, User, Mail, Phone, Lock, Eye, EyeOff } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../navigation/AuthNavigator';
+import { authService } from '../../services/authService';
+import { useAuth } from '../../context/AuthContext';
 
 const { width } = Dimensions.get('window');
 
 const SignupScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
+  const { setUser } = useAuth();
   const [secure, setSecure] = useState(true);
+  
+  // Form State
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSignup = async () => {
+    if (!fullName || !email || !phoneNumber || !password) {
+      Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await authService.register({
+        fullName,
+        email,
+        phoneNumber,
+        password
+      });
+      
+      // Store user data in AuthContext
+      setUser({
+        fullName,
+        email,
+        phoneNumber,
+      });
+      
+      setLoading(false);
+      Alert.alert('Success', 'Account created successfully! Please login.');
+      navigation.navigate('Login');
+    } catch (error: any) {
+      setLoading(false);
+      console.error('Signup error:', error);
+      const message = error.response?.data?.message || 'Failed to create account. Please try again.';
+      Alert.alert('Error', message);
+    }
+  };
 
   return (
     <View style={styles.mainContainer}>
@@ -71,6 +115,8 @@ const SignupScreen = () => {
                   placeholder="e.g. John Doe"
                   style={styles.input}
                   placeholderTextColor="#9ca3af"
+                  value={fullName}
+                  onChangeText={setFullName}
                 />
               </View>
             </View>
@@ -86,6 +132,8 @@ const SignupScreen = () => {
                   style={styles.input}
                   placeholderTextColor="#9ca3af"
                   autoCapitalize="none"
+                  value={email}
+                  onChangeText={setEmail}
                 />
               </View>
             </View>
@@ -100,6 +148,8 @@ const SignupScreen = () => {
                   keyboardType="phone-pad"
                   style={styles.input}
                   placeholderTextColor="#9ca3af"
+                  value={phoneNumber}
+                  onChangeText={setPhoneNumber}
                 />
               </View>
             </View>
@@ -114,6 +164,8 @@ const SignupScreen = () => {
                   secureTextEntry={secure}
                   style={styles.input}
                   placeholderTextColor="#9ca3af"
+                  value={password}
+                  onChangeText={setPassword}
                 />
                 <TouchableOpacity onPress={() => setSecure(!secure)} style={styles.eyeIcon}>
                   {secure ? (
@@ -129,10 +181,11 @@ const SignupScreen = () => {
 
             {/* Create Account Button */}
             <TouchableOpacity 
-              style={styles.mainButton}
-              onPress={() => navigation.replace('MainTabs')}
+              style={[styles.mainButton, loading && { opacity: 0.7 }]}
+              onPress={handleSignup}
+              disabled={loading}
             >
-              <Text style={styles.mainButtonText}>Create Account</Text>
+              <Text style={styles.mainButtonText}>{loading ? 'Creating Account...' : 'Create Account'}</Text>
             </TouchableOpacity>
 
             {/* Terms */}
