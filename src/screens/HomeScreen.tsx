@@ -36,6 +36,7 @@ import {
 } from 'lucide-react-native';
 
 import { useCart } from '../context/CartContext';
+import { useStore } from '../context/StoreContext';
 import PageLayout from '../components/PageLayout';
 
 const { width } = Dimensions.get('window');
@@ -81,6 +82,7 @@ const SPACING = 16;
 const HomeScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
   const { totalItems, addToCart } = useCart();
+  const { selectedStore } = useStore();
   const [deliveryMode, setDeliveryMode] = useState<'delivery' | 'pickup'>('delivery');
   
   const flatListRef = useRef<FlatList<any>>(null);
@@ -116,13 +118,13 @@ const HomeScreen = () => {
         <View style={styles.header}>
           <TouchableOpacity style={styles.headerLeft} onPress={() => navigation.navigate('StoreLocation' as any)}>
             <Image 
-              source={require('../assets/images/image.png')} 
+              source={require('../assets/images/logo.png')} 
               style={{ width: 40, height: 40, resizeMode: 'contain' }}
             />
             <View>
               <Text style={styles.brandName}>Change Outlet</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                <Text style={{ fontSize: 16, color: '#000', fontWeight: '600' }}>Ahmedabad</Text>
+                <Text style={{ fontSize: 16, color: '#000', fontWeight: '600' }}>{selectedStore ? selectedStore.city : 'Ahmedabad'}</Text>
                 <ChevronDown size={18} color="#000" />
               </View>
             </View>

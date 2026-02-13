@@ -15,6 +15,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { ArrowLeft, Search, MapPin, Navigation, X } from 'lucide-react-native';
 import axios from 'axios';
+import { useStore } from '../context/StoreContext';
 
 const API_URL = 'https://api.lapinozusa.com/api/storelocations';
 
@@ -34,6 +35,7 @@ interface Store {
 
 const StoreLocationScreen = () => {
   const navigation = useNavigation();
+  const { setSelectedStore } = useStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [allStores, setAllStores] = useState<Store[]>([]);
   const [filteredStores, setFilteredStores] = useState<Store[]>([]);
@@ -99,8 +101,7 @@ const StoreLocationScreen = () => {
   )).sort();
 
   const handleSelectLocation = (store: Store) => {
-    // In a real app, set context
-    // updateStoreLocation(store);
+    setSelectedStore(store);
     navigation.goBack();
   };
 
