@@ -32,6 +32,7 @@ import {
   Trophy,
   Users,
   ArrowRight,
+  ChevronDown,
 } from 'lucide-react-native';
 
 import { useCart } from '../context/CartContext';
@@ -113,12 +114,19 @@ const HomeScreen = () => {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <View style={styles.logoContainer}>
-              <Pizza size={28} color="#3c7d48" />
+          <TouchableOpacity style={styles.headerLeft} onPress={() => navigation.navigate('StoreLocation' as any)}>
+            <Image 
+              source={require('../assets/images/image.png')} 
+              style={{ width: 40, height: 40, resizeMode: 'contain' }}
+            />
+            <View>
+              <Text style={styles.brandName}>Change Outlet</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Text style={{ fontSize: 16, color: '#000', fontWeight: '600' }}>Ahmedabad</Text>
+                <ChevronDown size={18} color="#000" />
+              </View>
             </View>
-            <Text style={styles.brandName}>LA PINO'Z</Text>
-          </View>
+          </TouchableOpacity>
          
         </View>
 
@@ -404,8 +412,8 @@ const styles = StyleSheet.create({
     /* No specialized style needed */
   },
   brandName: {
-    fontSize: 18,
-    fontWeight: '800',
+    fontSize: 10,
+    fontWeight: '500',
     color: '#000',
     letterSpacing: -0.5,
   },
