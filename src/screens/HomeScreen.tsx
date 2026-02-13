@@ -198,7 +198,7 @@ const HomeScreen = () => {
                 renderItem={({ item }) => (
                     <BestSellerCard 
                         item={item}
-                        onAdd={() => addToCart(item)}
+                        onAdd={() => navigation.navigate('ProductDetail' as any, { item })}
                     />
                 )}
                 snapToInterval={CARD_WIDTH + SPACING}

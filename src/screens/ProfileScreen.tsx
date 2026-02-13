@@ -24,7 +24,8 @@ import {
   LogOut,
   ChevronLeft,
   ShieldCheck,
-  FileText
+  FileText,
+  Share2
 } from 'lucide-react-native';
 
 const ProfileScreen = () => {
@@ -53,6 +54,7 @@ const ProfileScreen = () => {
     { id: 'address', label: 'Manage Address', icon: MapPin, badge: null },
     { id: 'refund', label: 'Track My Refund', icon: BadgeDollarSign, badge: null },
     { id: 'concern', label: 'Raise a Concern', icon: MessageCircle, badge: null },
+    { id: 'share', label: 'Share this app', icon: Share2, badge: null },
     { id: 'faqs', label: 'FAQs', icon: HelpCircle, badge: null },
     { id: 'privacy', label: 'Privacy Policy', icon: ShieldCheck, badge: null },
     { id: 'terms', label: 'Terms and Conditions', icon: FileText, badge: null },
