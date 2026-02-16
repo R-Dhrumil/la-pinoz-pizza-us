@@ -79,7 +79,7 @@ const HomeScreen = () => {
         setCategories(cats);
 
         // Fetch Best Sellers
-        const best = await productService.getBestSellers(selectedStore.storeId);
+        const best = await productService.getBestSellers(selectedStore.id);
         setBestSellers(best);
       }
     };
