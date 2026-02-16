@@ -32,8 +32,13 @@ export const productService = {
         return response.data;
     },
     
-    getBestSellers: async () => {
-        const response = await apiClient.get('/products/bestsellers');
+    getBestSellers: async (storeId?: string) => {
+        const response = await apiClient.get('/Products', { 
+            params: { 
+                isBestSeller: true,
+                storeId: storeId 
+            } 
+        });
         return response.data;
     }
 };

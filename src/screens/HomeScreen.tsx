@@ -39,42 +39,12 @@ import { useCart } from '../context/CartContext';
 import { useStore } from '../context/StoreContext';
 import PageLayout from '../components/PageLayout';
 
+import { storeService } from '../services/storeService';
+import { categoryService, Category } from '../services/categoryService';
+import { productService } from '../services/productService';
+
 const { width } = Dimensions.get('window');
 
-const BEST_SELLERS = [
-  {
-    id: 'bs1',
-    name: 'Cheesy-7 Pizza',
-    description: 'Signature 7-cheese blend pizza',
-    price: 14.99,
-    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuB6pTGSpLBLr94GFO6UieWNSuzx4M7rLNKcSBn9GY-mpw72PfVSI1xJqkh1Lh9tFngkY18Ot8ZUv9SltfMbzFQTJc75L2h3ART5VLGWujpfkZ1RcRxSMVVFAxHnTVnnCceRQ2OGqoAgWQQ2HjshfCN-ElTRLv2aZAuMz4SQV5jW08fS8uGsKX9hZXeOMXQe4ufUolLb7T6T1P8jBi9GMgyPgHSGtkGRL7NpbAZq9EtMjjl7OdD6_3Ft-NKe9st04ypYkaySSSXgAouQ",
-    isVeg: true,
-  },
-  {
-    id: 'bs2',
-    name: 'Paneer Tikka Special',
-    description: 'Authentic fusion spices',
-    price: 16.99,
-    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuD-1D4AbD5Oh2Ct2N9-IL56XKpH6gzhbt99mf9upCAHdWA7hmj0i1JcUHhKasMBJ78ksxKDPNej86mRwnHCpNFrL9Uc2uITcL31T4qmchJcxvr8tb5boock07lyEfUxy-hJm88rxEM8Ehyr3g8Rs8sKt-xwz0EgWV2akQg4a3-OYZR4jLjhx0AiPLSy7b9FissOsbUJqDpKidYnH0KNrKWprZCrT6LOZBgc4zQ7zG-VngP2Hh_BQATTzMpKIcUrhfIeGtOF5sJs_iB6",
-    isVeg: true,
-  },
-  {
-    id: 'bs3',
-    name: 'Farm Villa Pizza',
-    description: 'Fresh farm veggies',
-    price: 13.49,
-    image: "https://lapinozpizza.in/assets/w_300,h_300/img/menus/farm-villa-pizza.jpg",
-    isVeg: true,
-  },
-  {
-    id: 'bs4',
-    name: 'Burn To Hell Pizza',
-    description: 'Spicy hot delight',
-    price: 15.99,
-    image: "https://lapinozpizza.in/assets/w_300,h_300/img/menus/burn-to-hell-pizza.jpg",
-    isVeg: true,
-  }
-];
 
 const CARD_WIDTH = 240;
 const SPACING = 16;
@@ -82,26 +52,59 @@ const SPACING = 16;
 const HomeScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
   const { totalItems, addToCart } = useCart();
-  const { selectedStore } = useStore();
+  const { selectedStore, setSelectedStore } = useStore();
   const [deliveryMode, setDeliveryMode] = useState<'delivery' | 'pickup'>('delivery');
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [bestSellers, setBestSellers] = useState<any[]>([]);
+  
+  useEffect(() => {
+    // 1. Set Default Store if none selected
+    const initStore = async () => {
+      if (!selectedStore) {
+        const stores = await storeService.getAllStores();
+        if (stores.length > 0) {
+          setSelectedStore(stores[0]);
+        }
+      }
+    };
+    initStore();
+  }, [selectedStore]);
+
+  useEffect(() => {
+    // 2. Fetch Categories and Best Sellers when store is selected
+    const fetchData = async () => {
+      if (selectedStore) {
+        // Fetch Categories
+        const cats = await categoryService.getCategories(selectedStore.id);
+        setCategories(cats);
+
+        // Fetch Best Sellers
+        const best = await productService.getBestSellers(selectedStore.storeId);
+        setBestSellers(best);
+      }
+    };
+    fetchData();
+  }, [selectedStore]);
   
   const flatListRef = useRef<FlatList<any>>(null);
   const scrollIndexRes = useRef(0);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      if (flatListRef.current) {
-         let nextIndex = scrollIndexRes.current + 1;
-         if (nextIndex >= BEST_SELLERS.length) {
-            nextIndex = 0;
-         }
-         flatListRef.current.scrollToIndex({ index: nextIndex, animated: true });
-         scrollIndexRes.current = nextIndex;
+      // Don't auto-scroll if there are no items or list is not ready
+      if (!flatListRef.current || bestSellers.length === 0) return;
+
+      let nextIndex = scrollIndexRes.current + 1;
+      if (nextIndex >= bestSellers.length) {
+         nextIndex = 0;
       }
-    }, 2000); // 2 seconds
+      
+      flatListRef.current.scrollToIndex({ index: nextIndex, animated: true });
+      scrollIndexRes.current = nextIndex;
+    }, 3000); // Increased to 3 seconds for better experience
 
     return () => clearInterval(interval);
-  }, []);
+  }, [bestSellers]); // Add dependency on bestSellers
 
   return (
     <PageLayout style={styles.container}>
@@ -181,15 +184,37 @@ const HomeScreen = () => {
         <View style={styles.section}>
             <Text style={styles.sectionTitle}>Top Categories</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryScroll}>
-                <CategoryItem icon={<Pizza size={32} color="#3c7d48" />} name="Pizza" active />
-                <CategoryItem icon={<Croissant size={32} color="#6b7280" />} name="Breads" />
-                <CategoryItem icon={<UtensilsCrossed size={32} color="#6b7280" />} name="Pasta" />
-                <CategoryItem icon={<Utensils size={32} color="#6b7280" />} name="Sides" />
-                <CategoryItem icon={<Martini size={32} color="#6b7280" />} name="Drinks" />
+                {categories.length > 0 ? (
+                    categories.map((cat) => (
+                        <CategoryItem 
+                            key={cat.id} 
+                            // Use API image, fallback to Pizza icon if fails or empty
+                            icon={
+                                cat.imageUrl ? (
+                                    <Image 
+                                        source={{ uri: cat.imageUrl }} 
+                                        style={{ width: 64, height: 64, borderRadius: 32, resizeMode: 'cover' }} 
+                                    />
+                                ) : (
+                                    <Pizza size={32} color="#3c7d48" />
+                                )
+                            } 
+                            name={cat.name} 
+                            // Highlight first category as example, or manage active state
+                            active={false} 
+                        />
+                    ))
+                ) : (
+                    // Loading / Fallback state
+                    <View style={{ padding: 10 }}>
+                        <Text style={{ color: '#aaa'}}>Loading categories...</Text>
+                    </View>
+                )}
             </ScrollView>
         </View>
 
         {/* Best Sellers */}
+        {bestSellers.length > 0 && (
         <View style={styles.section}>
             <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Our Best Sellers</Text>
@@ -200,14 +225,19 @@ const HomeScreen = () => {
 
             <FlatList
                 ref={flatListRef}
-                data={BEST_SELLERS}
-                keyExtractor={(item) => item.id}
+                data={bestSellers}
+                keyExtractor={(item) => item.id.toString()}
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.bestSellerScroll}
                 renderItem={({ item }) => (
                     <BestSellerCard 
-                        item={item}
+                        item={{
+                            ...item,
+                            image: item.imageUrl || item.image, // Handle API property name
+                            description: item.description || 'Delicious pizza',
+                            price: item.basePrice || item.price 
+                        }}
                         onAdd={() => navigation.navigate('ProductDetail' as any, { item })}
                     />
                 )}
@@ -215,6 +245,7 @@ const HomeScreen = () => {
                 decelerationRate="fast"
             />
         </View>
+        )}
 
         {/* Explore Menu */}
         <View style={styles.section}>

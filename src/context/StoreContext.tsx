@@ -1,11 +1,12 @@
 import React, { createContext, useState, useContext, ReactNode } from 'react';
 
-interface Store {
+export interface Store {
   id: number;
   storeId: string;
   name: string;
   city: string;
   state: string;
+  image?: string;
   // add other fields if needed
 }
 
