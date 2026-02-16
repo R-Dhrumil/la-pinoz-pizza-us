@@ -122,9 +122,9 @@ const HomeScreen = () => {
               style={{ width: 40, height: 40, resizeMode: 'contain' }}
             />
             <View>
-              <Text style={styles.brandName}>Change Outlet</Text>
+              <Text style={styles.brandName}>{selectedStore ? selectedStore.name : 'Select Outlet'}</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                <Text style={{ fontSize: 16, color: '#000', fontWeight: '600' }}>{selectedStore ? selectedStore.city : 'Ahmedabad'}</Text>
+                <Text style={{ fontSize: 16, color: '#000', fontWeight: '600' }}>{selectedStore ? selectedStore.city : 'Click to select'}</Text>
                 <ChevronDown size={18} color="#000" />
               </View>
             </View>
