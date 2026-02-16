@@ -12,6 +12,7 @@ import {
   TextInput,
   ImageBackground,
   FlatList,
+  RefreshControl,
 } from 'react-native';
 import React, { useRef, useEffect, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
@@ -70,20 +71,28 @@ const HomeScreen = () => {
     initStore();
   }, [selectedStore]);
 
-  useEffect(() => {
-    // 2. Fetch Categories and Best Sellers when store is selected
-    const fetchData = async () => {
-      if (selectedStore) {
-        // Fetch Categories
-        const cats = await categoryService.getCategories(selectedStore.id);
-        setCategories(cats);
+  const [refreshing, setRefreshing] = useState(false);
 
-        // Fetch Best Sellers
-        const best = await productService.getBestSellers(selectedStore.id);
-        setBestSellers(best);
-      }
-    };
+  const fetchData = async () => {
+    if (selectedStore) {
+      // Fetch Categories
+      const cats = await categoryService.getCategories(selectedStore.id);
+      setCategories(cats);
+
+      // Fetch Best Sellers
+      const best = await productService.getBestSellers(selectedStore.id);
+      setBestSellers(best);
+    }
+  };
+
+  useEffect(() => {
     fetchData();
+  }, [selectedStore]);
+
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await fetchData();
+    setRefreshing(false);
   }, [selectedStore]);
   
   const flatListRef = useRef<FlatList<any>>(null);
@@ -116,7 +125,13 @@ const HomeScreen = () => {
       {/* Navbar - Fixed Bottom */}
       {/* Navbar - Handled by TabNavigator now */}
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3c7d48']} />
+        }
+      >
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity style={styles.headerLeft} onPress={() => navigation.navigate('StoreLocation' as any)}>

@@ -13,7 +13,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { ArrowLeft, Search, MapPin, Navigation, X } from 'lucide-react-native';
+import { ArrowLeft, Search, MapPin, Navigation, X, SlidersHorizontal } from 'lucide-react-native';
 import axios from 'axios';
 import { useStore } from '../context/StoreContext';
 
@@ -44,6 +44,7 @@ const StoreLocationScreen = () => {
   // Filters
   const [selectedState, setSelectedState] = useState<string | null>(null);
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     fetchStores();
@@ -150,24 +151,33 @@ const StoreLocationScreen = () => {
       </View>
 
       <View style={styles.content}>
-        {/* Search Input */}
-        <View style={styles.searchContainer}>
-          <Search size={20} color="#6b7280" style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search city, state or zip..."
-            placeholderTextColor="#9ca3af"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-          {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchQuery('')}>
-                  <X size={18} color="#6b7280" />
-              </TouchableOpacity>
-          )}
+        {/* Search & Filter Row */}
+        <View style={styles.searchFilterRow}>
+            <View style={styles.searchContainer}>
+            <Search size={20} color="#6b7280" style={styles.searchIcon} />
+            <TextInput
+                style={styles.searchInput}
+                placeholder="Search city, state or zip..."
+                placeholderTextColor="#9ca3af"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+            />
+            {searchQuery.length > 0 && (
+                <TouchableOpacity onPress={() => setSearchQuery('')}>
+                    <X size={18} color="#6b7280" />
+                </TouchableOpacity>
+            )}
+            </View>
+            <TouchableOpacity 
+                style={[styles.filterButton, showFilters && styles.filterButtonActive]} 
+                onPress={() => setShowFilters(!showFilters)}
+            >
+                <SlidersHorizontal size={20} color={showFilters ? "#fff" : "#000"} />
+            </TouchableOpacity>
         </View>
         
         {/* Filters */}
+        {showFilters && (
         <View style={styles.filtersContainer}>
             {/* State Filters */}
             <View>
@@ -209,6 +219,7 @@ const StoreLocationScreen = () => {
                 </ScrollView>
             </View>
         </View>
+        )}
 
         <View style={styles.divider} />
 
@@ -269,13 +280,21 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
   },
+  searchFilterRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 16,
+      marginTop: 16,
+      marginBottom: 16,
+      gap: 12,
+  },
   searchContainer: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#f3f4f6',
     borderRadius: 12,
     paddingHorizontal: 12,
-    margin: 16,
     height: 48,
   },
   searchIcon: {
@@ -421,6 +440,17 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 14,
     color: '#6b7280',
+  },
+  filterButton: {
+      width: 48,
+      height: 48,
+      borderRadius: 12,
+      backgroundColor: '#f3f4f6',
+      justifyContent: 'center',
+      alignItems: 'center',
+  },
+  filterButtonActive: {
+      backgroundColor: '#3c7d48',
   },
 });
 
