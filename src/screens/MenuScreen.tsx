@@ -25,6 +25,7 @@ import {
   Wheat,
 } from 'lucide-react-native';
 import { useCart } from '../context/CartContext';
+import { useStore } from '../context/StoreContext';
 import PageLayout from '../components/PageLayout';
 
 const { width } = Dimensions.get('window');
@@ -79,6 +80,7 @@ const NON_VEG_PIZZAS = [
 const MenuScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
   const { addToCart, totalItems, totalAmount } = useCart();
+  const { selectedStore } = useStore();
   const [activeTab, setActiveTab] = useState('Veg Pizza');
 
   // Simple scroll ref to jump to sections (visual only for MVP)
@@ -90,10 +92,18 @@ const MenuScreen = () => {
       <View style={styles.header}>
         <View>
           <Text style={styles.brandName}>La Pino'z USA</Text>
-          <View style={styles.locationContainer}>
+          <TouchableOpacity 
+            style={styles.locationContainer}
+            onPress={() => navigation.navigate('StoreLocation')}
+          >
              <View style={styles.locationDot} />
-             <Text style={styles.locationText}>New York, Manhattan</Text>
-          </View>
+             <Text style={styles.locationText}>
+               {selectedStore 
+                 ? `${selectedStore.city}, ${selectedStore.state}` 
+                 : 'Select Location'}
+             </Text>
+             <ChevronRight size={12} color="#3c7d48" />
+          </TouchableOpacity>
         </View>
         <View style={styles.headerRight}>
           <TouchableOpacity style={styles.iconBtn}><Search size={20} color="#374151" /></TouchableOpacity>
