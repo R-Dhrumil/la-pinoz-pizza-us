@@ -8,8 +8,9 @@ import {
   Image,
   SafeAreaView,
 } from 'react-native';
+import { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { ArrowLeft, Trash2, Plus, Minus, MoveRight } from 'lucide-react-native';
+import { ArrowLeft, Trash2, Plus, Minus, MoveRight, ChevronDown, ChevronUp } from 'lucide-react-native';
 import { useCart } from '../context/CartContext';
 import PageLayout from '../components/PageLayout';
 
@@ -17,6 +18,15 @@ const CartScreen = () => {
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   const navigation = useNavigation<any>();
   const { cartItems, totalAmount, addToCart, removeFromCart, deleteItem } = useCart();
+  const [expandedItems, setExpandedItems] = useState<string[]>([]);
+
+  const toggleToppings = (id: string) => {
+    setExpandedItems(prev => 
+      prev.includes(id) 
+        ? prev.filter(itemId => itemId !== id)
+        : [...prev, id]
+    );
+  };
 
   if (cartItems.length === 0) {
     return (
@@ -36,7 +46,7 @@ const CartScreen = () => {
             <Text style={styles.emptyTitle}>Your cart is empty</Text>
             <Text style={styles.emptyDesc}>Looks like you haven't added any pizza yet.</Text>
             <TouchableOpacity style={styles.browseBtn} onPress={() => navigation.navigate('Menu' as any)}>
-                <Text style={styles.browseBtnText}>BROWSE AGENTIC PIZZA</Text>
+                <Text style={styles.browseBtnText}> BROWSE OUR MENU</Text>
             </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -74,10 +84,39 @@ const CartScreen = () => {
                               </TouchableOpacity>
                           </View>
                           
-                          <Text style={styles.itemVariant}>
-                              {item.variant?.size ? `${item.variant.size} Size` : 'Regular'} 
-                              {item.toppings && item.toppings.length > 0 && ` + ${item.toppings.length} Toppings`}
-                          </Text>
+                          <View>
+                              <Text style={styles.itemVariant}>
+                                  {item.variant?.size ? `${item.variant.size} Size` : 'Regular'} 
+                              </Text>
+
+                              {item.toppings && item.toppings.length > 0 && (
+                                <View>
+                                    <TouchableOpacity 
+                                        style={styles.toppingsToggle} 
+                                        onPress={() => toggleToppings(item.id)}
+                                    >
+                                        <Text style={styles.toppingsToggleText}>
+                                            {item.toppings.length} Toppings
+                                        </Text>
+                                        {expandedItems.includes(item.id) ? (
+                                            <ChevronUp size={12} color="#3c7d48" />
+                                        ) : (
+                                            <ChevronDown size={12} color="#3c7d48" />
+                                        )}
+                                    </TouchableOpacity>
+
+                                    {expandedItems.includes(item.id) && (
+                                        <View style={styles.toppingsList}>
+                                            {item.toppings.map((topping: any, index: number) => (
+                                                <Text key={index} style={styles.toppingItemText}>
+                                                    • {topping.name}
+                                                </Text>
+                                            ))}
+                                        </View>
+                                    )}
+                                </View>
+                              )}
+                          </View>
                           
                           <View style={styles.itemFooter}>
                               <Text style={styles.itemPrice}>${(item.price * item.quantity).toFixed(2)}</Text>
@@ -395,6 +434,32 @@ const styles = StyleSheet.create({
       fontSize: 14,
       fontWeight: 'bold',
       color: '#3c7d48',
+  },
+  toppingsToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+    gap: 4,
+    alignSelf: 'flex-start',
+    backgroundColor: '#f0fdf4',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  toppingsToggleText: {
+    fontSize: 12,
+    color: '#3c7d48',
+    fontWeight: '600',
+  },
+  toppingsList: {
+    marginTop: 4,
+    paddingLeft: 4,
+    gap: 2,
+  },
+  toppingItemText: {
+    fontSize: 11,
+    color: '#6b7280',
+    lineHeight: 16,
   },
 });
 
