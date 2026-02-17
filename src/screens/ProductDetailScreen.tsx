@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -15,75 +15,155 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../navigation/AuthNavigator';
 import { X, Star, Minus, Plus, Check } from 'lucide-react-native';
 import { useCart } from '../context/CartContext';
+import { Product, ProductVariant, ModifierGroup, ModifierOption } from '../services/categoryService';
 import PageLayout from '../components/PageLayout';
 
 const { width } = Dimensions.get('window');
 
-// Mock data for variants and toppings since they aren't in the main data yet
-const VARIANTS = [
- 
-  { id: 'v2', name: 'Regular', price: 12.99 },
-  { id: 'v3', name: 'Medium', price: 18.99 },
-  { id: 'v4', name: 'Large', price: 24.99 },
-  { id: 'v5', name: 'Giant', price: 32.99 },
- 
-];
-
-const TOPPINGS = [
-  { id: 't1', name: 'Onions', price: 0.99 },
-  { id: 't2', name: 'Capsicum', price: 0.99 },
-  { id: 't3', name: 'Paneer', price: 1.49 },
-  { id: 't4', name: 'Mushrooms', price: 1.29 },
-  { id: 't5', name: 'Olives', price: 1.29 },
-];
-
 type ParamList = {
   ProductDetail: {
-    item: any;
+    item: Product;
   };
 };
 
 const ProductDetailScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
   const route = useRoute<RouteProp<ParamList, 'ProductDetail'>>();
-  const { item } = route.params || {}; // Fallback if tested directly
+  const { item } = route.params || {}; 
   const { addToCart } = useCart();
 
-  const [selectedVariant, setSelectedVariant] = useState(VARIANTS[0]);
-  const [selectedToppings, setSelectedToppings] = useState<string[]>(['t1']); // Onions selected by default
+  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
+  // Map of GroupID -> Array of selected OptionIDs
+  const [selectedModifiers, setSelectedModifiers] = useState<Record<number, number[]>>({});
   const [quantity, setQuantity] = useState(1);
 
-  // If no item is passed (shouldn't happen in flow), return null or error
+  useEffect(() => {
+    if (item) {
+        // Initialize Variant: Default to first one if available
+        if (item.variants && item.variants.length > 0) {
+            setSelectedVariant(item.variants[0]);
+        }
+        
+        // Initialize Modifiers: Select defaults
+        const initialModifiers: Record<number, number[]> = {};
+        if (item.modifierGroups) {
+            item.modifierGroups.forEach(group => {
+                const defaults = group.modifierOptions
+                    .filter(opt => opt.isDefault)
+                    .map(opt => opt.id);
+                
+                if (defaults.length > 0) {
+                    initialModifiers[group.id] = defaults;
+                }
+            });
+        }
+        setSelectedModifiers(initialModifiers);
+    }
+  }, [item]);
+
   if (!item) return null;
 
-  const toggleTopping = (id: string) => {
-    if (selectedToppings.includes(id)) {
-      setSelectedToppings(selectedToppings.filter((t) => t !== id));
+  const toggleModifier = (group: ModifierGroup, optionId: number) => {
+    const currentSelected = selectedModifiers[group.id] || [];
+    const isSelected = currentSelected.includes(optionId);
+    
+    let newSelected = [...currentSelected];
+
+    if (group.selectionType === 'Single' || group.maxSelection === 1) {
+        // Radio behavior
+        if (!isSelected) {
+            newSelected = [optionId];
+        }
+        // If already selected and minSelection is 0, we can deselect. If minSelection > 0, we might strictly require one.
+        // Usually single select radio buttons don't allow deselecting the only option.
+        // Let's assume for Single selection we allow keeping it selected.
     } else {
-      if (selectedToppings.length < 10) {
-        setSelectedToppings([...selectedToppings, id]);
-      }
+        // Checkbox behavior
+        if (isSelected) {
+            newSelected = newSelected.filter(id => id !== optionId);
+        } else {
+            if (group.maxSelection > 0 && newSelected.length >= group.maxSelection) {
+                // Max limit reached, specific logic (replace first? ignore?)
+                // Usually we just ignore the tap or show a message.
+                return; 
+            }
+            newSelected.push(optionId);
+        }
     }
+
+    setSelectedModifiers({
+        ...selectedModifiers,
+        [group.id]: newSelected
+    });
+  };
+
+  const getOptionPrice = (option: ModifierOption) => {
+    // Check if there is an override for the current variant size
+    if (selectedVariant && option.priceOverrides) {
+        const override = option.priceOverrides.find(po => po.size === selectedVariant.size);
+        if (override) return override.price;
+    }
+    return option.price;
   };
 
   const calculateTotal = () => {
-    let total = selectedVariant.price;
-    selectedToppings.forEach((id) => {
-      const topping = TOPPINGS.find((t) => t.id === id);
-      if (topping) total += topping.price;
-    });
+    let total = item.basePrice;
+
+    if (selectedVariant) {
+        total = selectedVariant.price;
+    }
+
+    // Add selected modifiers
+    if (item.modifierGroups) {
+        item.modifierGroups.forEach(group => {
+            const selectedIds = selectedModifiers[group.id] || [];
+            selectedIds.forEach(id => {
+                const option = group.modifierOptions.find(o => o.id === id);
+                if (option) {
+                    total += getOptionPrice(option);
+                }
+            });
+        });
+    }
+
     return (total * quantity).toFixed(2);
   };
 
   const handleAddToCart = (redirect: boolean) => {
-    // Construct a custom item based on selections
+    // Gather all selected modifier objects
+    const allSelectedModifiers: ModifierOption[] = [];
+    if (item.modifierGroups) {
+        item.modifierGroups.forEach(group => {
+            const selectedIds = selectedModifiers[group.id] || [];
+            selectedIds.forEach(id => {
+                const option = group.modifierOptions.find(o => o.id === id);
+                if (option) {
+                    // Start Clone option to include the *actual* price used (handling overrides)
+                    allSelectedModifiers.push({
+                        ...option,
+                        price: getOptionPrice(option)
+                    });
+                }
+            });
+        });
+    }
+
+    const uniqueIdParts = [
+        item.id, 
+        selectedVariant?.id || 'base',
+        ...allSelectedModifiers.map(m => m.id).sort()
+    ];
+
     const customItem = {
-      ...item,
-      id: `${item.id}-${selectedVariant.id}-${selectedToppings.join('-')}`, // Unique ID for this combo
-      name: `${item.name} (${selectedVariant.name})`,
-      price: Number(calculateTotal())/quantity, // Price per unit
-      variant: selectedVariant,
-      toppings: selectedToppings.map(id => TOPPINGS.find(t => t.id === id)),
+        ...item, // Fallback properties
+        id: uniqueIdParts.join('-'),
+        name: selectedVariant ? `${item.name} (${selectedVariant.size})` : item.name,
+        price: Number(calculateTotal())/quantity, // Unit price
+        image: item.imageUrl || 'https://via.placeholder.com/150',
+        isVeg: item.isVeg,
+        description: item.description,
+        variant: selectedVariant,
+        toppings: allSelectedModifiers, // Using generic 'toppings' field for all modifiers
     };
     
     // Add quantity times
@@ -105,8 +185,7 @@ const ProductDetailScreen = () => {
         
         {/* Header Image */}
         <View style={styles.imageContainer}>
-          <Image source={{ uri: item.image }} style={styles.image} />
-          {/* Close Button overlay */}
+          <Image source={{ uri: item.imageUrl || 'https://via.placeholder.com/150' }} style={styles.image} />
           <TouchableOpacity 
             style={styles.closeButton} 
             onPress={() => navigation.goBack()}
@@ -138,67 +217,76 @@ const ProductDetailScreen = () => {
           <Text style={styles.title}>{item.name}</Text>
           <Text style={styles.description}>{item.description}</Text>
 
-          {/* Variants */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>SELECT VARIANT</Text>
-            <View style={styles.variantsGrid}>
-              {VARIANTS.map((variant) => (
-                <TouchableOpacity
-                  key={variant.id}
-                  style={[
-                    styles.variantCard,
-                    selectedVariant.id === variant.id && styles.variantCardActive,
-                  ]}
-                  onPress={() => setSelectedVariant(variant)}
-                >
-                  <Text style={[
-                      styles.variantName, 
-                      selectedVariant.id === variant.id && styles.variantTextActive
-                  ]}>{variant.name}</Text>
-                  <Text style={[
-                      styles.variantPrice,
-                      selectedVariant.id === variant.id && styles.variantTextActive
-                  ]}>${variant.price}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
+          {/* Dynamic Variants */}
+          {item.variants && item.variants.length > 0 && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>SELECT VARIANT</Text>
+                <View style={styles.variantsGrid}>
+                  {item.variants.map((variant) => (
+                    <TouchableOpacity
+                      key={variant.id}
+                      style={[
+                        styles.variantCard,
+                        selectedVariant?.id === variant.id && styles.variantCardActive,
+                      ]}
+                      onPress={() => setSelectedVariant(variant)}
+                    >
+                      <Text style={[
+                          styles.variantName, 
+                          selectedVariant?.id === variant.id && styles.variantTextActive
+                      ]}>{variant.size}</Text>
+                      <Text style={[
+                          styles.variantPrice,
+                          selectedVariant?.id === variant.id && styles.variantTextActive
+                      ]}>${variant.price}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+          )}
 
-          {/* Toppings */}
-          <View style={styles.section}>
-            <View style={styles.toppingsHeader}>
-                <Text style={styles.sectionTitle}>ADD TOPPINGS</Text>
-                <Text style={styles.maxText}>MAX 10</Text>
-            </View>
-            
-            {TOPPINGS.map((topping) => {
-              const isSelected = selectedToppings.includes(topping.id);
-              return (
-                <TouchableOpacity
-                  key={topping.id}
-                  style={styles.toppingRow}
-                  onPress={() => toggleTopping(topping.id)}
-                >
-                  <View style={styles.toppingInfo}>
-                    <View style={[styles.checkboxBase, isSelected && styles.checkboxChecked]}>
-                        {isSelected ? (
-                             <Check size={12} color="#fff" strokeWidth={4} />
-                        ) : (
-                             <View style={styles.vegDot} />
-                        )} 
-                    </View>
-                    <Text style={styles.toppingName}>{topping.name}</Text>
-                  </View>
-                  <Text style={styles.toppingPrice}>${topping.price}</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
+          {/* Dynamic Modifier Groups */}
+          {item.modifierGroups && item.modifierGroups.map(group => (
+              <View key={group.id} style={styles.section}>
+                <View style={styles.toppingsHeader}>
+                    <Text style={styles.sectionTitle}>{group.name.toUpperCase()}</Text>
+                    {group.maxSelection > 0 && (
+                        <Text style={styles.maxText}>MAX {group.maxSelection}</Text>
+                    )}
+                </View>
+                
+                {group.modifierOptions.map((option) => {
+                  const isSelected = (selectedModifiers[group.id] || []).includes(option.id);
+                  const price = getOptionPrice(option);
+                  
+                  return (
+                    <TouchableOpacity
+                      key={option.id}
+                      style={styles.toppingRow}
+                      onPress={() => toggleModifier(group, option.id)}
+                    >
+                      <View style={styles.toppingInfo}>
+                        <View style={[styles.checkboxBase, isSelected && styles.checkboxChecked]}>
+                            {isSelected ? (
+                                 <Check size={12} color="#fff" strokeWidth={4} />
+                            ) : (
+                                 /* Radio style for single select? Or just dot? Keeping consistent for now */
+                                 <View style={styles.vegDot} />
+                            )} 
+                        </View>
+                        <Text style={styles.toppingName}>{option.name}</Text>
+                      </View>
+                      <Text style={styles.toppingPrice}>+${price}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+          ))}
 
         </View>
       </ScrollView>
 
-      {/* Redesigned Bottom Bar */}
+      {/* Bottom Bar */}
       <View style={styles.bottomBar}>
         <View style={styles.priceRow}>
             <View>

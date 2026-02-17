@@ -75,7 +75,7 @@ const CartScreen = () => {
                           </View>
                           
                           <Text style={styles.itemVariant}>
-                              {item.variant?.name ? `${item.variant.name} Size` : 'Regular'} 
+                              {item.variant?.size ? `${item.variant.size} Size` : 'Regular'} 
                               {item.toppings && item.toppings.length > 0 && ` + ${item.toppings.length} Toppings`}
                           </Text>
                           

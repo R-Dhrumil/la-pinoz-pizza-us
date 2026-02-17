@@ -217,6 +217,7 @@ const HomeScreen = () => {
                             name={cat.name} 
                             // Highlight first category as example, or manage active state
                             active={false} 
+                            onPress={() => navigation.navigate('Menu' as any, { categoryId: cat.id })}
                         />
                     ))
                 ) : (
@@ -372,13 +373,13 @@ const HomeScreen = () => {
 
 // Helper Components
 
-const CategoryItem = ({icon, name, active}: {icon: React.ReactNode, name: string, active?: boolean}) => (
-    <View style={styles.categoryItem}>
+const CategoryItem = ({icon, name, active, onPress}: {icon: React.ReactNode, name: string, active?: boolean, onPress?: () => void}) => (
+    <TouchableOpacity style={styles.categoryItem} onPress={onPress}>
         <View style={[styles.categoryIcon, active && styles.categoryIconActive]}>
             {icon}
         </View>
         <Text style={[styles.categoryName, active ? {fontWeight: '700', color: '#000'} : {color: '#6b7280'}]}>{name}</Text>
-    </View>
+    </TouchableOpacity>
 );
 
 const BestSellerCard = ({item, onAdd}: {item: any, onAdd: () => void}) => (

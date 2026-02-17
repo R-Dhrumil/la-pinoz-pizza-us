@@ -12,7 +12,7 @@ export interface Store {
 
 interface StoreContextType {
   selectedStore: Store | null;
-  setSelectedStore: (store: Store) => void;
+  setSelectedStore: (store: Store | null) => void;
 }
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);

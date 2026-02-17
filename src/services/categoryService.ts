@@ -1,5 +1,40 @@
 import apiClient from './apiClient';
 
+export interface ProductVariant {
+    id: number;
+    size: string;
+    crust: string;
+    price: number;
+    productId: number;
+}
+
+export interface ModifierOptionPrice {
+    id: number;
+    size: string;
+    price: number;
+    modifierOptionId: number;
+}
+
+export interface ModifierOption {
+    id: number;
+    name: string;
+    price: number;
+    isDefault: boolean;
+    modifierGroupId: number;
+    priceOverrides?: ModifierOptionPrice[];
+}
+
+export interface ModifierGroup {
+    id: number;
+    name: string;
+    description?: string;
+    selectionType?: string; // e.g., "Single", "Multiple"
+    minSelection: number;
+    maxSelection: number;
+    productId: number;
+    modifierOptions: ModifierOption[];
+}
+
 export interface Product {
     id: number;
     name: string;
@@ -9,6 +44,8 @@ export interface Product {
     isVeg: boolean;
     isBestseller: boolean;
     subcategoryId?: number;
+    variants?: ProductVariant[];
+    modifierGroups?: ModifierGroup[];
 }
 
 export interface Subcategory {

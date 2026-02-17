@@ -10,15 +10,10 @@ interface PageLayoutProps {
 }
 
 const PageLayout = ({ children, style, showCart = true }: PageLayoutProps) => {
-  const { totalItems } = useCart();
-  
-  // Adjusted padding bottom if cart is visible to prevent overlap
-  const paddingBottom = (showCart && totalItems > 0) ? 90 : 0;
-
   return (
     <View style={[styles.container, style]}>
         <StatusBar barStyle="dark-content" backgroundColor="#fff" />
-        <View style={[styles.content, { paddingBottom }]}>
+        <View style={styles.content}>
             {children}
         </View>
         

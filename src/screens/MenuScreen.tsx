@@ -17,6 +17,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../navigation/AuthNavigator';
+import { RouteProp, useRoute } from '@react-navigation/native';
 import {
   Search,
   User,
@@ -25,7 +26,8 @@ import {
   IceCream,
   Martini,
   Wheat,
-  Utensils
+  Utensils,
+  X // Import X for close button
 } from 'lucide-react-native';
 import { useCart } from '../context/CartContext';
 import { useStore } from '../context/StoreContext';
@@ -36,15 +38,26 @@ const { width } = Dimensions.get('window');
 
 const MenuScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
+  const route = useRoute<RouteProp<{ params: { categoryId?: number } }, 'params'>>();
+  const { categoryId: targetCategoryId } = route.params || {};
+
   const { addToCart, totalItems, totalAmount } = useCart();
   const { selectedStore } = useStore();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<number | null>(null);
+  
+  // Search state
+  const [isSearchVisible, setIsSearchVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const searchInputRef = useRef<TextInput>(null);
 
   // Simple scroll ref to jump to sections (visual only for MVP)
   const scrollViewRef = useRef<ScrollView>(null);
-  const sectionRefs = useRef<{ [key: number]: View }>({});
+  const tabsScrollViewRef = useRef<ScrollView>(null);
+  const sectionPositions = useRef<{ [key: number]: number }>({});
+  const tabPositions = useRef<{ [key: number]: number }>({});
+  const isTabPress = useRef(false);
 
   useEffect(() => {
     if (selectedStore?.id) {
@@ -52,7 +65,22 @@ const MenuScreen = () => {
     } else {
         setCategories([]);
     }
+
   }, [selectedStore]);
+
+  // Handle route params when screen focuses or params change
+  useEffect(() => {
+    if (targetCategoryId && categories.length > 0) {
+        const targetId = Number(targetCategoryId);
+        const targetExists = categories.find(c => c.id === targetId);
+        if (targetExists) {
+            // instant jump
+            setTimeout(() => {
+                handleTabPress(targetId, false);
+            }, 100);
+        }
+    }
+  }, [targetCategoryId, categories]);
 
   const fetchCategories = async () => {
       if (!selectedStore?.id) return;
@@ -61,7 +89,8 @@ const MenuScreen = () => {
       try {
           const data = await categoryService.getCategories(selectedStore.id);
           setCategories(data);
-          if (data.length > 0) {
+          // Initial selection logic moved to useEffect above
+          if (data.length > 0 && !activeTab) {
               setActiveTab(data[0].id);
           }
       } catch (error) {
@@ -72,10 +101,60 @@ const MenuScreen = () => {
       }
   };
 
-  const handleTabPress = (categoryId: number) => {
+  const scrollToActiveTab = (categoryId: number) => {
+      const x = tabPositions.current[categoryId];
+      if (tabsScrollViewRef.current && x !== undefined) {
+         // Center the tab: x - (screenWidth / 2) + (tabWidth / 2)
+         // Assuming tab width is approx 70
+         const scrollX = x - (width / 2) + 35; 
+         tabsScrollViewRef.current.scrollTo({ x: Math.max(0, scrollX), animated: true });
+      }
+  };
+
+  const handleTabPress = (categoryId: number, animated = true) => {
       setActiveTab(categoryId);
-      // In a full implementation, this would scroll to the specific section
-      // For now, we just update the active tab
+      isTabPress.current = true;
+      const y = sectionPositions.current[categoryId];
+      
+      if (scrollViewRef.current && y !== undefined) {
+          // Add small offset for sticky header / visuals
+          const offset = Math.max(0, y - 20);
+          scrollViewRef.current.scrollTo({ y: offset, animated });
+      }
+      scrollToActiveTab(categoryId);
+      
+      // Reset flag after animation
+      setTimeout(() => {
+          isTabPress.current = false;
+      }, 1000);
+  };
+
+  const handleScroll = (event: any) => {
+      if (isTabPress.current) return;
+
+      const scrollY = event.nativeEvent.contentOffset.y;
+      const effectiveY = scrollY + 100; // Offset for better detection
+
+      // Find the last category whose position is <= effectiveY
+      let currentTab = activeTab;
+      
+      // We need to iterate over visible categories to find the current section
+      for (let i = 0; i < filteredCategories.length; i++) {
+            const category = filteredCategories[i];
+            const pos = sectionPositions.current[category.id];
+            
+            if (pos !== undefined && pos <= effectiveY) {
+                currentTab = category.id;
+            } else if (pos !== undefined && pos > effectiveY) {
+                // Since positions are ordered, we can stop checking once we go past
+                break;
+            }
+      }
+
+      if (currentTab !== activeTab && currentTab !== null) {
+          setActiveTab(currentTab);
+          scrollToActiveTab(currentTab);
+      }
   };
 
   const getCategoryIcon = (categoryName: string) => {
@@ -87,29 +166,86 @@ const MenuScreen = () => {
       return <Utensils size={18} />;
   };
 
+  const handleSearchToggle = () => {
+      if (isSearchVisible) {
+          setIsSearchVisible(false);
+          setSearchQuery('');
+      } else {
+          setIsSearchVisible(true);
+          // Focus input after render
+          setTimeout(() => searchInputRef.current?.focus(), 100);
+      }
+  };
+
+  // Filter categories based on search
+  const filteredCategories = categories.map(category => {
+      // If no search, return category as is
+      if (!searchQuery.trim()) return category;
+
+      // Filter products
+      const filteredProducts = category.products.filter(p => 
+          p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+          p.description.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+
+      // Return new category object with filtered products
+      return {
+          ...category,
+          products: filteredProducts
+      };
+  }).filter(category => category.products.length > 0); // Remove empty categories
+
   return (
     <PageLayout>
       {/* Header */}
       <View style={styles.header}>
-        <View>
-          <Text style={styles.brandName}>La Pino'z USA</Text>
-          <TouchableOpacity 
-            style={styles.locationContainer}
-            onPress={() => navigation.navigate('StoreLocation')}
-          >
-             <View style={styles.locationDot} />
-             <Text style={styles.locationText}>
-               {selectedStore 
-                 ? `${selectedStore.city}, ${selectedStore.state}` 
-                 : 'Select Location'}
-             </Text>
-             <ChevronRight size={12} color="#3c7d48" />
-          </TouchableOpacity>
-        </View>
-        <View style={styles.headerRight}>
-          <TouchableOpacity style={styles.iconBtn}><Search size={20} color="#374151" /></TouchableOpacity>
-         
-        </View>
+        {isSearchVisible ? (
+             <View style={styles.searchHeaderContainer}>
+                 <View style={styles.searchBox}>
+                     <Search size={18} color="#6b7280" style={{ marginRight: 8 }} />
+                     <TextInput
+                        ref={searchInputRef}
+                        style={styles.searchInput}
+                        placeholder="Search for items..."
+                        placeholderTextColor="#9ca3af"
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                        returnKeyType="search"
+                     />
+                     {searchQuery.length > 0 && (
+                         <TouchableOpacity onPress={() => setSearchQuery('')}>
+                             <X size={16} color="#6b7280" />
+                         </TouchableOpacity>
+                     )}
+                 </View>
+                 <TouchableOpacity onPress={handleSearchToggle} style={styles.cancelBtn}>
+                     <Text style={styles.cancelText}>Cancel</Text>
+                 </TouchableOpacity>
+             </View>
+        ) : (
+            <>
+                <View>
+                <Text style={styles.brandName}>La Pino'z USA</Text>
+                <TouchableOpacity 
+                    style={styles.locationContainer}
+                    onPress={() => navigation.navigate('StoreLocation')}
+                >
+                    <View style={styles.locationDot} />
+                    <Text style={styles.locationText}>
+                        {selectedStore 
+                        ? `${selectedStore.city}, ${selectedStore.state}` 
+                        : 'Select Location'}
+                    </Text>
+                    <ChevronRight size={12} color="#3c7d48" />
+                </TouchableOpacity>
+                </View>
+                <View style={styles.headerRight}>
+                <TouchableOpacity style={styles.iconBtn} onPress={handleSearchToggle}>
+                    <Search size={20} color="#374151" />
+                </TouchableOpacity>
+                </View>
+            </>
+        )}
       </View>
 
       {loading ? (
@@ -130,16 +266,27 @@ const MenuScreen = () => {
           <>
             {/* Category Tabs */}
             <View style={styles.tabContainer}>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabScroll}>
-                    {categories.map(category => (
-                        <TabItem 
+                <ScrollView 
+                    ref={tabsScrollViewRef}
+                    horizontal 
+                    showsHorizontalScrollIndicator={false} 
+                    contentContainerStyle={styles.tabScroll}
+                >
+                    {filteredCategories.map(category => (
+                        <View 
                             key={category.id}
-                            imageUrl={category.imageUrl}
-                            icon={getCategoryIcon(category.name)}
-                            name={category.name} 
-                            active={activeTab === category.id} 
-                            onPress={() => handleTabPress(category.id)} 
-                        />
+                            onLayout={(event) => {
+                                tabPositions.current[category.id] = event.nativeEvent.layout.x;
+                            }}
+                        >
+                            <TabItem 
+                                imageUrl={category.imageUrl}
+                                icon={getCategoryIcon(category.name)}
+                                name={category.name} 
+                                active={activeTab === category.id} 
+                                onPress={() => handleTabPress(category.id)} 
+                            />
+                        </View>
                     ))}
                 </ScrollView>
             </View>
@@ -148,9 +295,17 @@ const MenuScreen = () => {
                 ref={scrollViewRef}
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.content}
+                onScroll={handleScroll}
+                scrollEventThrottle={16}
             >
-                {categories.map(category => (
-                    <View key={category.id} style={styles.listSection}>
+                {filteredCategories.map(category => (
+                    <View 
+                        key={category.id} 
+                        style={styles.listSection}
+                        onLayout={(event) => {
+                            sectionPositions.current[category.id] = event.nativeEvent.layout.y;
+                        }}
+                    >
                         <View style={styles.sectionHeader}>
                             <Text style={styles.sectionTitle}>{category.name}</Text>
                             <Text style={styles.itemCount}>
@@ -167,9 +322,11 @@ const MenuScreen = () => {
                     </View>
                 ))}
                 
-                {categories.length === 0 && !loading && (
+                {filteredCategories.length === 0 && !loading && (
                     <View style={styles.centered}>
-                        <Text style={styles.messageText}>No menu items found for this store.</Text>
+                        <Text style={styles.messageText}>
+                            {searchQuery ? `No items found matching "${searchQuery}"` : "No menu items found for this store."}
+                        </Text>
                     </View>
                 )}
 
@@ -493,6 +650,35 @@ const styles = StyleSheet.create({
       marginHorizontal: 2,
       minWidth: 16,
       textAlign: 'center',
+  },
+  searchHeaderContainer: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+  },
+  searchBox: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: '#f3f4f6',
+      borderRadius: 12,
+      paddingHorizontal: 12,
+      height: 40,
+  },
+  searchInput: {
+      flex: 1,
+      fontSize: 14,
+      color: '#000',
+      paddingVertical: 0,
+  },
+  cancelBtn: {
+      padding: 4,
+  },
+  cancelText: {
+      color: '#3c7d48',
+      fontSize: 14,
+      fontWeight: '600',
   },
 });
 
