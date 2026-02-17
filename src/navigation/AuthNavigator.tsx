@@ -4,6 +4,7 @@ import TabNavigator from './TabNavigator';
 import LoginScreen from '../screens/auth/LoginScreen';
 import SignupScreen from '../screens/auth/SignupScreen';
 import CartScreen from '../screens/CartScreen';
+import MyOrdersScreen from '../screens/MyOrdersScreen';
 
 import ProductDetailScreen from '../screens/ProductDetailScreen';
 import ManageAddressScreen from '../screens/ManageAddressScreen';
@@ -20,6 +21,7 @@ export type AuthStackParamList = {
   MainTabs: undefined; // Replaces 'Home'
   ProductDetail: { item: any };
   Cart: undefined;
+  MyOrders: undefined;
   ManageAddress: undefined;
   AddNewAddress: undefined;
   StoreLocation: undefined;
@@ -59,6 +61,11 @@ const AuthNavigator = () => {
         name="Cart" 
         component={CartScreen} 
         options={{ animation: 'slide_from_bottom' }} 
+      />
+      <Stack.Screen 
+        name="MyOrders" 
+        component={MyOrdersScreen} 
+        options={{ animation: 'slide_from_right' }} 
       />
       <Stack.Screen 
         name="ManageAddress" 

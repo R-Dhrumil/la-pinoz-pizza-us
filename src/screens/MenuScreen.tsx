@@ -12,7 +12,8 @@ import {
   Dimensions,
   Animated,
   ActivityIndicator,
-  Alert
+  Alert,
+  RefreshControl
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -32,6 +33,7 @@ import {
 import { useCart } from '../context/CartContext';
 import { useStore } from '../context/StoreContext';
 import PageLayout from '../components/PageLayout';
+import MenuSkeleton from '../components/MenuSkeleton';
 import { categoryService, Category, Product } from '../services/categoryService';
 
 const { width } = Dimensions.get('window');
@@ -45,6 +47,7 @@ const MenuScreen = () => {
   const { selectedStore } = useStore();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<number | null>(null);
   
   // Search state
@@ -87,6 +90,9 @@ const MenuScreen = () => {
       
       setLoading(true);
       try {
+          // Artificial delay for skeleton testing
+          await new Promise(resolve => setTimeout(() => resolve(true), 2000));
+          
           const data = await categoryService.getCategories(selectedStore.id);
           setCategories(data);
           // Initial selection logic moved to useEffect above
@@ -98,7 +104,15 @@ const MenuScreen = () => {
           Alert.alert("Error", "Failed to load menu. Please try again.");
       } finally {
           setLoading(false);
+          setRefreshing(false);
       }
+  };
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    // Explicitly set loading to true to trigger skeleton
+    setLoading(true);
+    fetchCategories();
   };
 
   const scrollToActiveTab = (categoryId: number) => {
@@ -249,9 +263,7 @@ const MenuScreen = () => {
       </View>
 
       {loading ? (
-          <View style={[styles.container, styles.centered]}>
-              <ActivityIndicator size="large" color="#3c7d48" />
-          </View>
+          <MenuSkeleton />
       ) : !selectedStore ? (
           <View style={[styles.container, styles.centered]}>
               <Text style={styles.messageText}>Please select a store to view the menu</Text>
@@ -297,6 +309,9 @@ const MenuScreen = () => {
                 contentContainerStyle={styles.content}
                 onScroll={handleScroll}
                 scrollEventThrottle={16}
+                refreshControl={
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3c7d48']} />
+                }
             >
                 {filteredCategories.map(category => (
                     <View 

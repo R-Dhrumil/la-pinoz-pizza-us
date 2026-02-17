@@ -107,6 +107,8 @@ const ProfileScreen = () => {
                         onPress={() => {
                             if (item.id === 'address') {
                                 navigation.navigate('ManageAddress');
+                            } else if (item.id === 'orders') {
+                                navigation.navigate('MyOrders');
                             }
                             // Add other navigation cases here if needed
                         }}

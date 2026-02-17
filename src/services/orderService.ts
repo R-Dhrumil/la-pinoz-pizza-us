@@ -1,37 +1,103 @@
 import apiClient from './apiClient';
-import { CartItem } from '../context/CartContext';
 
 export interface OrderItem {
-    productId: string;
+    productId: number;
+    productName: string;
+    size?: string;
+    crust?: string;
     quantity: number;
-    price: number;
+    unitPrice: number;
+    totalPrice: number;
+    modifiers?: string;
 }
 
-export interface PlaceOrderParams {
-    items: CartItem[];
-    totalAmount: number;
-    addressId: string;
+export interface Address {
+    id: number;
+    fullName: string;
+    phoneNumber: string;
+    addressLine1: string;
+    addressLine2?: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    landmark?: string;
+    isDefault: boolean;
+}
+
+export interface Order {
+    id: number;
+    orderNumber: string;
+    userId: string;
+    address: Address;
+    storeId: number;
+    storeName?: string;
+    subtotal: number;
+    tax: number;
+    deliveryFee: number;
+    discount: number;
+    total: number;
     paymentMethod: string;
+    paymentStatus: string; // e.g., "Pending", "Paid", "Failed"
+    orderStatus: string;   // e.g., "Placed", "Confirmed", "Preparing", "OutForDelivery", "Delivered", "Cancelled"
+    specialInstructions?: string;
+    promoCode?: string;
+    createdAt: string;
+    estimatedDeliveryTime?: string;
+    deliveredAt?: string;
+    items: OrderItem[];
+}
+
+export interface CreateOrderDto {
+    addressId: number;
+    storeId: number;
+    subtotal: number;
+    tax: number;
+    deliveryFee: number;
+    discount: number;
+    total: number;
+    paymentMethod: string;
+    specialInstructions?: string;
+    promoCode?: string;
+    items: OrderItem[];
 }
 
 export const orderService = {
-    placeOrder: async (orderData: PlaceOrderParams) => {
-        const response = await apiClient.post('/orders', orderData);
-        return response.data;
+    getMyOrders: async (): Promise<Order[]> => {
+        try {
+            const response = await apiClient.get('/Orders');
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching orders:', error);
+            throw error;
+        }
     },
 
-    getOrderHistory: async () => {
-        const response = await apiClient.get('/orders/history');
-        return response.data;
+    getOrderById: async (id: number): Promise<Order> => {
+        try {
+            const response = await apiClient.get(`/Orders/${id}`);
+            return response.data;
+        } catch (error) {
+            console.error(`Error fetching order ${id}:`, error);
+            throw error;
+        }
     },
 
-    getOrderById: async (id: string) => {
-        const response = await apiClient.get(`/orders/${id}`);
-        return response.data;
+    createOrder: async (orderData: CreateOrderDto): Promise<Order> => {
+        try {
+            const response = await apiClient.post('/Orders', orderData);
+            return response.data;
+        } catch (error) {
+            console.error('Error creating order:', error);
+            throw error;
+        }
     },
-
-    trackOrder: async (id: string) => {
-        const response = await apiClient.get(`/orders/${id}/track`);
-        return response.data;
+    
+    cancelOrder: async (id: number): Promise<void> => {
+        try {
+            await apiClient.put(`/Orders/${id}/cancel`);
+        } catch (error) {
+             console.error(`Error cancelling order ${id}:`, error);
+             throw error;
+        }
     }
 };
