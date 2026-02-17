@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import {
   View,
   TextInput,
@@ -11,6 +11,8 @@ import {
   Image,
   Dimensions,
   Animated,
+  ActivityIndicator,
+  Alert
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -23,68 +25,67 @@ import {
   IceCream,
   Martini,
   Wheat,
+  Utensils
 } from 'lucide-react-native';
 import { useCart } from '../context/CartContext';
 import { useStore } from '../context/StoreContext';
 import PageLayout from '../components/PageLayout';
+import { categoryService, Category, Product } from '../services/categoryService';
 
 const { width } = Dimensions.get('window');
-
-// Mock Data based on the provided image
-const VEG_PIZZAS = [
-  {
-    id: 'v1',
-    name: 'Farm Villa Pizza',
-    description: 'Spiced paneer, capsicum, onion, and red paprika on a buttery crust.',
-    price: 12.99,
-    image: 'https://lapinozpizza.in/assets/w_300,h_300/img/menus/farm-villa-pizza.jpg', // Placeholder logic
-    isVeg: true,
-  },
-  {
-    id: 'v2',
-    name: 'Burn To Hell Pizza',
-    description: 'A fiery combination of hot & garlic dip, jalapeños, mushroom.',
-    price: 14.99,
-    image: 'https://lapinozpizza.in/assets/w_300,h_300/img/menus/burn-to-hell-pizza.jpg',
-    isVeg: true,
-  },
-  {
-    id: 'v3',
-    name: 'Sweet Heat Pizza',
-    description: 'Jalapeños, Pineapples, Sweet Corns, Red Paprika.',
-    price: 13.49,
-    image: 'https://lapinozpizza.in/assets/w_300,h_300/img/menus/sweet-heat-pizza.jpg',
-    isVeg: true,
-  },
-];
-
-const NON_VEG_PIZZAS = [
-  {
-    id: 'nv1',
-    name: 'Chicken Golden Delight',
-    description: 'Golden corn, double chicken toppings and extra cheese.',
-    price: 15.99,
-    image: 'https://lapinozpizza.in/assets/w_300,h_300/img/menus/chicken-golden-delight-pizza.jpg',
-    isVeg: false,
-  },
-  {
-      id: 'nv2',
-      name: 'Non-Veg Loaded',
-      description: 'Peri-peri chicken, grilled chicken, chicken tikka.',
-      price: 16.99,
-      image: 'https://lapinozpizza.in/assets/w_300,h_300/img/menus/non-veg-loaded-pizza.jpg',
-      isVeg: false,
-  }
-];
 
 const MenuScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
   const { addToCart, totalItems, totalAmount } = useCart();
   const { selectedStore } = useStore();
-  const [activeTab, setActiveTab] = useState('Veg Pizza');
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<number | null>(null);
 
   // Simple scroll ref to jump to sections (visual only for MVP)
   const scrollViewRef = useRef<ScrollView>(null);
+  const sectionRefs = useRef<{ [key: number]: View }>({});
+
+  useEffect(() => {
+    if (selectedStore?.id) {
+        fetchCategories();
+    } else {
+        setCategories([]);
+    }
+  }, [selectedStore]);
+
+  const fetchCategories = async () => {
+      if (!selectedStore?.id) return;
+      
+      setLoading(true);
+      try {
+          const data = await categoryService.getCategories(selectedStore.id);
+          setCategories(data);
+          if (data.length > 0) {
+              setActiveTab(data[0].id);
+          }
+      } catch (error) {
+          console.error("Failed to fetch categories", error);
+          Alert.alert("Error", "Failed to load menu. Please try again.");
+      } finally {
+          setLoading(false);
+      }
+  };
+
+  const handleTabPress = (categoryId: number) => {
+      setActiveTab(categoryId);
+      // In a full implementation, this would scroll to the specific section
+      // For now, we just update the active tab
+  };
+
+  const getCategoryIcon = (categoryName: string) => {
+      const lowerName = categoryName.toLowerCase();
+      if (lowerName.includes('pizza')) return <Pizza size={18} />;
+      if (lowerName.includes('dessert')) return <IceCream size={18} />;
+      if (lowerName.includes('beverage') || lowerName.includes('drink')) return <Martini size={18} />;
+      if (lowerName.includes('bread')) return <Wheat size={18} />;
+      return <Utensils size={18} />;
+  };
 
   return (
     <PageLayout>
@@ -111,46 +112,70 @@ const MenuScreen = () => {
         </View>
       </View>
 
-      {/* Category Tabs */}
-      <View style={styles.tabContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabScroll}>
-            <TabItem icon={<Pizza size={18}/>} name="Veg Pizza" active={activeTab === 'Veg Pizza'} onPress={() => setActiveTab('Veg Pizza')} />
-            <TabItem icon={<Pizza size={18}/>} name="Non-Veg Pizza" active={activeTab === 'Non-Veg Pizza'} onPress={() => setActiveTab('Non-Veg Pizza')} />
-            <TabItem icon={<IceCream size={18}/>} name="Desserts" active={activeTab === 'Desserts'} onPress={() => setActiveTab('Desserts')} />
-            <TabItem icon={<Martini size={18}/>} name="Beverages" active={activeTab === 'Beverages'} onPress={() => setActiveTab('Beverages')} />
-            <TabItem icon={<Wheat size={18}/>} name="Garlic Breads" active={activeTab === 'Garlic Breads'} onPress={() => setActiveTab('Garlic Breads')} />
-        </ScrollView>
-      </View>
+      {loading ? (
+          <View style={[styles.container, styles.centered]}>
+              <ActivityIndicator size="large" color="#3c7d48" />
+          </View>
+      ) : !selectedStore ? (
+          <View style={[styles.container, styles.centered]}>
+              <Text style={styles.messageText}>Please select a store to view the menu</Text>
+              <TouchableOpacity 
+                  style={styles.selectStoreBtn}
+                  onPress={() => navigation.navigate('StoreLocation')}
+              >
+                  <Text style={styles.selectStoreBtnText}>Select Store</Text>
+              </TouchableOpacity>
+          </View>
+      ) : (
+          <>
+            {/* Category Tabs */}
+            <View style={styles.tabContainer}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabScroll}>
+                    {categories.map(category => (
+                        <TabItem 
+                            key={category.id}
+                            imageUrl={category.imageUrl}
+                            icon={getCategoryIcon(category.name)}
+                            name={category.name} 
+                            active={activeTab === category.id} 
+                            onPress={() => handleTabPress(category.id)} 
+                        />
+                    ))}
+                </ScrollView>
+            </View>
 
-      <ScrollView 
-        ref={scrollViewRef}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.content}
-      >
-        
-        {/* Veg Section */}
-        <View style={styles.listSection}>
-             <View style={styles.sectionHeader}>
-                 <Text style={styles.sectionTitle}>Veg Pizza</Text>
-                 <Text style={styles.itemCount}>{VEG_PIZZAS.length} ITEMS</Text>
-             </View>
-             {VEG_PIZZAS.map(item => (
-                 <MenuItem key={item.id} item={item} onTap={() => navigation.navigate('ProductDetail', { item })} />
-             ))}
-        </View>
+            <ScrollView 
+                ref={scrollViewRef}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.content}
+            >
+                {categories.map(category => (
+                    <View key={category.id} style={styles.listSection}>
+                        <View style={styles.sectionHeader}>
+                            <Text style={styles.sectionTitle}>{category.name}</Text>
+                            <Text style={styles.itemCount}>
+                                {category.products ? category.products.length : 0} ITEMS
+                            </Text>
+                        </View>
+                        {category.products && category.products.map(item => (
+                            <MenuItem 
+                                key={item.id} 
+                                item={item} 
+                                onTap={() => navigation.navigate('ProductDetail', { item })} 
+                            />
+                        ))}
+                    </View>
+                ))}
+                
+                {categories.length === 0 && !loading && (
+                    <View style={styles.centered}>
+                        <Text style={styles.messageText}>No menu items found for this store.</Text>
+                    </View>
+                )}
 
-        {/* Non-Veg Section */}
-        <View style={styles.listSection}>
-             <View style={styles.sectionHeader}>
-                 <Text style={styles.sectionTitle}>Non-Veg Pizza</Text>
-                 <Text style={styles.itemCount}>{NON_VEG_PIZZAS.length} ITEMS</Text>
-             </View>
-             {NON_VEG_PIZZAS.map(item => (
-                 <MenuItem key={item.id} item={item} onTap={() => navigation.navigate('ProductDetail', { item })} />
-             ))}
-        </View>
-
-      </ScrollView>
+            </ScrollView>
+          </>
+      )}
 
     </PageLayout>
   );
@@ -158,21 +183,27 @@ const MenuScreen = () => {
 
 // Helper Components
 
-const TabItem = ({ icon, name, active, onPress }: any) => (
-    <TouchableOpacity style={[styles.tabItem, active && styles.tabItemActive]} onPress={onPress}>
-        <View style={{ marginBottom: 4 }}>
-           {React.cloneElement(icon, { color: active ? '#3c7d48' : '#6b7280' })}
+const TabItem = ({ icon, imageUrl, name, active, onPress }: any) => (
+    <TouchableOpacity style={styles.tabItem} onPress={onPress}>
+        <View style={[styles.tabIconContainer, active && styles.tabIconActive]}>
+            {imageUrl ? (
+                <Image source={{ uri: imageUrl }} style={styles.tabImage} />
+            ) : (
+                <View style={styles.fallbackIcon}>
+                   {React.cloneElement(icon, { color: active ? '#3c7d48' : '#6b7280', size: 24 })}
+                </View>
+            )}
         </View>
-        <Text style={[styles.tabText, active && styles.tabTextActive]}>{name}</Text>
+        <Text style={[styles.tabText, active && styles.tabTextActive]} numberOfLines={1}>{name}</Text>
     </TouchableOpacity>
 );
 
-const MenuItem = ({ item, onTap }: any) => {
+const MenuItem = ({ item, onTap }: { item: Product, onTap: () => void }) => {
     const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
     const { cartItems, addToCart, removeFromCart } = useCart();
     
     // Check if this specific item ID is in the cart
-    const cartItem = cartItems.find(i => i.id === item.id);
+    const cartItem = cartItems.find(i => i.id === item.id.toString());
     const quantity = cartItem ? cartItem.quantity : 0;
 
     const handleAdd = () => {
@@ -181,12 +212,12 @@ const MenuItem = ({ item, onTap }: any) => {
     };
 
     const handleRemove = () => {
-        removeFromCart(item.id);
+        removeFromCart(item.id.toString());
     };
 
     return (
         <TouchableOpacity style={styles.menuItem} onPress={onTap} activeOpacity={0.9}>
-             <Image source={{ uri: item.image }} style={styles.itemImage} />
+             <Image source={{ uri: item.imageUrl || 'https://via.placeholder.com/150' }} style={styles.itemImage} />
              <View style={styles.itemContent}>
                  <View style={styles.vegIndicatorRow}>
                      <Image 
@@ -198,9 +229,9 @@ const MenuItem = ({ item, onTap }: any) => {
                      />
                      <Text style={styles.itemName}>{item.name}</Text>
                  </View>
-                 <Text style={styles.itemDesc}>{item.description}</Text>
+                 <Text style={styles.itemDesc} numberOfLines={2}>{item.description}</Text>
                  <View style={styles.itemFooter}>
-                     <Text style={styles.itemPrice}>${item.price}</Text>
+                     <Text style={styles.itemPrice}>${item.basePrice}</Text>
                      
                      {quantity > 0 ? (
                         <View style={styles.qtyContainer}>
@@ -227,6 +258,28 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f9f9f9',
+  },
+  centered: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 20,
+  },
+  messageText: {
+      fontSize: 16,
+      color: '#6b7280',
+      textAlign: 'center',
+      marginBottom: 16,
+  },
+  selectStoreBtn: {
+      backgroundColor: '#3c7d48',
+      paddingHorizontal: 20,
+      paddingVertical: 10,
+      borderRadius: 8,
+  },
+  selectStoreBtnText: {
+      color: '#fff',
+      fontWeight: 'bold',
   },
   header: {
     flexDirection: 'row',
@@ -272,25 +325,46 @@ const styles = StyleSheet.create({
   },
   tabContainer: {
       backgroundColor: '#fff',
-      paddingVertical: 12,
+      paddingVertical: 16,
   },
   tabScroll: {
       paddingHorizontal: 16,
-      gap: 24,
+      gap: 16,
   },
   tabItem: {
       alignItems: 'center',
-      paddingBottom: 8,
-      borderBottomWidth: 2,
-      borderBottomColor: 'transparent',
+      gap: 8,
+      width: 70,
   },
-  tabItemActive: {
-      borderBottomColor: '#3c7d48',
+  tabIconContainer: {
+      width: 60,
+      height: 60,
+      borderRadius: 30,
+      backgroundColor: '#f3f4f6',
+      justifyContent: 'center',
+      alignItems: 'center',
+      overflow: 'hidden',
+      borderWidth: 2,
+      borderColor: 'transparent',
+  },
+  tabIconActive: {
+      borderColor: '#3c7d48',
+      backgroundColor: 'rgba(60, 125, 72, 0.1)',
+  },
+  tabImage: {
+      width: '100%',
+      height: '100%',
+      resizeMode: 'cover',
+  },
+  fallbackIcon: {
+      justifyContent: 'center',
+      alignItems: 'center',
   },
   tabText: {
-      fontSize: 10,
+      fontSize: 11,
       fontWeight: '600',
       color: '#6b7280',
+      textAlign: 'center',
   },
   tabTextActive: {
       color: '#3c7d48',
@@ -298,6 +372,7 @@ const styles = StyleSheet.create({
   },
   content: {
       padding: 16,
+      paddingBottom: 100, // Add bottom padding for better scrolling
   },
   listSection: {
       marginBottom: 24,
