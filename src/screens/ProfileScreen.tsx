@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   StatusBar,
   Image,
+  Linking,
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -137,6 +138,10 @@ const ProfileScreen = () => {
                                 navigation.navigate('ManageAddress');
                             } else if (item.id === 'orders') {
                                 navigation.navigate('MyOrders');
+                            } else if (item.id === 'privacy') {
+                                Linking.openURL('https://www.lapinozusa.com/privacy');
+                            } else if (item.id === 'terms') {
+                                Linking.openURL('https://www.lapinozusa.com/terms');
                             }
                             // Add other navigation cases here if needed
                         }}

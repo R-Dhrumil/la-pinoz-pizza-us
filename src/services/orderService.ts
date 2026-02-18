@@ -9,6 +9,9 @@ export interface OrderItem {
     unitPrice: number;
     totalPrice: number;
     modifiers?: string;
+    specialInstructions?: string;
+    imageUrl?: string;
+    isVeg: boolean;
 }
 
 export interface Address {

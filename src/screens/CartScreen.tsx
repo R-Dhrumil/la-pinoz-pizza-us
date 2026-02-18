@@ -12,12 +12,14 @@ import { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { ArrowLeft, Trash2, Plus, Minus, MoveRight, ChevronDown, ChevronUp } from 'lucide-react-native';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import PageLayout from '../components/PageLayout';
 
 const CartScreen = () => {
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   const navigation = useNavigation<any>();
   const { cartItems, totalAmount, addToCart, removeFromCart, deleteItem } = useCart();
+  const { isAuthenticated } = useAuth();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
   const toggleToppings = (id: string) => {
@@ -183,10 +185,10 @@ const CartScreen = () => {
                <Text style={styles.payLabel}>PAYABLE</Text>
                <Text style={styles.payAmount}>${finalTotal.toFixed(2)}</Text>
            </View>
-           <TouchableOpacity style={styles.checkoutBtn} onPress={() => { /* Checkout Logic */ }}>
-               <Text style={styles.checkoutText}>PLACE ORDER</Text>
-               <MoveRight size={18} color="#fff" />
-           </TouchableOpacity>
+            <TouchableOpacity style={styles.checkoutBtn} onPress={() => navigation.navigate('Checkout')}>
+                <Text style={styles.checkoutText}>PLACE ORDER</Text>
+                <MoveRight size={18} color="#fff" />
+            </TouchableOpacity>
       </View>
 
     </PageLayout>

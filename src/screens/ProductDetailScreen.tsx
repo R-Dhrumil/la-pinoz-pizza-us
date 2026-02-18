@@ -9,12 +9,15 @@ import {
   SafeAreaView,
   StatusBar,
   Dimensions,
+  Linking,
+  Alert,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../navigation/AuthNavigator';
 import { X, Star, Minus, Plus, Check } from 'lucide-react-native';
 import { useCart } from '../context/CartContext';
+import { useStore } from '../context/StoreContext';
 import { Product, ProductVariant, ModifierGroup, ModifierOption } from '../services/categoryService';
 import PageLayout from '../components/PageLayout';
 
@@ -31,6 +34,7 @@ const ProductDetailScreen = () => {
   const route = useRoute<RouteProp<ParamList, 'ProductDetail'>>();
   const { item } = route.params || {}; 
   const { addToCart } = useCart();
+  const { selectedStore } = useStore();
 
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
   // Map of GroupID -> Array of selected OptionIDs
@@ -163,6 +167,8 @@ const ProductDetailScreen = () => {
         isVeg: item.isVeg,
         description: item.description,
         variant: selectedVariant,
+        size: selectedVariant?.size,
+        crust: selectedVariant?.crust,
         toppings: allSelectedModifiers, // Using generic 'toppings' field for all modifiers
     };
     
@@ -311,19 +317,33 @@ const ProductDetailScreen = () => {
         </View>
 
         <View style={styles.actionButtons}>
-            <TouchableOpacity 
-                style={[styles.btn, styles.btnSecondary]} 
-                onPress={() => handleAddToCart(false)}
-            >
-              <Text style={styles.btnTextSecondary}>ADD TO CART</Text>
-            </TouchableOpacity>
+            {(selectedStore?.state === 'NJ' && selectedStore?.city === 'Iselin') || item.externalLink ? (
+                 <TouchableOpacity 
+                    style={[styles.btn, styles.btnPrimary, { backgroundColor: '#ea580c' }]} 
+                    onPress={() => {
+                        const link = item.externalLink || 'https://lapinozpizza.us/order-online/';
+                        Linking.openURL(link).catch(err => Alert.alert("Error", "Could not open link"));
+                    }}
+                >
+                  <Text style={styles.btnTextPrimary}>ORDER ON WEB</Text>
+                </TouchableOpacity>
+            ) : (
+                <>
+                    <TouchableOpacity 
+                        style={[styles.btn, styles.btnSecondary]} 
+                        onPress={() => handleAddToCart(false)}
+                    >
+                    <Text style={styles.btnTextSecondary}>ADD TO CART</Text>
+                    </TouchableOpacity>
 
-            <TouchableOpacity 
-                style={[styles.btn, styles.btnPrimary]} 
-                onPress={() => handleAddToCart(true)}
-            >
-              <Text style={styles.btnTextPrimary}>BUY NOW</Text>
-            </TouchableOpacity>
+                    <TouchableOpacity 
+                        style={[styles.btn, styles.btnPrimary]} 
+                        onPress={() => handleAddToCart(true)}
+                    >
+                    <Text style={styles.btnTextPrimary}>BUY NOW</Text>
+                    </TouchableOpacity>
+                </>
+            )}
         </View>
       </View>
     </PageLayout>

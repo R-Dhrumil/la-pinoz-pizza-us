@@ -2,7 +2,7 @@ import apiClient from './apiClient';
 import { Store } from '../types';
 
 const DUMMY_STORES: Store[] = [
-  {
+   {
     id: 101,
     storeId: 'LP-AKSHAR',
     name: "La Pino'z Pizza - Akshar Chowk",
@@ -49,9 +49,26 @@ const DUMMY_STORES: Store[] = [
     operatingHours: [],
     latitude: 22.2740,
     longitude: 73.1815
+  },
+  {
+    id: 104,
+    storeId: 'LP-ISELIN',
+    name: "La Pino'z Pizza - Iselin",
+    city: "Iselin",
+    state: "NJ",
+    // @ts-ignore
+    address: "123 Green Street, Iselin, NJ 08830",
+    zipCode: "08830",
+    phone: "+1-732-555-0199",
+    image: "https://b.zmtcdn.com/data/pictures/chains/1/18602631/1e9386343e9366db5e1176540d5e9f4a.jpg",
+    status: "Open",
+    operatingHours: [],
+    latitude: 40.5754,
+    longitude: -74.3213
   }
 ];
 
+ 
 export const storeService = {
   getAllStores: async (): Promise<Store[]> => {
     try {

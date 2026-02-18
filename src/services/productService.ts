@@ -9,6 +9,7 @@ export interface Product {
     categories: string[];
     isVeg: boolean;
     rating?: number;
+    externalLink?: string;
 }
 
 export const productService = {

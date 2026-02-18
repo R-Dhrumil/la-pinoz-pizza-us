@@ -10,6 +10,8 @@ export interface CartItem {
   description: string;
   variant?: any;
   toppings?: any[];
+  size?: string;
+  crust?: string;
 }
 
 interface CartContextType {

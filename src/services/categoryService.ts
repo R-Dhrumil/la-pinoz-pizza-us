@@ -46,6 +46,7 @@ export interface Product {
     subcategoryId?: number;
     variants?: ProductVariant[];
     modifierGroups?: ModifierGroup[];
+    externalLink?: string
 }
 
 export interface Subcategory {

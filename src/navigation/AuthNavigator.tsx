@@ -13,6 +13,7 @@ import PracticeScreen from '../PracticeScreen';
 
 import AddNewAddressScreen from '../screens/AddNewAddressScreen';
 import StoreLocationScreen from '../screens/StoreLocationScreen';
+import CheckoutScreen from '../screens/CheckoutScreen';
 
 
 export type AuthStackParamList = {
@@ -25,6 +26,7 @@ export type AuthStackParamList = {
   ManageAddress: undefined;
   AddNewAddress: undefined;
   StoreLocation: undefined;
+  Checkout: undefined;
   Practice: undefined;
 };
 
@@ -61,6 +63,11 @@ const AuthNavigator = () => {
         name="Cart" 
         component={CartScreen} 
         options={{ animation: 'slide_from_bottom' }} 
+      />
+      <Stack.Screen 
+        name="Checkout" 
+        component={CheckoutScreen} 
+        options={{ animation: 'slide_from_right' }} 
       />
       <Stack.Screen 
         name="MyOrders" 

@@ -13,7 +13,8 @@ import {
   Animated,
   ActivityIndicator,
   Alert,
-  RefreshControl
+  RefreshControl,
+  Linking,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -373,12 +374,21 @@ const TabItem = ({ icon, imageUrl, name, active, onPress }: any) => (
 const MenuItem = ({ item, onTap }: { item: Product, onTap: () => void }) => {
     const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
     const { cartItems, addToCart, removeFromCart } = useCart();
+    const { selectedStore } = useStore();
     
     // Check if this specific item ID is in the cart
     const cartItem = cartItems.find(i => i.id === item.id.toString());
     const quantity = cartItem ? cartItem.quantity : 0;
+    
+    // External link check
+    const isExternal = (selectedStore?.state === 'NJ' && selectedStore?.city === 'Iselin') || item.externalLink;
 
     const handleAdd = () => {
+        if (isExternal) {
+             const link = item.externalLink || 'https://lapinozpizza.us/order-online/';
+             Linking.openURL(link).catch(err => Alert.alert("Error", "Could not open link"));
+             return;
+        }
         // Instead of adding directly, navigate to details for customization
         navigation.navigate('ProductDetail', { item });
     };
@@ -405,7 +415,7 @@ const MenuItem = ({ item, onTap }: { item: Product, onTap: () => void }) => {
                  <View style={styles.itemFooter}>
                      <Text style={styles.itemPrice}>${item.basePrice}</Text>
                      
-                     {quantity > 0 ? (
+                     {quantity > 0 && !isExternal ? (
                         <View style={styles.qtyContainer}>
                             <TouchableOpacity style={styles.qtyBtnSmall} onPress={handleRemove}>
                                 <Text style={styles.qtyBtnText}>-</Text>
@@ -416,8 +426,11 @@ const MenuItem = ({ item, onTap }: { item: Product, onTap: () => void }) => {
                             </TouchableOpacity>
                         </View>
                      ) : (
-                        <TouchableOpacity style={styles.addButton} onPress={handleAdd}>
-                            <Text style={styles.addButtonText}>ADD +</Text>
+                        <TouchableOpacity 
+                            style={[styles.addButton, isExternal && { backgroundColor: '#ea580c' }]} 
+                            onPress={handleAdd}
+                        >
+                            <Text style={styles.addButtonText}>{isExternal ? 'ORDER' : 'ADD +'}</Text>
                         </TouchableOpacity>
                      )}
                  </View>
