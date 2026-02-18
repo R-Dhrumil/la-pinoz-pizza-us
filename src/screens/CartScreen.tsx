@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { ArrowLeft, Trash2, Plus, Minus, MoveRight, ChevronDown, ChevronUp } from 'lucide-react-native';
+import { ArrowLeft, Trash2, Plus, Minus, MoveRight, ChevronDown, ChevronUp, Pencil } from 'lucide-react-native';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import PageLayout from '../components/PageLayout';
@@ -91,8 +91,8 @@ const CartScreen = () => {
                                   {item.variant?.size ? `${item.variant.size} Size` : 'Regular'} 
                               </Text>
 
-                              {item.toppings && item.toppings.length > 0 && (
-                                <View>
+                              <View style={styles.controlsRow}>
+                                {item.toppings && item.toppings.length > 0 && (
                                     <TouchableOpacity 
                                         style={styles.toppingsToggle} 
                                         onPress={() => toggleToppings(item.id)}
@@ -106,23 +106,43 @@ const CartScreen = () => {
                                             <ChevronDown size={12} color="#3c7d48" />
                                         )}
                                     </TouchableOpacity>
+                                )}
 
-                                    {expandedItems.includes(item.id) && (
-                                        <View style={styles.toppingsList}>
-                                            {item.toppings.map((topping: any, index: number) => (
-                                                <Text key={index} style={styles.toppingItemText}>
-                                                    • {topping.name}
-                                                </Text>
-                                            ))}
-                                        </View>
-                                    )}
-                                </View>
+                                {/* Edit Button */}
+                                {item.originalProduct && (
+                                    <TouchableOpacity 
+                                        style={styles.editButton}
+                                        onPress={() => {
+                                            navigation.navigate('ProductDetail', {
+                                                item: item.originalProduct,
+                                                editMode: true,
+                                                existingCartId: item.id,
+                                                prefill: {
+                                                    variant: item.variant,
+                                                    toppings: item.toppings,
+                                                    quantity: item.quantity
+                                                }
+                                            });
+                                        }}
+                                    >
+                                        <Pencil size={14} color="#3c7d48" />
+                                        <Text style={styles.editText}>Edit</Text>
+                                    </TouchableOpacity>
+                                )}
+                              </View>
+
+                              {item.toppings && item.toppings.length > 0 && expandedItems.includes(item.id) && (
+                                  <View style={styles.toppingsList}>
+                                      {item.toppings.map((topping: any, index: number) => (
+                                          <Text key={index} style={styles.toppingItemText}>
+                                              • {topping.name}
+                                          </Text>
+                                      ))}
+                                  </View>
                               )}
                           </View>
                           
                           <View style={styles.itemFooter}>
-                              <Text style={styles.itemPrice}>${(item.price * item.quantity).toFixed(2)}</Text>
-                              
                               <View style={styles.qtyControl}>
                                   <TouchableOpacity 
                                     style={styles.qtyBtn}
@@ -301,9 +321,15 @@ const styles = StyleSheet.create({
   },
   itemFooter: {
       flexDirection: 'row',
-      justifyContent: 'space-between',
+      justifyContent: 'flex-end', // Align to right
       alignItems: 'center',
       marginTop: 8,
+  },
+  controlsRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      marginTop: 4,
   },
   itemPrice: {
       fontSize: 14,
@@ -440,7 +466,6 @@ const styles = StyleSheet.create({
   toppingsToggle: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 4,
     gap: 4,
     alignSelf: 'flex-start',
     backgroundColor: '#f0fdf4',
@@ -462,6 +487,21 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#6b7280',
     lineHeight: 16,
+  },
+  editButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      alignSelf: 'flex-start',
+      paddingVertical: 4,
+      paddingHorizontal: 8,
+      backgroundColor: '#f0fdf4',
+      borderRadius: 6,
+  },
+  editText: {
+      fontSize: 12,
+      color: '#3c7d48',
+      fontWeight: '600',
   },
 });
 

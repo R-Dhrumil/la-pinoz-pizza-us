@@ -14,13 +14,23 @@ import PracticeScreen from '../PracticeScreen';
 import AddNewAddressScreen from '../screens/AddNewAddressScreen';
 import StoreLocationScreen from '../screens/StoreLocationScreen';
 import CheckoutScreen from '../screens/CheckoutScreen';
+import { Product, ProductVariant } from '../services/categoryService';
 
 
 export type AuthStackParamList = {
   Login: undefined;
   Signup: undefined;
   MainTabs: undefined; // Replaces 'Home'
-  ProductDetail: { item: any };
+  ProductDetail: { 
+    item: Product;
+    editMode?: boolean;
+    existingCartId?: string;
+    prefill?: {
+      variant?: ProductVariant;
+      toppings?: { modifierGroupId: number; modifierOptionId: number }[];
+      quantity: number;
+    };
+  };
   Cart: undefined;
   MyOrders: undefined;
   ManageAddress: undefined;

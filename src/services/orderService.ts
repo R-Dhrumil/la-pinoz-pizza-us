@@ -3,14 +3,14 @@ import apiClient from './apiClient';
 export interface OrderItem {
     productId: number;
     productName: string;
-    size?: string;
-    crust?: string;
+    size?: string | null;
+    crust?: string | null;
     quantity: number;
     unitPrice: number;
     totalPrice: number;
-    modifiers?: string;
-    specialInstructions?: string;
-    imageUrl?: string;
+    modifiers?: string | null;
+    specialInstructions?: string | null;
+    imageUrl?: string | null;
     isVeg: boolean;
 }
 
@@ -19,11 +19,11 @@ export interface Address {
     fullName: string;
     phoneNumber: string;
     addressLine1: string;
-    addressLine2?: string;
+    addressLine2?: string | null;
     city: string;
     state: string;
     zipCode: string;
-    landmark?: string;
+    landmark?: string | null;
     isDefault: boolean;
 }
 
@@ -33,20 +33,20 @@ export interface Order {
     userId: string;
     address: Address;
     storeId: number;
-    storeName?: string;
+    storeName?: string | null;
     subtotal: number;
     tax: number;
     deliveryFee: number;
     discount: number;
     total: number;
-    paymentMethod: string;
-    paymentStatus: string; // e.g., "Pending", "Paid", "Failed"
-    orderStatus: string;   // e.g., "Placed", "Confirmed", "Preparing", "OutForDelivery", "Delivered", "Cancelled"
-    specialInstructions?: string;
-    promoCode?: string;
+    paymentMethod: string | null;
+    paymentStatus: string | null; // e.g., "Pending", "Paid", "Failed"
+    orderStatus: string | null;   // e.g., "Placed", "Confirmed", "Preparing", "OutForDelivery", "Delivered", "Cancelled"
+    specialInstructions?: string | null;
+    promoCode?: string | null;
     createdAt: string;
-    estimatedDeliveryTime?: string;
-    deliveredAt?: string;
+    estimatedDeliveryTime?: string | null;
+    deliveredAt?: string | null;
     items: OrderItem[];
 }
 
@@ -59,8 +59,8 @@ export interface CreateOrderDto {
     discount: number;
     total: number;
     paymentMethod: string;
-    specialInstructions?: string;
-    promoCode?: string;
+    specialInstructions?: string | null;
+    promoCode?: string | null;
     items: OrderItem[];
 }
 

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -20,17 +20,18 @@ import { useAddress, Address } from '../context/AddressContext';
 
 const ManageAddressScreen = () => {
     const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
-    const { addresses, deleteAddress } = useAddress();
+    const { addresses, deleteAddress, loading, refreshAddresses } = useAddress();
     const [refreshing, setRefreshing] = useState(false);
 
-    const onRefresh = useCallback(() => {
+    useEffect(() => {
+        refreshAddresses();
+    }, [refreshAddresses]);
+
+    const onRefresh = useCallback(async () => {
         setRefreshing(true);
-        // Simulate a network request
-        setTimeout(() => {
-            // In a real app, you would fetch new data here
-            setRefreshing(false);
-        }, 2000);
-    }, []);
+        await refreshAddresses();
+        setRefreshing(false);
+    }, [refreshAddresses]);
     
 
   return (
@@ -53,7 +54,7 @@ const ManageAddressScreen = () => {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3c7d48']} />
+            <RefreshControl refreshing={refreshing || loading} onRefresh={onRefresh} colors={['#3c7d48']} />
           }
         >
           {addresses.map((address) => (
@@ -63,16 +64,26 @@ const ManageAddressScreen = () => {
                   <MapPin size={24} color="#3c7d48" />
                 </View>
                 <View style={styles.addressDetails}>
-                  <Text style={styles.addressType}>{address.type}</Text>
-                  <Text style={styles.addressText}>{`${address.houseNo}, ${address.street}, ${address.landmark}, ${address.city} - ${address.pincode}`}</Text>
+                  <Text style={styles.addressType}>{address.type || 'Home'}</Text>
+                   <Text style={styles.addressText} numberOfLines={2}>
+                        {address.fullName}, {address.phoneNumber}
+                        {'\n'}
+                        {address.addressLine1}, {address.addressLine2 ? address.addressLine2 + ', ' : ''}
+                        {address.landmark ? address.landmark + ', ' : ''}
+                        {address.city}, {address.state} - {address.zipCode}
+                    </Text>
                 </View>
-                <TouchableOpacity style={styles.deleteButton} onPress={() => deleteAddress(address.id)}>
+                <TouchableOpacity style={styles.deleteButton} onPress={() => {
+                  if (address.id !== undefined) {
+                    deleteAddress(address.id);
+                  }
+                }}>
                   <Trash2 size={20} color="#ef4444" />
                 </TouchableOpacity>
               </View>
               
               {!address.isDeliverable && (
-                <TouchableOpacity onPress={() => navigation.navigate('AddNewAddress')}>
+                <TouchableOpacity >
                 <View style={styles.warningContainer}>
                   <AlertTriangle size={16} color="#f97316" style={styles.warningIcon} />
                   <Text style={styles.warningText}>Not delivering to this address</Text>

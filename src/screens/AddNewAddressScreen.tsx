@@ -25,11 +25,15 @@ const AddNewAddressScreen = () => {
     const { addAddress } = useAddress();
     const webViewRef = useRef<WebView>(null);
 
+
     // Form State
+    const [fullName, setFullName] = useState('');
+    const [phoneNumber, setPhoneNumber] = useState('');
     const [houseNo, setHouseNo] = useState('');
     const [street, setStreet] = useState('');
     const [landmark, setLandmark] = useState('');
     const [city, setCity] = useState('');
+    const [state, setState] = useState('');
     const [pincode, setPincode] = useState('');
     const [addressType, setAddressType] = useState<'Home' | 'Work' | 'Other'>('Home');
     
@@ -87,24 +91,31 @@ const AddNewAddressScreen = () => {
         );
     };
 
-    const handleSaveAddress = () => {
-        if (!houseNo || !street || !city || !pincode) {
+    const handleSaveAddress = async () => {
+        if (!fullName || !phoneNumber || !houseNo || !street || !city || !state || !pincode) {
             Alert.alert("Error", "Please fill in all required fields.");
             return;
         }
 
-        addAddress({
-            type: addressType,
-            houseNo,
-            street,
-            landmark,
-            city,
-            pincode,
-            isDeliverable: true, // Assuming deliverable for now
-            coordinates: currentLocation || undefined
-        });
-
-        navigation.goBack();
+        try {
+            await addAddress({
+                fullName,
+                phoneNumber,
+                addressLine1: houseNo,
+                addressLine2: street,
+                landmark: landmark || null,
+                city,
+                state,
+                zipCode: pincode,
+                isDefault: false,
+                type: addressType,
+                coordinates: currentLocation || undefined,
+                isDeliverable: true
+            });
+            navigation.goBack();
+        } catch (error) {
+            Alert.alert("Error", "Failed to save address. Please try again.");
+        }
     };
 
     // HTML content for WebView (Leaflet Map)
@@ -213,6 +224,27 @@ const AddNewAddressScreen = () => {
                 style={styles.formContainer}
             >
                 <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+                    <Text style={styles.sectionTitle}>Contact Details</Text>
+                    <View style={styles.inputGroup}>
+                        <Text style={styles.label}>Full Name *</Text>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="John Doe"
+                            value={fullName}
+                            onChangeText={setFullName}
+                        />
+                    </View>
+                    <View style={styles.inputGroup}>
+                        <Text style={styles.label}>Phone Number *</Text>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="1234567890"
+                            keyboardType="phone-pad"
+                            value={phoneNumber}
+                            onChangeText={setPhoneNumber}
+                        />
+                    </View>
+
                     <Text style={styles.sectionTitle}>Address Details</Text>
                     
                     <View style={styles.inputGroup}>
@@ -254,18 +286,28 @@ const AddNewAddressScreen = () => {
                                 value={city}
                                 onChangeText={setCity}
                             />
+
                         </View>
                         <View style={[styles.inputGroup, { flex: 1, marginLeft: 8 }]}>
-                            <Text style={styles.label}>Pincode *</Text>
+                            <Text style={styles.label}>State *</Text>
                             <TextInput
                                 style={styles.input}
-                                placeholder="390001"
-                                keyboardType="number-pad"
-                                value={pincode}
-                                onChangeText={setPincode}
-                                maxLength={6}
+                                placeholder="Gujarat"
+                                value={state}
+                                onChangeText={setState}
                             />
                         </View>
+                    </View>
+                    <View style={styles.inputGroup}>
+                        <Text style={styles.label}>Pincode *</Text>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="390001"
+                            keyboardType="number-pad"
+                            value={pincode}
+                            onChangeText={setPincode}
+                            maxLength={6}
+                        />
                     </View>
 
                     <Text style={styles.label}>Save As</Text>

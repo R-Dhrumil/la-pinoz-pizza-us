@@ -23,17 +23,13 @@ import PageLayout from '../components/PageLayout';
 
 const { width } = Dimensions.get('window');
 
-type ParamList = {
-  ProductDetail: {
-    item: Product;
-  };
-};
+
 
 const ProductDetailScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
-  const route = useRoute<RouteProp<ParamList, 'ProductDetail'>>();
-  const { item } = route.params || {}; 
-  const { addToCart } = useCart();
+  const route = useRoute<RouteProp<AuthStackParamList, 'ProductDetail'>>();
+  const { item, editMode, existingCartId, prefill } = route.params || {}; 
+  const { addToCart, deleteItem, updateCartItem } = useCart();
   const { selectedStore } = useStore();
 
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
@@ -43,27 +39,47 @@ const ProductDetailScreen = () => {
 
   useEffect(() => {
     if (item) {
-        // Initialize Variant: Default to first one if available
-        if (item.variants && item.variants.length > 0) {
-            setSelectedVariant(item.variants[0]);
+        if (editMode && prefill) {
+             // Prefill mode
+             setSelectedVariant(prefill.variant || null);
+             
+             // Reconstruct modifiers map
+             const modifiersMap: Record<number, number[]> = {};
+             if (prefill.toppings) {
+                 prefill.toppings.forEach((top: any) => {
+                     if (!modifiersMap[top.modifierGroupId]) {
+                         modifiersMap[top.modifierGroupId] = [];
+                     }
+                     modifiersMap[top.modifierGroupId].push(top.id);
+                 });
+             }
+             setSelectedModifiers(modifiersMap);
+             setQuantity(prefill.quantity);
+
+        } else {
+             // Default add mode
+            // Initialize Variant: Default to first one if available
+            if (item.variants && item.variants.length > 0) {
+                setSelectedVariant(item.variants[0]);
+            }
+            
+            // Initialize Modifiers: Select defaults
+            const initialModifiers: Record<number, number[]> = {};
+            if (item.modifierGroups) {
+                item.modifierGroups.forEach(group => {
+                    const defaults = group.modifierOptions
+                        .filter(opt => opt.isDefault)
+                        .map(opt => opt.id);
+                    
+                    if (defaults.length > 0) {
+                        initialModifiers[group.id] = defaults;
+                    }
+                });
+            }
+            setSelectedModifiers(initialModifiers);
         }
-        
-        // Initialize Modifiers: Select defaults
-        const initialModifiers: Record<number, number[]> = {};
-        if (item.modifierGroups) {
-            item.modifierGroups.forEach(group => {
-                const defaults = group.modifierOptions
-                    .filter(opt => opt.isDefault)
-                    .map(opt => opt.id);
-                
-                if (defaults.length > 0) {
-                    initialModifiers[group.id] = defaults;
-                }
-            });
-        }
-        setSelectedModifiers(initialModifiers);
     }
-  }, [item]);
+  }, [item, editMode, prefill]);
 
   if (!item) return null;
 
@@ -170,11 +186,17 @@ const ProductDetailScreen = () => {
         size: selectedVariant?.size,
         crust: selectedVariant?.crust,
         toppings: allSelectedModifiers, // Using generic 'toppings' field for all modifiers
+        originalProduct: item, // Save original product for future editing
     };
     
-    // Add quantity times
-    for(let i=0; i<quantity; i++) {
-        addToCart(customItem);
+    // If edit mode, use updateCartItem
+    if (editMode && existingCartId) {
+        updateCartItem(existingCartId, { ...customItem, quantity });
+    } else {
+        // Add quantity times
+        for(let i=0; i<quantity; i++) {
+            addToCart(customItem);
+        }
     }
     
     if (redirect) {
@@ -340,7 +362,7 @@ const ProductDetailScreen = () => {
                         style={[styles.btn, styles.btnPrimary]} 
                         onPress={() => handleAddToCart(true)}
                     >
-                    <Text style={styles.btnTextPrimary}>BUY NOW</Text>
+                    <Text style={styles.btnTextPrimary}>{editMode ? 'UPDATE CART' : 'BUY NOW'}</Text>
                     </TouchableOpacity>
                 </>
             )}

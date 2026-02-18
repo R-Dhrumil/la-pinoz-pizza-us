@@ -1,74 +1,76 @@
-import React, { createContext, useState, useContext, ReactNode } from 'react';
-
-export interface Address {
-  id: string;
-  type: 'Home' | 'Work' | 'Other';
-  houseNo: string;
-  street: string;
-  landmark: string;
-  city: string;
-  pincode: string;
-  isDeliverable: boolean;
-  coordinates?: {
-    lat: number;
-    lng: number;
-  };
-}
+import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback } from 'react';
+import { addressService, Address } from '../services/addressService';
+import { useAuth } from './AuthContext';
 
 interface AddressContextType {
   addresses: Address[];
-  addAddress: (address: Omit<Address, 'id'>) => void;
-  deleteAddress: (id: string) => void;
-  updateAddress: (id: string, address: Partial<Address>) => void;
+  loading: boolean;
+  refreshAddresses: () => Promise<void>;
+  addAddress: (address: Omit<Address, 'id'>) => Promise<void>;
+  deleteAddress: (id: number) => Promise<void>;
 }
 
 const AddressContext = createContext<AddressContextType | undefined>(undefined);
 
 export const AddressProvider = ({ children }: { children: ReactNode }) => {
-  const [addresses, setAddresses] = useState<Address[]>([
-    {
-        id: '1',
-        type: 'Home',
-        houseNo: '208',
-        street: 'Hotel RK in tarsali , Vijay Nagar, Tarsali',
-        landmark: 'Near Hotel RK',
-        city: 'Vadodara',
-        pincode: '390009',
-        isDeliverable: true,
-        coordinates: { lat: 22.2587, lng: 73.1812 }
-    }, {
-        id: '2',
-        type: 'Work',
-        houseNo: '101',
-        street: 'Tech Park, Sector 2',
-        landmark: 'Opposite Mall',
-        city: 'Vadodara',
-        pincode: '390011',
-        isDeliverable: false,
-        coordinates: { lat: 22.3107, lng: 73.1812 }
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [loading, setLoading] = useState(false);
+  const { user } = useAuth();
+
+  const fetchAddresses = useCallback(async () => {
+      if (!user) {
+          setAddresses([]);
+          return;
+      }
+      setLoading(true);
+      try {
+          const data = await addressService.getAddresses();
+          // Map backend data to UI expectations if needed
+          const mappedAddresses = data.map(addr => ({
+              ...addr,
+              type: addr.type || 'Home', // Default if missing
+              isDeliverable: true, // Default
+          }));
+          setAddresses(mappedAddresses);
+      } catch (error) {
+          console.error("Failed to fetch addresses", error);
+      } finally {
+          setLoading(false);
+      }
+  }, [user]);
+
+  useEffect(() => {
+      fetchAddresses();
+  }, [fetchAddresses]);
+
+  const addAddress = async (address: Omit<Address, 'id'>) => {
+    setLoading(true);
+    try {
+        await addressService.addAddress(address);
+        await fetchAddresses(); // Refresh list after add
+    } catch (error) {
+        console.error("Failed to add address", error);
+        throw error;
+    } finally {
+        setLoading(false);
     }
-  ]);
-
-  const addAddress = (address: Omit<Address, 'id'>) => {
-    const newAddress = {
-      ...address,
-      id: Math.random().toString(36).substr(2, 9),
-    };
-    setAddresses((prev) => [...prev, newAddress]);
   };
 
-  const deleteAddress = (id: string) => {
-    setAddresses((prev) => prev.filter((addr) => addr.id !== id));
-  };
-
-  const updateAddress = (id: string, updatedFields: Partial<Address>) => {
-    setAddresses((prev) =>
-      prev.map((addr) => (addr.id === id ? { ...addr, ...updatedFields } : addr))
-    );
+  const deleteAddress = async (id: number) => {
+    setLoading(true);
+    try {
+        await addressService.deleteAddress(id);
+        setAddresses(prev => prev.filter(a => a.id !== id));
+    } catch (error) {
+         console.error("Failed to delete address", error);
+         throw error;
+    } finally {
+        setLoading(false);
+    }
   };
 
   return (
-    <AddressContext.Provider value={{ addresses, addAddress, deleteAddress, updateAddress }}>
+    <AddressContext.Provider value={{ addresses, loading, refreshAddresses: fetchAddresses, addAddress, deleteAddress }}>
       {children}
     </AddressContext.Provider>
   );
@@ -81,3 +83,6 @@ export const useAddress = () => {
   }
   return context;
 };
+
+// Re-export Address type for convenience
+export type { Address };

@@ -9,7 +9,8 @@ import {
   Alert,
   ActivityIndicator,
   Modal,
-  FlatList
+  FlatList,
+  TextInput
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -36,6 +37,7 @@ const CheckoutScreen = () => {
     const [paymentMethod, setPaymentMethod] = useState<'COD' | 'Online'>('COD');
     const [placingOrder, setPlacingOrder] = useState(false);
     const [showAddressModal, setShowAddressModal] = useState(false);
+    const [orderInstructions, setOrderInstructions] = useState('');
 
     // Calculate totals
     const tax = totalAmount * 0.05;
@@ -44,13 +46,15 @@ const CheckoutScreen = () => {
 
     useFocusEffect(
         useCallback(() => {
-            // Auto-select default or first address from context
+            // Auto-select default or first deliverable address from context
             if (addresses.length > 0 && !selectedAddress) {
-                 const defaultAddr = addresses.find((a: any) => a.isDefault); // specific type Address if imported?
+                 const deliverableAddresses = addresses.filter((a: any) => a.isDeliverable);
+                 const defaultAddr = deliverableAddresses.find((a: any) => a.isDefault);
+                 
                  if (defaultAddr) {
                      setSelectedAddress(defaultAddr);
-                 } else {
-                     setSelectedAddress(addresses[0]);
+                 } else if (deliverableAddresses.length > 0) {
+                     setSelectedAddress(deliverableAddresses[0]);
                  }
             } else if (addresses.length === 0) {
                 setSelectedAddress(null);
@@ -73,6 +77,11 @@ const CheckoutScreen = () => {
             return;
         }
 
+        if (!selectedAddress.isDeliverable) {
+            Alert.alert("Invalid Address", "Selected address is not deliverable. Please choose another address.");
+            return;
+        }
+
         if (!selectedStore) {
              Alert.alert("Store Error", "No store selected for this order.");
              return;
@@ -80,30 +89,43 @@ const CheckoutScreen = () => {
 
         setPlacingOrder(true);
         try {
-            const orderData = {
-                addressId: selectedAddress.id,
-                storeId: selectedStore.id,
-                items: cartItems.map(item => ({
-                    productId: parseInt(item.id),
+            console.log("Preparing order payload...");
+            
+            const items = cartItems.map(item => {
+                // safer ID extraction
+                const productId = item.originalProduct?.id 
+                    ? item.originalProduct.id 
+                    : parseInt(item.id.split('-')[0] || item.id);
+
+                return {
+                    productId: productId,
                     productName: item.name,
                     quantity: item.quantity,
                     unitPrice: item.price,
                     totalPrice: item.price * item.quantity,
                     modifiers: item.toppings ? item.toppings.map((t: any) => t.name).join(', ') : '',
-                    specialInstructions: '',
-                    imageUrl: item.image || '', // Assuming item has image property
-                    isVeg: item.isVeg || false, // Assuming item has isVeg property
-                    size: item.size || '', // Added size if available
-                    crust: item.crust || '' // Added crust if available
-                })),
+                    specialInstructions: '', // passing empty string as per observation, or could be null
+                    imageUrl: item.image || '',
+                    isVeg: item.isVeg || false,
+                    size: item.size || null,
+                    crust: item.crust || null
+                };
+            });
+
+            const orderData = {
+                addressId: selectedAddress.id,
+                storeId: selectedStore.id,
+                items: items,
                 subtotal: totalAmount,
                 tax: tax,
                 deliveryFee: deliveryFee,
                 discount: 0,
                 total: finalTotal,
-                paymentMethod: paymentMethod,
-                specialInstructions: ''
+                paymentMethod: paymentMethod, // 'COD' or 'Online'
+                specialInstructions: orderInstructions || ''
             };
+
+            console.log("Order Payload:", JSON.stringify(orderData, null, 2));
 
             await orderService.createOrder(orderData);
             
@@ -120,9 +142,26 @@ const CheckoutScreen = () => {
                 }
             ]);
 
-        } catch (error) {
+        } catch (error: any) {
             console.error("Order placement failed", error);
-            Alert.alert("Error", "Failed to place order. Please try again.");
+            
+            let errorMessage = "Failed to place order. Please try again.";
+            if (error.response?.data) {
+                console.log("API Error Data:", error.response.data);
+                if (typeof error.response.data === 'string') {
+                    errorMessage = error.response.data;
+                } else if (error.response.data.title) {
+                    errorMessage = error.response.data.title;
+                    if (error.response.data.errors) {
+                         const details = Object.values(error.response.data.errors).flat().join('\n');
+                         errorMessage += `\n${details}`;
+                    }
+                }
+            } else if (error.message) {
+                 errorMessage = error.message;
+            }
+
+            Alert.alert("Error", errorMessage);
         } finally {
             setPlacingOrder(false);
         }
@@ -146,33 +185,49 @@ const CheckoutScreen = () => {
 
                     <FlatList
                         data={addresses}
-                        keyExtractor={(item) => item.id}
+                        keyExtractor={(item, index) => item.id ? item.id.toString() : index.toString()}
                         contentContainerStyle={styles.addressListContent}
-                        renderItem={({ item }) => (
+                        renderItem={({ item }) => {
+                            const isDeliverable = item.isDeliverable !== false; // Default to true if undefined, safe check
+                            return (
                             <TouchableOpacity 
                                 style={[
                                     styles.modalAddressItem,
-                                    selectedAddress?.id === item.id && styles.selectedModalAddress
+                                    selectedAddress?.id === item.id && styles.selectedModalAddress,
+                                    !isDeliverable && styles.disabledAddressItem
                                 ]}
                                 onPress={() => {
-                                    setSelectedAddress(item);
-                                    setShowAddressModal(false);
+                                    if (isDeliverable) {
+                                        setSelectedAddress(item);
+                                        setShowAddressModal(false);
+                                    } else {
+                                        Alert.alert("Not Deliverable", "We do not deliver to this address.");
+                                    }
                                 }}
+                                activeOpacity={isDeliverable ? 0.7 : 1}
                             >
-                                <View style={styles.modalAddressIcon}>
-                                    <MapPin size={20} color={selectedAddress?.id === item.id ? "#fff" : "#3c7d48"} />
+                                <View style={[styles.modalAddressIcon, !isDeliverable && styles.disabledAddressIcon]}>
+                                    <MapPin size={20} color={!isDeliverable ? "#9ca3af" : (selectedAddress?.id === item.id ? "#fff" : "#3c7d48")} />
                                 </View>
-                                <View style={{ flex: 1 }}>
-                                    <Text style={styles.addressType}>{item.type || 'Home'}</Text>
+                                <View style={{ flex: 1, opacity: isDeliverable ? 1 : 0.6 }}>
+                                    <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+                                        <Text style={styles.addressType}>{item.type || 'Home'}</Text>
+                                        {!isDeliverable && (
+                                            <Text style={styles.notDeliverableText}>Not Deliverable</Text>
+                                        )}
+                                    </View>
                                     <Text style={styles.addressText}>
-                                        {item.houseNo}, {item.street}, {item.landmark}, {item.city} - {item.pincode}
+                                        {item.addressLine1}, {item.addressLine2}
+                                    </Text>
+                                    <Text style={styles.addressText}>
+                                        {item.landmark}, {item.city} - {item.zipCode}
                                     </Text>
                                 </View>
                                 {selectedAddress?.id === item.id && (
                                     <CheckCircle2 size={20} color="#3c7d48" />
                                 )}
                             </TouchableOpacity>
-                        )}
+                        )}}
                         ListFooterComponent={() => (
                             <TouchableOpacity 
                                 style={styles.modalAddBtn}
@@ -221,7 +276,10 @@ const CheckoutScreen = () => {
                             <View style={{ flex: 1 }}>
                                 <Text style={styles.addressType}>{selectedAddress.type || 'Home'}</Text>
                                 <Text style={styles.addressText}>
-                                    {selectedAddress.addressLine1}, {selectedAddress.city}
+                                    {selectedAddress.addressLine1}, {selectedAddress.addressLine2}
+                                </Text>
+                                <Text style={styles.addressText}>
+                                    {selectedAddress.landmark}, {selectedAddress.city} - {selectedAddress.zipCode}
                                 </Text>
                                 <Text style={styles.phoneText}>Phone: {selectedAddress.phoneNumber}</Text>
                             </View>
@@ -234,6 +292,21 @@ const CheckoutScreen = () => {
                             <Text style={styles.addAddressText}>+ Add New Address</Text>
                         </TouchableOpacity>
                     )}
+                </View>
+
+                {/* Order Instructions Section */}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>Order Instructions</Text>
+                    <TextInput
+                        style={styles.instructionInput}
+                        placeholder="Add specific cooking instructions, allergies, or delivery notes..."
+                        placeholderTextColor="#9ca3af"
+                        multiline
+                        numberOfLines={3}
+                        value={orderInstructions}
+                        onChangeText={setOrderInstructions}
+                        textAlignVertical="top"
+                    />
                 </View>
 
                 {/* Payment Method Section */}
@@ -582,6 +655,33 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: 'bold',
         color: '#3c7d48',
+    },
+    instructionInput: {
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        padding: 12,
+        borderWidth: 1,
+        borderColor: '#e5e7eb',
+        minHeight: 80,
+        fontSize: 14,
+        color: '#374151',
+    },
+    disabledAddressItem: {
+        backgroundColor: '#f3f4f6',
+        borderColor: '#e5e7eb',
+    },
+    disabledAddressIcon: {
+        backgroundColor: '#e5e7eb',
+    },
+    notDeliverableText: {
+        fontSize: 10,
+        color: '#ef4444',
+        fontWeight: 'bold',
+        backgroundColor: '#fee2e2',
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderRadius: 4,
+        overflow: 'hidden',
     },
 });
 

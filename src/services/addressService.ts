@@ -1,24 +1,63 @@
 import apiClient from './apiClient';
-import { Address } from '../context/AddressContext';
+
+export interface Address {
+    id?: number; // Optional for new addresses (before saving)
+    fullName: string;
+    phoneNumber: string;
+    addressLine1: string; // House No, Street, etc.
+    addressLine2?: string | null; // Locality, Area, etc.
+    city: string;
+    state: string;
+    zipCode: string;
+    landmark?: string | null;
+    isDefault: boolean;
+    // UI-only fields (not sent to backend directly unless we map them)
+    type?: 'Home' | 'Work' | 'Other'; 
+    coordinates?: {
+        lat: number;
+        lng: number;
+    };
+    isDeliverable?: boolean;
+}
 
 export const addressService = {
-    getAddresses: async () => {
-        const response = await apiClient.get('/addresses');
-        return response.data;
+    getAddresses: async (): Promise<Address[]> => {
+        try {
+            const response = await apiClient.get('/Addresses');
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching addresses:', error);
+            throw error;
+        }
     },
 
-    addAddress: async (address: Omit<Address, 'id'>) => {
-        const response = await apiClient.post('/addresses', address);
-        return response.data;
+    addAddress: async (address: Omit<Address, 'id'>): Promise<Address> => {
+        try {
+            const payload = {
+                fullName: address.fullName,
+                phoneNumber: address.phoneNumber,
+                addressLine1: address.addressLine1,
+                addressLine2: address.addressLine2,
+                city: address.city,
+                state: address.state,
+                zipCode: address.zipCode,
+                landmark: address.landmark,
+                isDefault: address.isDefault
+            };
+            const response = await apiClient.post('/Addresses', payload);
+            return response.data;
+        } catch (error) {
+            console.error('Error adding address:', error);
+            throw error;
+        }
     },
 
-    updateAddress: async (id: string, address: Partial<Address>) => {
-        const response = await apiClient.put(`/addresses/${id}`, address);
-        return response.data;
-    },
-
-    deleteAddress: async (id: string) => {
-        const response = await apiClient.delete(`/addresses/${id}`);
-        return response.data;
+    deleteAddress: async (id: number): Promise<void> => {
+        try {
+            await apiClient.delete(`/Addresses/${id}`);
+        } catch (error) {
+            console.error(`Error deleting address ${id}:`, error);
+            throw error;
+        }
     }
 };
