@@ -18,6 +18,7 @@ import { useNavigation } from '@react-navigation/native';
 import { ArrowLeft, Search, MapPin, Navigation, X, SlidersHorizontal } from 'lucide-react-native';
 import axios from 'axios';
 import { useStore } from '../context/StoreContext';
+import { useCart } from '../context/CartContext';
 import getCurrentLocation from '../services/getCurrentLocation';
 import { calculateDistance } from '../utils/calculateDistance';
 import { requestLocationPermission } from '../utils/requestLocation';
@@ -193,9 +194,33 @@ const StoreLocationScreen = () => {
         .map(store => store.city)
   )).sort();
 
+  const { clearCart, cartItems } = useCart();
+
   const handleSelectLocation = (store: Store) => {
-    setSelectedStore(store);
-    navigation.goBack();
+    if (cartItems.length > 0) {
+      Alert.alert(
+        'Change Store?',
+        'Changing the store will clear your current cart. Do you want to proceed?',
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel',
+          },
+          {
+            text: 'Yes, Change Store',
+            onPress: () => {
+              clearCart();
+              setSelectedStore(store);
+              navigation.goBack();
+            },
+            style: 'destructive',
+          },
+        ]
+      );
+    } else {
+      setSelectedStore(store);
+      navigation.goBack();
+    }
   };
 
   const handleUseCurrentLocation = async () => {

@@ -283,20 +283,13 @@ const HomeScreen = () => {
             <View style={{ gap: 16 }}>
                 <ExplorationCard 
                     image="https://lh3.googleusercontent.com/aida-public/AB6AXuArhpRY-0nyLHzV1F4lzmIvMxXn22ZqY8diImVmQWs2C3EtC6EY9l_KVanQ5d4M-kjWUy_jUIJWl7r956NH2_INqlrBluBwSdWEz2EmIUl4nEvfeWyZsmdbTyI-rT_a2oUQXI1I8zFYp_SOhQyVbRTSkulvF_dk1HjkAoOTJB_PR3WM-jfQ2v3zPgGYrGtezFyONXEi8BhhzCQQhJPYnzjxneE4HDNSHhM72GoEB50kH9NYdKIK0flWFJpTU757cfDsHlisavMj4tDy"
-                    title="THE MONSTER PIZZA"
+                    title="THE GIANT PIZZA"
                     subtitle="Feed the whole crew"
                     buttonText="Order Now"
                     btnStyle="primary"
                     onPress={() => navigation.navigate('Menu' as any)}
                 />
-                <ExplorationCard 
-                    image="https://lh3.googleusercontent.com/aida-public/AB6AXuCFRPEE383icBhG-V4GYSUUQnMLKDprJWxIofXROC2729fGb6cNkYmxhApOv3eXbEihTl_5eSO8k6-V8EekzrVwjVZO9PHMmNyhyrbaeK3cER7wrGKdufJx6NhS_87BfWpKFbaw3xLdJRqFnSpVrtUI7T5IcLYVOxb7xS3DJtlR0Gzp8w7CTvQvOnBEsh0PswkLa6p81aaMHDkdtwnEA79cKJjY1nqSuu8CeqbC9n80pb98tCvejQYVCWdFKBpIRL1_bco4voFiZ6g3"
-                    title="GIANT SLICE"
-                    subtitle="Solo hunger pangs fixed"
-                    buttonText="Order Now"
-                    btnStyle="white"
-                    onPress={() => navigation.navigate('Menu' as any)}
-                />
+                
             </View>
         </View>
 

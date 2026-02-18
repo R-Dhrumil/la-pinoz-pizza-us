@@ -10,7 +10,6 @@ import {
   Dimensions,
   KeyboardAvoidingView,
   ScrollView,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 
@@ -19,6 +18,7 @@ import { useNavigation } from '@react-navigation/native';
 import { authService } from '../../services/authService';
 import { Pizza, AtSign, Lock, Eye, EyeOff } from 'lucide-react-native';
 import { useAuth } from '../../context/AuthContext';
+import Toast from 'react-native-toast-message';
 
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../navigation/AuthNavigator';
@@ -35,7 +35,11 @@ const LoginScreen = () => {
 
     const handleLogin = async () => {
         if (!email || !password) {
-            Alert.alert('Error', 'Please enter both email and password');
+            Toast.show({
+                type: 'error',
+                text1: 'Missing Fields',
+                text2: 'Please enter both email and password'
+            });
             return;
         }
 
@@ -70,11 +74,19 @@ const LoginScreen = () => {
                 // Navigate to main app
                 navigation.replace('MainTabs');
             } else {
-                Alert.alert('Login Failed', 'Invalid response from server');
+                Toast.show({
+                    type: 'error',
+                    text1: 'Login Failed',
+                    text2: 'Invalid response from server'
+                });
             }
         } catch (error: any) {
             console.error(error);
-            Alert.alert('Login Failed', error.response?.data?.message || 'Invalid credentials or server error');
+            Toast.show({
+                type: 'error',
+                text1: 'Login Failed',
+                text2: error.response?.data?.message || 'Invalid credentials or server error'
+            });
         } finally {
             setLoading(false);
         }

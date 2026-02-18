@@ -239,12 +239,9 @@ const MenuScreen = () => {
              </View>
         ) : (
             <>
-                <View>
+                <TouchableOpacity onPress={() => navigation.navigate('StoreLocation')}>
                 <Text style={styles.brandName}>La Pino'z USA</Text>
-                <TouchableOpacity 
-                    style={styles.locationContainer}
-                    onPress={() => navigation.navigate('StoreLocation')}
-                >
+                <View style={styles.locationContainer}>
                     <View style={styles.locationDot} />
                     <Text style={styles.locationText}>
                         {selectedStore 
@@ -252,8 +249,8 @@ const MenuScreen = () => {
                         : 'Select Location'}
                     </Text>
                     <ChevronRight size={12} color="#3c7d48" />
-                </TouchableOpacity>
                 </View>
+                </TouchableOpacity>
                 <View style={styles.headerRight}>
                 <TouchableOpacity style={styles.iconBtn} onPress={handleSearchToggle}>
                     <Search size={20} color="#374151" />
