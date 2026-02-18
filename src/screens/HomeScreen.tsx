@@ -43,6 +43,7 @@ import PageLayout from '../components/PageLayout';
 import { storeService } from '../services/storeService';
 import { categoryService, Category } from '../services/categoryService';
 import { productService } from '../services/productService';
+import HomeSkeleton from '../components/HomeSkeleton';
 
 const { width } = Dimensions.get('window');
 
@@ -72,20 +73,30 @@ const HomeScreen = () => {
   }, [selectedStore]);
 
   const [refreshing, setRefreshing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const fetchData = async () => {
     if (selectedStore) {
-      // Fetch Categories
-      const cats = await categoryService.getCategories(selectedStore.id);
-      setCategories(cats);
+      try {
+        // Fetch Categories
+        const cats = await categoryService.getCategories(selectedStore.id);
+        setCategories(cats);
 
-      // Fetch Best Sellers
-      const best = await productService.getBestSellers(selectedStore.id);
-      setBestSellers(best);
+        // Fetch Best Sellers
+        const best = await productService.getBestSellers(selectedStore.id);
+        setBestSellers(best);
+      } catch (error) {
+        console.error("Error fetching home data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+        setIsLoading(false);
     }
   };
 
   useEffect(() => {
+    setIsLoading(true);
     fetchData();
   }, [selectedStore]);
 
@@ -125,6 +136,9 @@ const HomeScreen = () => {
       {/* Navbar - Fixed Bottom */}
       {/* Navbar - Handled by TabNavigator now */}
 
+      {isLoading ? (
+        <HomeSkeleton />
+      ) : (
       <ScrollView 
         contentContainerStyle={styles.scrollContent} 
         showsVerticalScrollIndicator={false}
@@ -367,6 +381,7 @@ const HomeScreen = () => {
              </View>
         </View>
       </ScrollView>
+      )}
     </PageLayout>
   );
 };

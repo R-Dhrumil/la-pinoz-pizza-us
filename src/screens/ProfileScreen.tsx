@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,10 +8,11 @@ import {
   StatusBar,
   Image,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../navigation/AuthNavigator';
 import { useAuth } from '../context/AuthContext';
+import { orderService } from '../services/orderService';
 import {
   User,
   Receipt,
@@ -31,6 +32,27 @@ import {
 const ProfileScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
   const { user, logout } = useAuth();
+  const [activeCount, setActiveCount] = useState(0);
+
+  useFocusEffect(
+    useCallback(() => {
+      const fetchActiveOrders = async () => {
+        try {
+          const orders = await orderService.getMyOrders();
+          const active = orders.filter(o => 
+            ['placed', 'confirmed', 'preparing', 'outfordelivery', 'pending'].includes(o.orderStatus.toLowerCase())
+          );
+          setActiveCount(active.length);
+        } catch (error) {
+          console.error("Error fetching active orders count:", error);
+        }
+      };
+
+      if (user) {
+        fetchActiveOrders();
+      }
+    }, [user])
+  );
   
 
   // Default user data if not logged in
@@ -50,7 +72,13 @@ const ProfileScreen = () => {
   };
 
   const menuItems: MenuItem[] = [
-    { id: 'orders', label: 'My Orders', icon: Receipt, badge: '2 Active', badgeColor: '#3c7d48' },
+    { 
+      id: 'orders', 
+      label: 'My Orders', 
+      icon: Receipt, 
+      badge: activeCount > 0 ? `${activeCount} Active` : null, 
+      badgeColor: '#3c7d48' 
+    },
     { id: 'address', label: 'Manage Address', icon: MapPin, badge: null },
     { id: 'refund', label: 'Track My Refund', icon: BadgeDollarSign, badge: null },
     { id: 'concern', label: 'Raise a Concern', icon: MessageCircle, badge: null },
