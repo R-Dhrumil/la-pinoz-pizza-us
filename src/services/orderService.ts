@@ -64,11 +64,20 @@ export interface CreateOrderDto {
     items: OrderItem[];
 }
 
+export interface PaginatedOrderResponse {
+    orders: Order[];
+    totalCount: number;
+    pageNumber: number;
+    pageSize: number;
+    totalPages: number;
+}
+
 export const orderService = {
     getMyOrders: async (): Promise<Order[]> => {
         try {
-            const response = await apiClient.get('/Orders');
-            return response.data;
+            const response = await apiClient.get<PaginatedOrderResponse>('/Orders');
+            // The API returns a paginated response, so we need to extract the orders array
+            return response.data.orders || []; 
         } catch (error) {
             console.error('Error fetching orders:', error);
             throw error;
