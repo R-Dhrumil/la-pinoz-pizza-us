@@ -8,20 +8,26 @@ import {
   SafeAreaView,
   StatusBar,
   RefreshControl,
+  Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../navigation/AuthNavigator';
 import { ChevronLeft, MapPin, Trash2, AlertTriangle } from 'lucide-react-native';
-
 import { useAddress, Address } from '../context/AddressContext';
+import AddressSkeleton from '../components/AddressSkeleton';
 
 
+
+import { useAuth } from '../context/AuthContext';
 
 const ManageAddressScreen = () => {
     const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
-    const { addresses, deleteAddress, loading, refreshAddresses } = useAddress();
+    const { addresses, deleteAddress, loading: addressLoading, refreshAddresses } = useAddress();
+    const { loading: authLoading } = useAuth();
     const [refreshing, setRefreshing] = useState(false);
+    
+    const loading = addressLoading || authLoading;
 
     useEffect(() => {
         refreshAddresses();
@@ -32,6 +38,33 @@ const ManageAddressScreen = () => {
         await refreshAddresses();
         setRefreshing(false);
     }, [refreshAddresses]);
+
+    const handleDeleteAddress = async (id: number) => {
+        Alert.alert(
+            "Delete Address",
+            "Are you sure you want to delete this address?",
+            [
+                {
+                    text: "Cancel",
+                    style: "cancel"
+                },
+                {
+                    text: "Delete",
+                    style: "destructive",
+                    onPress: async () => {
+                        try {
+                            await deleteAddress(id);
+                            // Optional: Toast or simple alert on success
+                           // Alert.alert("Success", "Address deleted successfully"); 
+                        } catch (error: any) {
+                            const errorMessage = error.response?.data?.message || error.message || "Failed to delete address. Please try again.";
+                            Alert.alert("Error", errorMessage);
+                        }
+                    }
+                }
+            ]
+        );
+    };
     
 
   return (
@@ -54,10 +87,18 @@ const ManageAddressScreen = () => {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={refreshing || loading} onRefresh={onRefresh} colors={['#3c7d48']} />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3c7d48']} />
           }
         >
-          {addresses.map((address) => (
+          {loading && addresses.length === 0 ? (
+            // Show Skeleton when loading and no addresses are present (initial load)
+            <>
+               <AddressSkeleton />
+               <AddressSkeleton />
+               <AddressSkeleton />
+            </>
+          ) : (
+             addresses.map((address) => (
             <View key={address.id} style={styles.addressCard}>
               <View style={styles.cardHeader}>
                 <View style={styles.iconContainer}>
@@ -75,7 +116,7 @@ const ManageAddressScreen = () => {
                 </View>
                 <TouchableOpacity style={styles.deleteButton} onPress={() => {
                   if (address.id !== undefined) {
-                    deleteAddress(address.id);
+                    handleDeleteAddress(address.id);
                   }
                 }}>
                   <Trash2 size={20} color="#ef4444" />
@@ -91,7 +132,8 @@ const ManageAddressScreen = () => {
                 </TouchableOpacity>
               )}
             </View>
-          ))}
+          ))
+          )}
         </ScrollView>
 
         <View style={styles.footer}>

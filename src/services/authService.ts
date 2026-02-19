@@ -14,6 +14,14 @@ interface SignupParams {
     password: string;
 }
 
+interface UpdateProfileParams {
+    fullName?: string;
+    phoneNumber?: string;
+    email?: string;
+    dob?: string;
+    gender?: string;
+}
+
 export const authService = {
     login: async (credentials: LoginParams) => {
         // Transform the request to match API expectations
@@ -42,6 +50,11 @@ export const authService = {
     
     verifyOtp: async (phone: string, otp: string) => {
         const response = await apiClient.post('/auth/verify-otp', { phone, otp });
+        return response.data;
+    },
+
+    updateProfile: async (data: UpdateProfileParams) => {
+        const response = await apiClient.put('/auth/profile', data);
         return response.data;
     }
 };

@@ -109,7 +109,10 @@ const ProfileScreen = () => {
             <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconBtn}>
                 <ChevronLeft size={24} color="#fff" />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.editBtn}>
+            <TouchableOpacity 
+              style={styles.editBtn}
+              onPress={() => navigation.navigate('EditProfile')}
+            >
                 <Text style={styles.editBtnText}>Edit</Text>
             </TouchableOpacity>
         </View>

@@ -55,8 +55,8 @@ export const addressService = {
     deleteAddress: async (id: number): Promise<void> => {
         try {
             await apiClient.delete(`/Addresses/${id}`);
-        } catch (error) {
-            console.error(`Error deleting address ${id}:`, error);
+        } catch (error: any) {
+            console.error(`Error deleting address ${id}:`, error.response?.data || error.message);
             throw error;
         }
     }

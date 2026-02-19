@@ -38,6 +38,7 @@ export type AuthStackParamList = {
   StoreLocation: undefined;
   Checkout: undefined;
   Practice: undefined;
+  EditProfile: undefined;
 };
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
@@ -45,7 +46,7 @@ const Stack = createNativeStackNavigator<AuthStackParamList>();
 const AuthNavigator = () => {
   return (
     <Stack.Navigator
-      initialRouteName="Login"
+      initialRouteName="MainTabs"
       screenOptions={{
         headerShown: false,
         animation: 'slide_from_right'
@@ -93,6 +94,11 @@ const AuthNavigator = () => {
         name="Practice" 
         component={PracticeScreen} 
         options={{ animation: 'slide_from_bottom' }} 
+      />
+      <Stack.Screen 
+        name="EditProfile" 
+        component={require('../screens/EditProfileScreen').default} 
+        options={{ animation: 'slide_from_right' }} 
       />
     </Stack.Navigator>
   );
