@@ -378,7 +378,7 @@ const MenuItem = ({ item, onTap }: { item: Product, onTap: () => void }) => {
     const quantity = cartItem ? cartItem.quantity : 0;
     
     // External link check
-    const isExternal = (selectedStore?.state === 'NJ' && selectedStore?.city === 'Iselin') || item.externalLink;
+    const isExternal = item.externalLink;
 
     const handleAdd = () => {
         if (isExternal) {

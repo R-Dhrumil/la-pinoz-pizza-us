@@ -339,7 +339,7 @@ const ProductDetailScreen = () => {
         </View>
 
         <View style={styles.actionButtons}>
-            {(selectedStore?.state === 'NJ' && selectedStore?.city === 'Iselin') || item.externalLink ? (
+            {item.externalLink ? (
                  <TouchableOpacity 
                     style={[styles.btn, styles.btnPrimary, { backgroundColor: '#ea580c' }]} 
                     onPress={() => {
