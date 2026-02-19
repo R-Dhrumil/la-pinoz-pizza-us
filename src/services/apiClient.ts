@@ -2,7 +2,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // const BASE_URL = 'https://api.lapinozusa.com/api';
-const BASE_URL = 'https://localhost:7100/api';
+const BASE_URL = 'https://api.nsenterprise.net/api';
 
 const apiClient = axios.create({
     baseURL: BASE_URL,

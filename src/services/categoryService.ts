@@ -62,6 +62,7 @@ export interface Category {
   subcategories: Subcategory[];
 }
 
+
 export const categoryService = {
   getCategories: async (storeId: number): Promise<Category[]> => {
     try {
