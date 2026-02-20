@@ -69,39 +69,23 @@ const SignupScreen = () => {
 
   return (
     <View style={styles.mainContainer}>
-      <StatusBar barStyle="light-content" backgroundColor="#3c7d48" />
-      {/* 
-        Using KeyboardAvoidingView to ensure inputs are visible when keyboard is open.
-        Platform-specific behavior is needed.
-      */}
+      <StatusBar barStyle="light-content" backgroundColor="#2d6a3a" />
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
       >
         <ScrollView 
-          // contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Mobile Header / Logo Area */}
-          <View style={styles.headerContainer}>
-             {/* New Header Layout: Row with Brand on Left, Login Button on Right */}
-              <View style={styles.logoRow}>
-               <View style={styles.brandContainer}>
-                  <Pizza size={28} color="#3c7d48" fill="#3c7d48" />
-                  <Text style={styles.brandText}>La Pino'z Pizza</Text>
-               </View>
-
-               <TouchableOpacity style={styles.loginButton} onPress={() => navigation.navigate('Login')}>
-                  <Text style={styles.loginButtonText}>Login</Text>
-               </TouchableOpacity>
-             </View>
-             
-             {/* Spacing and Title */}
-             <View style={{marginTop: 5, alignItems: 'center'}}>
-                 
-                 <Text style={styles.pageTitle}>Create Account</Text>
-                 <Text style={styles.pageSubtitle}>Join us for faster ordering and exclusive rewards.</Text>
-             </View>
+          {/* Hero Header */}
+          <View style={styles.heroContainer}>
+            <View style={styles.heroBrandRow}>
+              <Pizza size={22} color="#fff" />
+              <Text style={styles.heroBrandText}>La Pino'z USA</Text>
+            </View>
+            <Text style={styles.heroTitle}>Create Account</Text>
+            <Text style={styles.heroSubtitle}>Join us for faster ordering and exclusive rewards.</Text>
           </View>
 
           {/* Form Section */}
@@ -109,7 +93,7 @@ const SignupScreen = () => {
             
             {/* Full Name */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Full Name</Text>
+              <Text style={styles.label}>FULL NAME</Text>
               <View style={styles.inputWrapper}>
                 <User size={20} color="#9ca3af" style={styles.inputIcon} />
                 <TextInput
@@ -124,7 +108,7 @@ const SignupScreen = () => {
 
             {/* Email */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Email Address</Text>
+              <Text style={styles.label}>EMAIL ADDRESS</Text>
               <View style={styles.inputWrapper}>
                 <Mail size={20} color="#9ca3af" style={styles.inputIcon} />
                 <TextInput
@@ -141,7 +125,7 @@ const SignupScreen = () => {
 
             {/* Phone */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Phone Number</Text>
+              <Text style={styles.label}>PHONE NUMBER</Text>
               <View style={styles.inputWrapper}>
                 <Phone size={20} color="#9ca3af" style={styles.inputIcon} />
                 <TextInput
@@ -157,7 +141,7 @@ const SignupScreen = () => {
 
             {/* Password */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Password</Text>
+              <Text style={styles.label}>PASSWORD</Text>
               <View style={styles.inputWrapper}>
                 <Lock size={20} color="#9ca3af" style={styles.inputIcon} />
                 <TextInput
@@ -179,8 +163,6 @@ const SignupScreen = () => {
               </View>
             </View>
 
-
-
             {/* Create Account Button */}
             <TouchableOpacity 
               style={[styles.mainButton, loading && { opacity: 0.7 }]}
@@ -197,10 +179,12 @@ const SignupScreen = () => {
               <Text style={styles.linkText}>Privacy Policy</Text>.
             </Text>
 
-
-
-            {/* Back to Login */}
-           
+            {/* Already have an account? Login */}
+            <TouchableOpacity style={styles.loginLinkContainer} onPress={() => navigation.navigate('Login')}>
+              <Text style={styles.loginLinkText}>
+                Already have an account? <Text style={styles.loginLinkHighlight}>Login</Text>
+              </Text>
+            </TouchableOpacity>
 
           </View>
         </ScrollView>
@@ -214,75 +198,60 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
-  // scrollContent: {
-  //   paddingBottom: 30,
-  // },
-  headerContainer: {
-    paddingHorizontal: 24,
-    paddingTop: 20,
-    paddingBottom: 30,
+  scrollContent: {
+    flexGrow: 1,
   },
-  logoRow: {
+  heroContainer: {
+    backgroundColor: '#3c7d48',
+    paddingTop: Platform.OS === 'android' ? 48 : 60,
+    paddingBottom: 36,
+    paddingHorizontal: 24,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+  },
+  heroBrandRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 10,
+    gap: 8,
+    marginBottom: 20,
   },
-  brandContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 8,
-  },
-  brandText: {
+  heroBrandText: {
+    color: '#fff',
     fontSize: 16,
-    fontWeight: '800',
-    color: '#1b0d0e',
-    letterSpacing: -0.5,
+    fontWeight: '700',
   },
-  loginButton: {
-      backgroundColor: '#3c7d48',
-      paddingVertical: 8,
-      paddingHorizontal: 20,
-      borderRadius: 20,
-      elevation: 2,
-  },
-  loginButtonText: {
-      color: '#fff',
-      fontWeight: '700',
-      fontSize: 13,
-  },
-  pageTitle: {
+  heroTitle: {
     fontSize: 28,
     fontWeight: '900',
-    color: '#1b0d0e',
+    color: '#fff',
     marginBottom: 8,
-    textAlign: 'center',
   },
-  pageSubtitle: {
+  heroSubtitle: {
     fontSize: 14,
-    color: '#6b7280',
-    textAlign: 'center',
+    color: 'rgba(255,255,255,0.8)',
     fontWeight: '500',
     lineHeight: 20,
   },
   formContainer: {
     paddingHorizontal: 24,
+    paddingTop: 28,
   },
   inputGroup: {
     marginBottom: 20,
   },
   label: {
-    fontSize: 14,
+    fontSize: 11,
     fontWeight: '700',
-    color: '#374151',
+    color: '#9ca3af',
     marginBottom: 8,
+    letterSpacing: 0.5,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f9fafb', // gray-50
+    backgroundColor: '#fff',
     borderWidth: 1,
-    borderColor: '#e5e7eb', // gray-200
+    borderColor: '#e5e7eb',
     borderRadius: 12,
     height: 52,
   },
@@ -293,9 +262,8 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     height: '100%',
-    fontSize: 14,
+    fontSize: 15,
     color: '#1b0d0e',
-    fontWeight: '500',
   },
   eyeIcon: {
     padding: 10,
@@ -312,6 +280,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 4,
+    marginTop: 4,
     marginBottom: 16,
   },
   mainButtonText: {
@@ -322,16 +291,29 @@ const styles = StyleSheet.create({
   },
   termsText: {
     fontSize: 12,
-    color: '#9ca3af', // gray-400
+    color: '#9ca3af',
     textAlign: 'center',
     lineHeight: 18,
     paddingHorizontal: 10,
-    marginBottom: 24,
+    marginBottom: 20,
   },
   linkText: {
-    color: '#4b5563', // gray-600
+    color: '#4b5563',
     fontWeight: '700',
     textDecorationLine: 'underline',
+  },
+  loginLinkContainer: {
+    alignSelf: 'center',
+    marginBottom: 30,
+  },
+  loginLinkText: {
+    color: '#6b7280',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  loginLinkHighlight: {
+    color: '#3c7d48',
+    fontWeight: '700',
   },
 });
 

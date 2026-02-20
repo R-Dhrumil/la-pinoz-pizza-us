@@ -16,12 +16,10 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use(
     async (config) => {
         const token = await AsyncStorage.getItem('userToken');
-        console.log("Token: ", token);
 
         console.log(`[API Request] Method: ${config.method?.toUpperCase()} URL: ${config.url}`);
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
-            console.log("[API Request] Token present");
         } else {
             console.warn("[API Request] No token found - request might fail if auth required");
         }

@@ -47,109 +47,12 @@ const StoreLocationScreen = () => {
   const fetchStores = async () => {
     try {
       const response = await axios.get(API_URL);
-      const dummyStores: Store[] = [
-        {
-          id: 101,
-          storeId: 'LP-AKSHAR',
-          name: "La Pino'z Pizza - Akshar Chowk",
-          address: "Gf 108/109, The Park, Near Akshar Chowk, Madhav Nagar, Akota",
-          city: "Vadodara",
-          state: "Gujarat",
-          zipCode: "390020",
-          phone: "+91-9876543210",
-          image: "https://b.zmtcdn.com/data/pictures/chains/1/18602631/1e9386343e9366db5e1176540d5e9f4a.jpg", // Placeholder image
-          status: "Open",
-          operatingHours: [],
-          latitude: 22.2885,
-          longitude: 73.1610,
-        },
-        {
-          id: 102,
-          storeId: 'LP-BHAYLI',
-          name: "La Pino'z Pizza - Bhayli",
-          address: "Shop 1-4, Ground Floor, Gangotri Icon, Near Nilamber Char Rasta, Vasna Bhayli Road, Bhayli",
-          city: "Vadodara",
-          state: "Gujarat",
-          zipCode: "391410",
-          phone: "+91-9876543211",
-          image: "https://b.zmtcdn.com/data/pictures/chains/1/18602631/1e9386343e9366db5e1176540d5e9f4a.jpg",
-          status: "Open",
-          operatingHours: [],
-          latitude: 22.2850,
-          longitude: 73.1360
-        },
-        {
-          id: 103,
-          storeId: 'LP-MANJALPUR',
-          name: "La Pino'z Pizza - Manjalpur",
-          address: "Shop 1, 2 Ground Floor, Platinum Hub, Near Tulsidham Char Rasta, Manjalpur",
-          city: "Vadodara",
-          state: "Gujarat",
-          zipCode: "390011",
-          phone: "+91-9876543212",
-          image: "https://b.zmtcdn.com/data/pictures/chains/1/18602631/1e9386343e9366db5e1176540d5e9f4a.jpg",
-          status: "Open",
-          operatingHours: [],
-          latitude: 22.2740,
-          longitude: 73.1815
-        }
-      ];
-
-      const combinedData = [...response.data, ...dummyStores];
-      setAllStores(combinedData);
-      setFilteredStores(combinedData);
+      setAllStores(response.data);
+      setFilteredStores(response.data);
     } catch (error) {
       console.error('Error fetching stores:', error);
-      // Fallback with just dummy stores in case of error
-       const dummyStores: Store[] = [
-        {
-          id: 101,
-          storeId: 'LP-AKSHAR',
-          name: "La Pino'z Pizza - Akshar Chowk",
-          address: "Gf 108/109, The Park, Near Akshar Chowk, Madhav Nagar, Akota",
-          city: "Vadodara",
-          state: "Gujarat",
-          zipCode: "390020",
-          phone: "+91-9876543210",
-          image: "https://b.zmtcdn.com/data/pictures/chains/1/18602631/1e9386343e9366db5e1176540d5e9f4a.jpg", 
-          status: "Open",
-          operatingHours: [],
-          latitude: 22.2885,
-          longitude: 73.1610,
-        },
-        {
-          id: 102,
-          storeId: 'LP-BHAYLI',
-          name: "La Pino'z Pizza - Bhayli",
-          address: "Shop 1-4, Ground Floor, Gangotri Icon, Near Nilamber Char Rasta, Vasna Bhayli Road, Bhayli",
-          city: "Vadodara",
-          state: "Gujarat",
-          zipCode: "391410",
-          phone: "+91-9876543211",
-          image: "https://b.zmtcdn.com/data/pictures/chains/1/18602631/1e9386343e9366db5e1176540d5e9f4a.jpg",
-          status: "Open",
-          operatingHours: [],
-          latitude: 22.2850,
-          longitude: 73.1360
-        },
-        {
-          id: 103,
-          storeId: 'LP-MANJALPUR',
-          name: "La Pino'z Pizza - Manjalpur",
-          address: "Shop 1, 2 Ground Floor, Platinum Hub, Near Tulsidham Char Rasta, Manjalpur",
-          city: "Vadodara",
-          state: "Gujarat",
-          zipCode: "390011",
-          phone: "+91-9876543212",
-          image: "https://b.zmtcdn.com/data/pictures/chains/1/18602631/1e9386343e9366db5e1176540d5e9f4a.jpg",
-          status: "Open",
-          operatingHours: [],
-          latitude: 22.2740,
-          longitude: 73.1815
-        }
-      ];
-      setAllStores(dummyStores);
-      setFilteredStores(dummyStores);
+      setAllStores([]);
+      setFilteredStores([]);
     } finally {
       setLoading(false);
     }

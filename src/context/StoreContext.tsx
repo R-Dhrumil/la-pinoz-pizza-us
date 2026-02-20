@@ -18,7 +18,7 @@ export const StoreProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const initializeStore = async () => {
       try {
-        // 1. Fetch all stores (including dummy ones)
+        // 1. Fetch all stores
         const stores = await storeService.getAllStores();
         
         // 2. Request Location Permission
