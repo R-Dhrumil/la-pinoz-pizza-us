@@ -13,6 +13,7 @@ import {
   ImageBackground,
   FlatList,
   RefreshControl,
+  Linking,
 } from 'react-native';
 import React, { useRef, useEffect, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
@@ -338,7 +339,7 @@ const HomeScreen = () => {
                         </View>
                     </View>
 
-                    <TouchableOpacity style={styles.learnMoreRow}>
+                    <TouchableOpacity style={styles.learnMoreRow} onPress={() => Linking.openURL('https://www.lapinozusa.com/about')}>
                         <Text style={styles.learnMoreText}>Read our full story</Text>
                         <ArrowRight size={16} color="#ffbe33" />
                     </TouchableOpacity>
