@@ -14,7 +14,9 @@ import PracticeScreen from '../PracticeScreen';
 import AddNewAddressScreen from '../screens/AddNewAddressScreen';
 import StoreLocationScreen from '../screens/StoreLocationScreen';
 import CheckoutScreen from '../screens/CheckoutScreen';
+import PaymentWebViewScreen from '../screens/PaymentWebViewScreen';
 import { Product, ProductVariant } from '../services/categoryService';
+import { PendingOrderData } from '../services/paymentService';
 
 
 export type AuthStackParamList = {
@@ -37,6 +39,7 @@ export type AuthStackParamList = {
   AddNewAddress: undefined;
   StoreLocation: undefined;
   Checkout: undefined;
+  PaymentWebView: { url: string; transactionId: string; orderData: PendingOrderData };
   Practice: undefined;
   EditProfile: undefined;
 };
@@ -89,6 +92,11 @@ const AuthNavigator = () => {
         name="ManageAddress" 
         component={ManageAddressScreen} 
         options={{ animation: 'slide_from_right' }} 
+      />
+      <Stack.Screen 
+        name="PaymentWebView" 
+        component={PaymentWebViewScreen} 
+        options={{ animation: 'slide_from_bottom' }} 
       />
       <Stack.Screen 
         name="Practice" 

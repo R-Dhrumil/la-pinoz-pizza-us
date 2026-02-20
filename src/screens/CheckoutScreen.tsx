@@ -22,6 +22,7 @@ import { useStore } from '../context/StoreContext';
 import { useAuth } from '../context/AuthContext';
 // import { addressService } from '../services/addressService';
 import { orderService } from '../services/orderService';
+import { paymentService, PendingOrderData } from '../services/paymentService';
 import PageLayout from '../components/PageLayout';
 
 const CheckoutScreen = () => {
@@ -92,7 +93,6 @@ const CheckoutScreen = () => {
             console.log("Preparing order payload...");
             
             const items = cartItems.map(item => {
-                // safer ID extraction
                 const productId = item.originalProduct?.id 
                     ? item.originalProduct.id 
                     : parseInt(item.id.split('-')[0] || item.id);
@@ -104,7 +104,7 @@ const CheckoutScreen = () => {
                     unitPrice: item.price,
                     totalPrice: item.price * item.quantity,
                     modifiers: item.toppings ? item.toppings.map((t: any) => t.name).join(', ') : '',
-                    specialInstructions: '', // passing empty string as per observation, or could be null
+                    specialInstructions: '',
                     imageUrl: item.image || '',
                     isVeg: item.isVeg || false,
                     size: item.size || null,
@@ -112,40 +112,82 @@ const CheckoutScreen = () => {
                 };
             });
 
-            const orderData = {
-                addressId: selectedAddress.id,
-                storeId: selectedStore.id,
-                items: items,
-                subtotal: totalAmount,
-                tax: tax,
-                deliveryFee: deliveryFee,
-                discount: 0,
-                total: finalTotal,
-                paymentMethod: paymentMethod, // 'COD' or 'Online'
-                specialInstructions: orderInstructions || ''
-            };
+            if (paymentMethod === 'COD') {
+                // --- Cash on Delivery: create order directly ---
+                const orderData = {
+                    addressId: selectedAddress.id,
+                    storeId: selectedStore.id,
+                    items: items,
+                    subtotal: totalAmount,
+                    tax: tax,
+                    deliveryFee: deliveryFee,
+                    discount: 0,
+                    total: finalTotal,
+                    paymentMethod: 'COD',
+                    specialInstructions: orderInstructions || ''
+                };
 
-            console.log("Order Payload:", JSON.stringify(orderData, null, 2));
-
-            await orderService.createOrder(orderData);
-            
-            Alert.alert("Success", "Order placed successfully!", [
-                { 
-                    text: "OK", 
-                    onPress: () => {
-                        clearCart();
-                        navigation.reset({
-                            index: 0,
-                            routes: [{ name: 'MainTabs' }, { name: 'MyOrders' }],
-                        });
+                console.log("COD Order Payload:", JSON.stringify(orderData, null, 2));
+                await orderService.createOrder(orderData);
+                
+                Alert.alert("Success", "Order placed successfully!", [
+                    { 
+                        text: "OK", 
+                        onPress: () => {
+                            clearCart();
+                            navigation.reset({
+                                index: 0,
+                                routes: [{ name: 'MainTabs' }, { name: 'MyOrders' }],
+                            });
+                        }
                     }
-                }
-            ]);
+                ]);
+            } else {
+                // --- Online Payment: PhonePe flow ---
+                console.log("Initiating PhonePe payment session...");
+                
+                const sessionResponse = await paymentService.initiateSession(
+                    finalTotal,
+                    selectedAddress.phoneNumber || undefined
+                );
+
+                console.log("PhonePe session created:", JSON.stringify(sessionResponse));
+
+                // Prepare order data for after payment
+                const pendingOrderData: PendingOrderData = {
+                    addressId: selectedAddress.id,
+                    storeId: selectedStore.id,
+                    subtotal: totalAmount,
+                    tax: tax,
+                    deliveryFee: deliveryFee,
+                    discount: 0,
+                    total: finalTotal,
+                    specialInstructions: orderInstructions || '',
+                    items: items.map(item => ({
+                        productId: item.productId,
+                        productName: item.productName,
+                        quantity: item.quantity,
+                        unitPrice: item.unitPrice,
+                        totalPrice: item.totalPrice,
+                        modifiers: item.modifiers || '',
+                        specialInstructions: item.specialInstructions || '',
+                        size: item.size || null,
+                        crust: item.crust || null,
+                    })),
+                };
+
+                // Navigate to the WebView payment screen
+                navigation.navigate('PaymentWebView', {
+                    url: sessionResponse.redirectUrl,
+                    transactionId: sessionResponse.transactionId,
+                    orderData: pendingOrderData,
+                });
+            }
 
         } catch (error: any) {
-            console.error("Order placement failed", error);
+            console.error("Order/Payment failed", error);
             
-            let errorMessage = "Failed to place order. Please try again.";
+            let errorMessage = "Failed to process your order. Please try again.";
             if (error.response?.data) {
                 console.log("API Error Data:", error.response.data);
                 if (typeof error.response.data === 'string') {
@@ -337,7 +379,7 @@ const CheckoutScreen = () => {
                                 ) : (
                                     <Circle size={20} color="#9ca3af" />
                                 )}
-                                <Text style={styles.paymentText}>Online Payment (Mock)</Text>
+                                <Text style={styles.paymentText}>Pay Online (PhonePe)</Text>
                             </View>
                         </TouchableOpacity>
                     </View>
