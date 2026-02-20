@@ -20,6 +20,7 @@ import { useCart } from '../context/CartContext';
 type PaymentWebViewRouteProp = RouteProp<AuthStackParamList, 'PaymentWebView'>;
 
 const REDIRECT_URL = 'https://api.nsenterprise.net'; // Base domain to detect redirect
+const FALLBACK_REDIRECT_URL = 'http://localhost:5173'; // Current backend local redirect
 
 const PaymentWebViewScreen = () => {
     const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
@@ -42,28 +43,31 @@ const PaymentWebViewScreen = () => {
 
         try {
             // Step 1: Verify the payment
+            console.log('[PaymentWebView] Verifying payment for TX:', transactionId);
             const verifyResult = await paymentService.verifyPayment(transactionId);
             console.log('[PaymentWebView] Verify result:', JSON.stringify(verifyResult));
 
             const status = (verifyResult.status || '').toUpperCase();
 
-            if (status === 'SUCCESS' || status === 'COMPLETED' || status === 'PAYMENT_SUCCESS') {
+            // Handle various success status strings
+            if (status === 'SUCCESS' || status === 'COMPLETED' || status === 'PAYMENT_SUCCESS' || status === 'PAID') {
                 // Step 2: Create the order
                 try {
                     await paymentService.createOrderAfterPayment(transactionId, orderData);
                     setPaymentResult('success');
                 } catch (orderError) {
                     console.error('[PaymentWebView] Order creation failed after successful payment:', orderError);
-                    // Payment succeeded but order creation failed - still show success
-                    // The backend should handle this gracefully  
+                    // If payment succeeded but order creation failed, we might want to still show success 
+                    // or a help message. For now, showing success as the money is taken.
                     setPaymentResult('success');
                 }
             } else if (status === 'PENDING') {
                 // Payment still pending — poll again after a delay
+                console.log('[PaymentWebView] Status PENDING, will poll again...');
                 hasHandledRedirect.current = false;
                 setTimeout(() => handlePaymentVerification(), 3000);
-                return;
             } else {
+                console.log('[PaymentWebView] Payment status non-success:', status);
                 setPaymentResult('failure');
             }
         } catch (error) {
@@ -76,10 +80,16 @@ const PaymentWebViewScreen = () => {
 
     const handleNavigationChange = (navState: any) => {
         const { url: currentUrl } = navState;
+        if (!currentUrl) return;
+        
         console.log('[PaymentWebView] Navigation:', currentUrl);
 
-        // Detect when PhonePe redirects back to our redirect URL
-        if (currentUrl && currentUrl.startsWith(REDIRECT_URL) && !hasHandledRedirect.current) {
+        // Detect when PhonePe redirects back to our redirect URL (Production OR Fallback)
+        const isMatchedRedirect = currentUrl.startsWith(REDIRECT_URL) || currentUrl.startsWith(FALLBACK_REDIRECT_URL);
+        const isResultPath = currentUrl.includes('payment-result');
+
+        if ((isMatchedRedirect || isResultPath) && !hasHandledRedirect.current) {
+            console.log('[PaymentWebView] Detected redirect path, triggering verification...');
             handlePaymentVerification();
         }
     };
@@ -124,7 +134,7 @@ const PaymentWebViewScreen = () => {
                     <ActivityIndicator size="large" color="#3c7d48" />
                     <Text style={styles.processingTitle}>Verifying Payment</Text>
                     <Text style={styles.processingSubtitle}>
-                        Please wait while we confirm your payment...
+                        Please wait while we confirm your payment with PhonePe...
                     </Text>
                 </View>
             </SafeAreaView>
@@ -159,12 +169,15 @@ const PaymentWebViewScreen = () => {
                     <View style={styles.failureIconWrapper}>
                         <AlertTriangle size={64} color="#ef4444" />
                     </View>
-                    <Text style={styles.failureTitle}>Payment Failed</Text>
+                    <Text style={styles.failureTitle}>Payment Issue</Text>
                     <Text style={styles.failureSubtitle}>
-                        Your payment could not be completed. Please try again or choose a different payment method.
+                        We couldn't confirm your payment. If money was debited, please contact support with Transaction ID: {transactionId}
                     </Text>
-                    <TouchableOpacity style={styles.retryBtn} onPress={handleRetry}>
-                        <Text style={styles.retryBtnText}>TRY AGAIN</Text>
+                    <TouchableOpacity style={styles.retryBtn} onPress={() => {
+                        hasHandledRedirect.current = false;
+                        handlePaymentVerification();
+                    }}>
+                        <Text style={styles.retryBtnText}>CHECK STATUS AGAIN</Text>
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.cancelBtn} onPress={() => navigation.goBack()}>
                         <Text style={styles.cancelBtnText}>Go Back to Checkout</Text>
@@ -213,13 +226,19 @@ const PaymentWebViewScreen = () => {
                 userAgent="Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
                 onError={(syntheticEvent) => {
                     const { nativeEvent } = syntheticEvent;
-                    console.error('[PaymentWebView] WebView error:', nativeEvent);
+                    console.log('[PaymentWebView] WebView error occurred:', nativeEvent.description);
+                    
+                    // If we get an error on a result URL (like localhost refusing connection)
+                    // we should still try to verify because the backend has likely received the status
+                    if (nativeEvent.url && (nativeEvent.url.includes('payment-result') || nativeEvent.url.includes('localhost')) && !hasHandledRedirect.current) {
+                        console.log('[PaymentWebView] Error on result URL, triggering verification fallback...');
+                        handlePaymentVerification();
+                    }
                 }}
                 onHttpError={(syntheticEvent) => {
                     const { nativeEvent } = syntheticEvent;
                     console.log('[PaymentWebView] HTTP error:', nativeEvent.statusCode, nativeEvent.url);
-                    // If the redirect URL returns an error, it might be from PhonePe callback
-                    if (nativeEvent.url && nativeEvent.url.startsWith(REDIRECT_URL) && !hasHandledRedirect.current) {
+                    if (nativeEvent.url && (nativeEvent.url.includes('payment-result') || nativeEvent.url.includes('localhost')) && !hasHandledRedirect.current) {
                         handlePaymentVerification();
                     }
                 }}
