@@ -30,6 +30,35 @@ const EditProfileScreen = () => {
   const [gender, setGender] = useState(user?.gender || '');
   const [loading, setLoading] = useState(false);
 
+  // Auto-format DOB input to YYYY-MM-DD
+  const handleDobChange = (text: string) => {
+    // Strip everything except digits
+    const digits = text.replace(/\D/g, '');
+    let formatted = '';
+    if (digits.length <= 4) {
+      formatted = digits;
+    } else if (digits.length <= 6) {
+      formatted = `${digits.slice(0, 4)}-${digits.slice(4)}`;
+    } else {
+      formatted = `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6, 8)}`;
+    }
+    setDob(formatted);
+  };
+
+  // Auto-format phone number to US format (XXX) XXX-XXXX
+  const handlePhoneChange = (text: string) => {
+    const digits = text.replace(/\D/g, '');
+    let formatted = '';
+    if (digits.length <= 3) {
+      formatted = digits;
+    } else if (digits.length <= 6) {
+      formatted = `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+    } else {
+      formatted = `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6, 10)}`;
+    }
+    setPhoneNumber(formatted);
+  };
+
   const handleSave = async () => {
     if (!fullName.trim() || !phoneNumber.trim()) {
       Alert.alert('Error', 'Name and Phone Number are required.');
@@ -40,7 +69,7 @@ const EditProfileScreen = () => {
     try {
       const updatedUser = await authService.updateProfile({
         fullName,
-        phoneNumber,
+        phoneNumber: phoneNumber.replace(/\D/g, ''),
         email,
         dob,
         gender,
@@ -103,10 +132,11 @@ const EditProfileScreen = () => {
             <TextInput
               style={styles.input}
               value={phoneNumber}
-              onChangeText={setPhoneNumber}
-              placeholder="Enter your phone number"
+              onChangeText={handlePhoneChange}
+              placeholder="(123) 456-7890"
               keyboardType="phone-pad"
               placeholderTextColor="#9ca3af"
+              maxLength={14}
             />
           </View>
         </View>
@@ -135,9 +165,11 @@ const EditProfileScreen = () => {
             <TextInput
               style={styles.input}
               value={dob}
-              onChangeText={setDob}
+              onChangeText={handleDobChange}
               placeholder="YYYY-MM-DD"
               placeholderTextColor="#9ca3af"
+              keyboardType="number-pad"
+              maxLength={10}
             />
           </View>
         </View>

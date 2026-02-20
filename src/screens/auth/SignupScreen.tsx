@@ -4,13 +4,13 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
   ScrollView,
   StatusBar,
   Platform,
   KeyboardAvoidingView,
   Dimensions,
   Alert,
+  Linking,
 } from 'react-native';
 import { Pizza, User, Mail, Phone, Lock, Eye, EyeOff } from 'lucide-react-native';
 
@@ -34,9 +34,72 @@ const SignupScreen = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Auto-format phone number to US format (XXX) XXX-XXXX
+  const handlePhoneChange = (text: string) => {
+    const digits = text.replace(/\D/g, '');
+    let formatted = '';
+    if (digits.length <= 3) {
+      formatted = digits;
+    } else if (digits.length <= 6) {
+      formatted = `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+    } else {
+      formatted = `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6, 10)}`;
+    }
+    setPhoneNumber(formatted);
+  };
+  
+  // Validation State
+  const [touched, setTouched] = useState<{ [key: string]: boolean }>({});
+
+  const getValidationErrors = (values: { fullName: string, email: string, phoneNumber: string, password: string }) => {
+    let newErrors: { [key: string]: string } = {};
+
+    // Full Name Validation
+    if (!values.fullName.trim()) {
+      newErrors.fullName = 'Full Name is required';
+    } else if (values.fullName.trim().length < 3) {
+      newErrors.fullName = 'Full Name must be at least 3 characters';
+    }
+
+    // Email Validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!values.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!emailRegex.test(values.email)) {
+      newErrors.email = 'Please enter a valid email address';
+    }
+
+    // Phone Validation (USA Format - 10 digits)
+    const phoneRegex = /^\d{10}$/;
+    if (!values.phoneNumber.trim()) {
+      newErrors.phoneNumber = 'Phone Number is required';
+    } else if (!phoneRegex.test(values.phoneNumber.replace(/\D/g, ''))) {
+       newErrors.phoneNumber = 'Please enter a valid 10-digit phone number';
+    }
+
+    // Password Validation (Strict)
+    const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
+    if (!values.password) {
+      newErrors.password = 'Password is required';
+    } else if (!passwordRegex.test(values.password)) {
+      newErrors.password = '8+ chars, 1 Uppercase, 1 Number, 1 Symbol (!@#$%)';
+    }
+
+    return newErrors;
+  };
+
+  const errors = getValidationErrors({ fullName, email, phoneNumber, password });
+
   const handleSignup = async () => {
-    if (!fullName || !email || !phoneNumber || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
+    // specific check: if any error exists key length > 0
+    if (Object.keys(errors).length > 0) {
+      // Mark all as touched to show errors
+      setTouched({
+        fullName: true,
+        email: true,
+        phoneNumber: true,
+        password: true,
+      });
       return;
     }
 
@@ -45,7 +108,7 @@ const SignupScreen = () => {
       const response = await authService.register({
         fullName,
         email,
-        phoneNumber,
+        phoneNumber: phoneNumber.replace(/\D/g, ''),
         password
       });
       
@@ -67,9 +130,17 @@ const SignupScreen = () => {
     }
   };
 
+  const handleBlur = (field: string) => {
+      setTouched((prev) => ({ ...prev, [field]: true }));
+  };
+
   return (
     <View style={styles.mainContainer}>
-      <StatusBar barStyle="light-content" backgroundColor="#2d6a3a" />
+      <StatusBar barStyle="light-content" backgroundColor="#3c7d48" />
+      {/* 
+        Using KeyboardAvoidingView to ensure inputs are visible when keyboard is open.
+        Platform-specific behavior is needed.
+      */}
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
@@ -94,23 +165,25 @@ const SignupScreen = () => {
             {/* Full Name */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>FULL NAME</Text>
-              <View style={styles.inputWrapper}>
-                <User size={20} color="#9ca3af" style={styles.inputIcon} />
+              <View style={[styles.inputWrapper, touched.fullName && errors.fullName && styles.inputError]}>
+                <User size={20} color={touched.fullName && errors.fullName ? "#ef4444" : "#9ca3af"} style={styles.inputIcon} />
                 <TextInput
                   placeholder="e.g. John Doe"
                   style={styles.input}
                   placeholderTextColor="#9ca3af"
                   value={fullName}
                   onChangeText={setFullName}
+                  onBlur={() => handleBlur('fullName')}
                 />
               </View>
+              {touched.fullName && errors.fullName && <Text style={styles.errorText}>{errors.fullName}</Text>}
             </View>
 
             {/* Email */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>EMAIL ADDRESS</Text>
-              <View style={styles.inputWrapper}>
-                <Mail size={20} color="#9ca3af" style={styles.inputIcon} />
+              <View style={[styles.inputWrapper, touched.email && errors.email && styles.inputError]}>
+                <Mail size={20} color={touched.email && errors.email ? "#ef4444" : "#9ca3af"} style={styles.inputIcon} />
                 <TextInput
                   placeholder="name@example.com"
                   keyboardType="email-address"
@@ -119,31 +192,36 @@ const SignupScreen = () => {
                   autoCapitalize="none"
                   value={email}
                   onChangeText={setEmail}
+                  onBlur={() => handleBlur('email')}
                 />
               </View>
+              {touched.email && errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
             </View>
 
             {/* Phone */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>PHONE NUMBER</Text>
-              <View style={styles.inputWrapper}>
-                <Phone size={20} color="#9ca3af" style={styles.inputIcon} />
+              <View style={[styles.inputWrapper, touched.phoneNumber && errors.phoneNumber && styles.inputError]}>
+                <Phone size={20} color={touched.phoneNumber && errors.phoneNumber ? "#ef4444" : "#9ca3af"} style={styles.inputIcon} />
                 <TextInput
                   placeholder="(555) 000-0000"
                   keyboardType="phone-pad"
                   style={styles.input}
                   placeholderTextColor="#9ca3af"
                   value={phoneNumber}
-                  onChangeText={setPhoneNumber}
+                  onChangeText={handlePhoneChange}
+                  onBlur={() => handleBlur('phoneNumber')}
+                  maxLength={14}
                 />
               </View>
+               {touched.phoneNumber && errors.phoneNumber && <Text style={styles.errorText}>{errors.phoneNumber}</Text>}
             </View>
 
             {/* Password */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>PASSWORD</Text>
-              <View style={styles.inputWrapper}>
-                <Lock size={20} color="#9ca3af" style={styles.inputIcon} />
+              <View style={[styles.inputWrapper, touched.password && errors.password && styles.inputError]}>
+                <Lock size={20} color={touched.password && errors.password ? "#ef4444" : "#9ca3af"} style={styles.inputIcon} />
                 <TextInput
                   placeholder="At least 8 characters"
                   secureTextEntry={secure}
@@ -151,6 +229,7 @@ const SignupScreen = () => {
                   placeholderTextColor="#9ca3af"
                   value={password}
                   onChangeText={setPassword}
+                  onBlur={() => handleBlur('password')}
                 />
                 
                 <TouchableOpacity onPress={() => setSecure(!secure)} style={styles.eyeIcon}>
@@ -161,6 +240,7 @@ const SignupScreen = () => {
                   )}
                 </TouchableOpacity>
               </View>
+              {touched.password && errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
             </View>
 
             {/* Create Account Button */}
@@ -175,8 +255,18 @@ const SignupScreen = () => {
             {/* Terms */}
             <Text style={styles.termsText}>
               By creating an account, you agree to La Pino'z{' '}
-              <Text style={styles.linkText}>Terms of Service</Text> and{' '}
-              <Text style={styles.linkText}>Privacy Policy</Text>.
+              <Text 
+                style={styles.linkText}
+                onPress={() => Linking.openURL('https://www.lapinozusa.com/terms')}
+              >
+                Terms of Service
+              </Text> and{' '}
+              <Text 
+                style={styles.linkText}
+                onPress={() => Linking.openURL('https://www.lapinozusa.com/privacy')}
+              >
+                Privacy Policy
+              </Text>.
             </Text>
 
             {/* Already have an account? Login */}
@@ -193,128 +283,6 @@ const SignupScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  mainContainer: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  scrollContent: {
-    flexGrow: 1,
-  },
-  heroContainer: {
-    backgroundColor: '#3c7d48',
-    paddingTop: Platform.OS === 'android' ? 48 : 60,
-    paddingBottom: 36,
-    paddingHorizontal: 24,
-    borderBottomLeftRadius: 28,
-    borderBottomRightRadius: 28,
-  },
-  heroBrandRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 20,
-  },
-  heroBrandText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  heroTitle: {
-    fontSize: 28,
-    fontWeight: '900',
-    color: '#fff',
-    marginBottom: 8,
-  },
-  heroSubtitle: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.8)',
-    fontWeight: '500',
-    lineHeight: 20,
-  },
-  formContainer: {
-    paddingHorizontal: 24,
-    paddingTop: 28,
-  },
-  inputGroup: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#9ca3af',
-    marginBottom: 8,
-    letterSpacing: 0.5,
-  },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    borderRadius: 12,
-    height: 52,
-  },
-  inputIcon: {
-    marginLeft: 16,
-    marginRight: 12,
-  },
-  input: {
-    flex: 1,
-    height: '100%',
-    fontSize: 15,
-    color: '#1b0d0e',
-  },
-  eyeIcon: {
-    padding: 10,
-    marginRight: 4,
-  },
-  mainButton: {
-    backgroundColor: '#3c7d48',
-    height: 56,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#3c7d48',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
-    marginTop: 4,
-    marginBottom: 16,
-  },
-  mainButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
-  termsText: {
-    fontSize: 12,
-    color: '#9ca3af',
-    textAlign: 'center',
-    lineHeight: 18,
-    paddingHorizontal: 10,
-    marginBottom: 20,
-  },
-  linkText: {
-    color: '#4b5563',
-    fontWeight: '700',
-    textDecorationLine: 'underline',
-  },
-  loginLinkContainer: {
-    alignSelf: 'center',
-    marginBottom: 30,
-  },
-  loginLinkText: {
-    color: '#6b7280',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  loginLinkHighlight: {
-    color: '#3c7d48',
-    fontWeight: '700',
-  },
-});
+import { styles } from './SignupScreen.styles';
 
 export default SignupScreen;
