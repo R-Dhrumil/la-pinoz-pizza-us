@@ -60,8 +60,25 @@ const EditProfileScreen = () => {
   };
 
   const handleSave = async () => {
+    const nameRegex = /^[a-zA-Z\s\-']+$/;
+    
     if (!fullName.trim() || !phoneNumber.trim()) {
       Alert.alert('Error', 'Name and Phone Number are required.');
+      return;
+    }
+
+    if (fullName.trim().length < 3) {
+      Alert.alert('Error', 'Full Name must be at least 3 characters.');
+      return;
+    }
+
+    if (fullName.trim().length > 50) {
+      Alert.alert('Error', 'Full Name must be less than 50 characters.');
+      return;
+    }
+
+    if (!nameRegex.test(fullName.trim())) {
+      Alert.alert('Error', 'Please enter a valid name without special characters or numbers.');
       return;
     }
 

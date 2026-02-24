@@ -179,7 +179,7 @@ const ProductDetailScreen = () => {
         id: uniqueIdParts.join('-'),
         name: selectedVariant ? `${item.name} (${selectedVariant.size})` : item.name,
         price: Number(calculateTotal())/quantity, // Unit price
-        image: item.imageUrl || 'https://via.placeholder.com/150',
+        image: item.imageUrl || '',
         isVeg: item.isVeg,
         description: item.description,
         variant: selectedVariant,
@@ -213,7 +213,7 @@ const ProductDetailScreen = () => {
         
         {/* Header Image */}
         <View style={styles.imageContainer}>
-          <Image source={{ uri: item.imageUrl || 'https://via.placeholder.com/150' }} style={styles.image} />
+          <Image source={item.imageUrl ? { uri: item.imageUrl } : require('../assets/images/pizza_placeholder.jpg')} style={[styles.image, !item.imageUrl && { resizeMode: 'contain' }]} />
           <TouchableOpacity 
             style={styles.closeButton} 
             onPress={() => navigation.goBack()}

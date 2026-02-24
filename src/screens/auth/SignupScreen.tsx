@@ -12,6 +12,7 @@ import {
   Alert,
   Linking,
 } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { Pizza, User, Mail, Phone, Lock, Eye, EyeOff } from 'lucide-react-native';
 
 import { useNavigation } from '@react-navigation/native';
@@ -55,10 +56,15 @@ const SignupScreen = () => {
     let newErrors: { [key: string]: string } = {};
 
     // Full Name Validation
+    const nameRegex = /^[a-zA-Z\s\-']+$/;
     if (!values.fullName.trim()) {
       newErrors.fullName = 'Full Name is required';
     } else if (values.fullName.trim().length < 3) {
       newErrors.fullName = 'Full Name must be at least 3 characters';
+    } else if (values.fullName.trim().length > 50) {
+      newErrors.fullName = 'Full Name must be less than 50 characters';
+    } else if (!nameRegex.test(values.fullName.trim())) {
+      newErrors.fullName = 'Please enter a valid name without special characters or numbers';
     }
 
     // Email Validation
@@ -137,18 +143,12 @@ const SignupScreen = () => {
   return (
     <View style={styles.mainContainer}>
       <StatusBar barStyle="light-content" backgroundColor="#3c7d48" />
-      {/* 
-        Using KeyboardAvoidingView to ensure inputs are visible when keyboard is open.
-        Platform-specific behavior is needed.
-      */}
-      <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={{ flex: 1 }}
+      <KeyboardAwareScrollView 
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        enableOnAndroid={true}
+        extraScrollHeight={20}
       >
-        <ScrollView 
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-        >
           {/* Hero Header */}
           <View style={styles.heroContainer}>
             <View style={styles.heroBrandRow}>
@@ -277,8 +277,7 @@ const SignupScreen = () => {
             </TouchableOpacity>
 
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+        </KeyboardAwareScrollView>
     </View>
   );
 };

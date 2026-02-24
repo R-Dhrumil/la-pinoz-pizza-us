@@ -12,6 +12,7 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
@@ -98,7 +99,7 @@ const LoginScreen = () => {
     
       
       {/* Top Header Bar */}
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+      <KeyboardAwareScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled" enableOnAndroid={true} extraScrollHeight={20}>
         {/* Hero Section */}
         <View style={styles.heroContainer}>
             <ImageBackground
@@ -184,7 +185,7 @@ const LoginScreen = () => {
                 </Text>
             </TouchableOpacity>
           </View>
-    </ScrollView>
+    </KeyboardAwareScrollView>
   </View>
   );
 };

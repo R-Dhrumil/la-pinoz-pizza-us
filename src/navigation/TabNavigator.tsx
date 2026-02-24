@@ -1,6 +1,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import HomeScreen from '../screens/HomeScreen';
 import MenuScreen from '../screens/MenuScreen';
 import CartScreen from '../screens/CartScreen';
@@ -10,6 +11,9 @@ import { Home, Menu, ShoppingCart, User } from 'lucide-react-native';
 const Tab = createBottomTabNavigator();
 
 const TabNavigator = () => {
+  const insets = useSafeAreaInsets();
+  const paddingBottom = Math.max(insets.bottom, Platform.OS === 'ios' ? 20 : 10);
+
   return (
     <Tab.Navigator
       screenOptions={{
@@ -18,8 +22,8 @@ const TabNavigator = () => {
           backgroundColor: '#fff',
           borderTopWidth: 1,
           borderTopColor: '#f3f4f6',
-          height: 70,
-          paddingBottom: 10,
+          height: 60 + paddingBottom,
+          paddingBottom: paddingBottom,
           paddingTop: 10,
         },
         tabBarActiveTintColor: '#3c7d48',

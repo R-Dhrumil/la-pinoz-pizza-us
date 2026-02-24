@@ -210,39 +210,7 @@ const HomeScreen = () => {
             </View>
         </View>
 
-        {/* Top Categories */}
-        <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Top Categories</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryScroll}>
-                {categories.length > 0 ? (
-                    categories.map((cat) => (
-                        <CategoryItem 
-                            key={cat.id} 
-                            // Use API image, fallback to Pizza icon if fails or empty
-                            icon={
-                                cat.imageUrl ? (
-                                    <Image 
-                                        source={{ uri: cat.imageUrl }} 
-                                        style={{ width: 64, height: 64, borderRadius: 32, resizeMode: 'cover' }} 
-                                    />
-                                ) : (
-                                    <Pizza size={32} color="#3c7d48" />
-                                )
-                            } 
-                            name={cat.name} 
-                            // Highlight first category as example, or manage active state
-                            active={false} 
-                            onPress={() => navigation.navigate('Menu' as any, { categoryId: cat.id })}
-                        />
-                    ))
-                ) : (
-                    // Loading / Fallback state
-                    <View style={{ padding: 10 }}>
-                        <Text style={{ color: '#aaa'}}>Loading categories...</Text>
-                    </View>
-                )}
-            </ScrollView>
-        </View>
+
 
         {/* Best Sellers */}
         {bestSellers.length > 0 && (
@@ -280,17 +248,17 @@ const HomeScreen = () => {
 
         {/* Explore Menu */}
         <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Explore Our Menu</Text>
-            <View style={{ gap: 16 }}>
-                <ExplorationCard 
-                    image="https://lh3.googleusercontent.com/aida-public/AB6AXuArhpRY-0nyLHzV1F4lzmIvMxXn22ZqY8diImVmQWs2C3EtC6EY9l_KVanQ5d4M-kjWUy_jUIJWl7r956NH2_INqlrBluBwSdWEz2EmIUl4nEvfeWyZsmdbTyI-rT_a2oUQXI1I8zFYp_SOhQyVbRTSkulvF_dk1HjkAoOTJB_PR3WM-jfQ2v3zPgGYrGtezFyONXEi8BhhzCQQhJPYnzjxneE4HDNSHhM72GoEB50kH9NYdKIK0flWFJpTU757cfDsHlisavMj4tDy"
-                    title="THE GIANT PIZZA"
-                    subtitle="Feed the whole crew"
-                    buttonText="Order Now"
-                    btnStyle="primary"
-                    onPress={() => navigation.navigate('Menu' as any)}
-                />
-                
+            <Text style={[styles.sectionTitle, { textTransform: 'uppercase', textAlign: 'center', marginVertical: 8 }]}>Explore Menu</Text>
+            <View style={styles.exploreGrid}>
+                {categories.map((cat, index) => {
+                    return (
+                        <ExploreGridCard
+                            key={cat.id}
+                            category={cat}
+                            onPress={() => navigation.navigate('CategoryProducts' as any, { category: cat })}
+                        />
+                    );
+                })}
             </View>
         </View>
 
@@ -407,28 +375,27 @@ const BestSellerCard = ({item, onAdd}: {item: any, onAdd: () => void}) => (
     </View>
 );
 
-const ExplorationCard = ({image, title, subtitle, buttonText, btnStyle, onPress}: any) => (
-    <View style={styles.exploreCard}>
-        <ImageBackground source={{uri: image}} style={styles.exploreBg}>
-             <View style={styles.exploreOverlay}>
-                 <View style={styles.exploreContent}>
-                     <Text style={styles.exploreTitle}>{title}</Text>
-                     <Text style={styles.exploreSubtitle}>{subtitle}</Text>
-                     <TouchableOpacity 
-                         onPress={onPress}
-                         style={[
-                         styles.exploreBtn, 
-                         btnStyle === 'white' ? styles.exploreBtnWhite : styles.exploreBtnPrimary
-                     ]}>
-                         <Text style={[
-                             styles.exploreBtnText,
-                             btnStyle === 'white' ? {color: '#3c7d48'} : {color: '#fff'}
-                         ]}>{buttonText}</Text>
-                     </TouchableOpacity>
-                 </View>
-             </View>
-        </ImageBackground>
-    </View>
+const ExploreGridCard = ({category, tagText, tagColor, onPress}: any) => (
+    <TouchableOpacity style={styles.exploreGridCard} onPress={onPress} activeOpacity={0.9}>
+        <View style={styles.exploreGridImageContainer}>
+            <ImageBackground 
+                source={category.imageUrl ? { uri: category.imageUrl } : require('../assets/images/pizza_placeholder.jpg')} 
+                style={styles.exploreGridImage}
+                imageStyle={{ borderTopLeftRadius: 16, borderTopRightRadius: 16, borderBottomLeftRadius: 16, borderBottomRightRadius: 16, resizeMode: category.imageUrl ? 'cover' : 'contain' }}
+            >
+                {tagText ? (
+                    <View style={[styles.exploreGridTag, { backgroundColor: tagColor }]}>
+                        <Text style={styles.exploreGridTagText}>{tagText}</Text>
+                    </View>
+                ) : null}
+            </ImageBackground>
+            <View style={styles.exploreGridFooter}>
+                <Text style={styles.exploreGridTitle} numberOfLines={2}>
+                    {category.name}
+                </Text>
+            </View>
+        </View>
+    </TouchableOpacity>
 );
 
 const PromiseItem = ({icon, title, desc, iconBgColor}: any) => (
@@ -700,54 +667,62 @@ const styles = StyleSheet.create({
       fontSize: 10,
       fontWeight: 'bold',
   },
-  exploreCard: {
-      height: 160,
-      borderRadius: 16,
-      overflow: 'hidden',
-      shadowColor: '#000',
-      shadowOpacity: 0.1,
-      shadowRadius: 8,
-      elevation: 3,
+  exploreGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'space-between',
+      paddingHorizontal: 4,
+      marginTop: 8,
   },
-  exploreBg: {
-      flex: 1,
-  },
-  exploreOverlay: {
-      flex: 1,
-      backgroundColor: 'rgba(0,0,0,0.3)', // gradient approximation
-      justifyContent: 'center',
-      padding: 24,
-  },
-  exploreContent: {
-      justifyContent: 'center',
-  },
-  exploreTitle: {
-      fontSize: 20,
-      fontWeight: '900',
-      color: '#fff',
-      textTransform: 'uppercase',
-      fontStyle: 'italic',
-  },
-  exploreSubtitle: {
-      fontSize: 10,
-      color: 'rgba(255,255,255,0.8)',
-      marginBottom: 12,
-  },
-  exploreBtn: {
-      paddingVertical: 8,
-      paddingHorizontal: 16,
-      borderRadius: 8,
-      alignSelf: 'flex-start',
-  },
-  exploreBtnPrimary: {
-      backgroundColor: '#3c7d48',
-  },
-  exploreBtnWhite: {
+  exploreGridCard: {
+      width: '31%', // roughly 1/3 minus gap
       backgroundColor: '#fff',
+      borderRadius: 16,
+      marginBottom: 16,
+      shadowColor: '#000',
+      shadowOpacity: 0.08,
+      shadowRadius: 6,
+      elevation: 3,
+      borderWidth: 1,
+      borderColor: '#f3f4f6',
+      minHeight: 140,
   },
-  exploreBtnText: {
-      fontSize: 10,
+  exploreGridImageContainer: {
+      flex: 1,
+      alignItems: 'center',
+      padding: 4,
+  },
+  exploreGridImage: {
+      width: '100%',
+      aspectRatio: 1, // square image area
+      justifyContent: 'flex-start',
+      alignItems: 'flex-end',
+  },
+  exploreGridTag: {
+      paddingHorizontal: 6,
+      paddingVertical: 4,
+      borderBottomLeftRadius: 8,
+      borderTopRightRadius: 12,
+  },
+  exploreGridTagText: {
+      color: '#fff',
+      fontSize: 7,
       fontWeight: 'bold',
+      textTransform: 'uppercase',
+  },
+  exploreGridFooter: {
+      paddingVertical: 8,
+      paddingHorizontal: 4,
+      width: '100%',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flex: 1,
+  },
+  exploreGridTitle: {
+      fontSize: 11,
+      fontWeight: '600',
+      textAlign: 'center',
+      color: '#374151',
   },
   storyContainer: {
       backgroundColor: '#1a472a', // Even deeper, more premium green

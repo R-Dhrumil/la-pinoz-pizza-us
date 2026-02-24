@@ -110,7 +110,7 @@ const MenuItem = ({ item, onTap }: { item: Product, onTap: () => void }) => {
              </View>
              
              <View style={styles.imageContainer}>
-                 <Image source={{ uri: item?.imageUrl || 'https://via.placeholder.com/150' }} style={styles.itemImage} />
+                 <Image source={item?.imageUrl ? { uri: item.imageUrl } : require('../assets/images/pizza_placeholder.jpg')} style={[styles.itemImage, !item?.imageUrl && { resizeMode: 'contain' }]} />
                  <View style={styles.addButtonContainer}>
                      {quantity > 0 && !isExternal ? (
                         <View style={styles.qtyContainer}>
