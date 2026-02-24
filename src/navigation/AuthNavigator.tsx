@@ -17,12 +17,13 @@ import CheckoutScreen from '../screens/CheckoutScreen';
 import PaymentWebViewScreen from '../screens/PaymentWebViewScreen';
 import { Product, ProductVariant } from '../services/categoryService';
 import { PendingOrderData } from '../services/paymentService';
-
+import { Category } from '../services/categoryService';
 
 export type AuthStackParamList = {
   Login: undefined;
   Signup: undefined;
   MainTabs: undefined; // Replaces 'Home'
+  CategoryProducts: { category: Category };
   ProductDetail: { 
     item: Product;
     editMode?: boolean;
@@ -49,7 +50,7 @@ const Stack = createNativeStackNavigator<AuthStackParamList>();
 const AuthNavigator = () => {
   return (
     <Stack.Navigator
-      initialRouteName="Login"
+      initialRouteName="MainTabs"
       screenOptions={{
         headerShown: false,
         animation: 'slide_from_right'
@@ -58,6 +59,11 @@ const AuthNavigator = () => {
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Signup" component={SignupScreen} />
       <Stack.Screen name="MainTabs" component={TabNavigator} />
+      <Stack.Screen 
+        name="CategoryProducts" 
+        component={require('../screens/CategoryProductsScreen').default} 
+        options={{ animation: 'slide_from_right' }}
+      />
       <Stack.Screen 
         name="ProductDetail" 
         component={ProductDetailScreen} 

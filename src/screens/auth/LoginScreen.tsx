@@ -178,22 +178,20 @@ const LoginScreen = () => {
             </TouchableOpacity>
 
              {/* Optional: Add Sign Up link since the plan mentioned connecting "Sign Up" */}
-             <TouchableOpacity style={{alignSelf: 'center', marginTop: 20}} onPress={() => navigation.navigate('Signup')}>
+            <TouchableOpacity style={{alignSelf: 'center', marginTop: 20}} onPress={() => navigation.navigate('Signup')}>
                 <Text style={{color: '#6b7280', fontSize: 14, fontWeight: '600'}}>
                     Don't have an account? <Text style={{color: '#3c7d48'}}>Sign Up</Text>
                 </Text>
             </TouchableOpacity>
-
-        </View>
+          </View>
     </ScrollView>
-
-    </View>
+  </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     backgroundColor: '#fff',
   },
 

@@ -15,6 +15,7 @@ import {
   Alert,
   RefreshControl,
   Linking,
+  Modal,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -51,9 +52,9 @@ const MenuScreen = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<number | null>(null);
   
-  // Search state
-  const [isSearchVisible, setIsSearchVisible] = useState(false);
+  // Search & Modal state
   const [searchQuery, setSearchQuery] = useState('');
+  const [isMenuModalVisible, setIsMenuModalVisible] = useState(false);
   const searchInputRef = useRef<TextInput>(null);
 
   // Simple scroll ref to jump to sections (visual only for MVP)
@@ -181,17 +182,6 @@ const MenuScreen = () => {
       return <Utensils size={18} />;
   };
 
-  const handleSearchToggle = () => {
-      if (isSearchVisible) {
-          setIsSearchVisible(false);
-          setSearchQuery('');
-      } else {
-          setIsSearchVisible(true);
-          // Focus input after render
-          setTimeout(() => searchInputRef.current?.focus(), 100);
-      }
-  };
-
   // Filter categories based on search
   const filteredCategories = categories.map(category => {
       // If no search, return category as is
@@ -214,50 +204,18 @@ const MenuScreen = () => {
     <PageLayout>
       {/* Header */}
       <View style={styles.header}>
-        {isSearchVisible ? (
-             <View style={styles.searchHeaderContainer}>
-                 <View style={styles.searchBox}>
-                     <Search size={18} color="#6b7280" style={{ marginRight: 8 }} />
-                     <TextInput
-                        ref={searchInputRef}
-                        style={styles.searchInput}
-                        placeholder="Search for items..."
-                        placeholderTextColor="#9ca3af"
-                        value={searchQuery}
-                        onChangeText={setSearchQuery}
-                        returnKeyType="search"
-                     />
-                     {searchQuery.length > 0 && (
-                         <TouchableOpacity onPress={() => setSearchQuery('')}>
-                             <X size={16} color="#6b7280" />
-                         </TouchableOpacity>
-                     )}
-                 </View>
-                 <TouchableOpacity onPress={handleSearchToggle} style={styles.cancelBtn}>
-                     <Text style={styles.cancelText}>Cancel</Text>
-                 </TouchableOpacity>
-             </View>
-        ) : (
-            <>
-                <TouchableOpacity onPress={() => navigation.navigate('StoreLocation')}>
-                <Text style={styles.brandName}>La Pino'z USA</Text>
-                <View style={styles.locationContainer}>
-                    <View style={styles.locationDot} />
-                    <Text style={styles.locationText}>
-                        {selectedStore 
-                        ? `${selectedStore.city}, ${selectedStore.state}` 
-                        : 'Select Location'}
-                    </Text>
-                    <ChevronRight size={12} color="#3c7d48" />
-                </View>
-                </TouchableOpacity>
-                <View style={styles.headerRight}>
-                <TouchableOpacity style={styles.iconBtn} onPress={handleSearchToggle}>
-                    <Search size={20} color="#374151" />
-                </TouchableOpacity>
-                </View>
-            </>
-        )}
+          <TouchableOpacity onPress={() => navigation.navigate('StoreLocation')}>
+          <Text style={styles.brandName}>La Pino'z USA</Text>
+          <View style={styles.locationContainer}>
+              <View style={styles.locationDot} />
+              <Text style={styles.locationText}>
+                  {selectedStore 
+                  ? `${selectedStore.city}, ${selectedStore.state}` 
+                  : 'Select Location'}
+              </Text>
+              <ChevronRight size={12} color="#3c7d48" />
+          </View>
+          </TouchableOpacity>
       </View>
 
       {loading ? (
@@ -274,32 +232,6 @@ const MenuScreen = () => {
           </View>
       ) : (
           <>
-            {/* Category Tabs */}
-            <View style={styles.tabContainer}>
-                <ScrollView 
-                    ref={tabsScrollViewRef}
-                    horizontal 
-                    showsHorizontalScrollIndicator={false} 
-                    contentContainerStyle={styles.tabScroll}
-                >
-                    {filteredCategories.map(category => (
-                        <View 
-                            key={category.id}
-                            onLayout={(event) => {
-                                tabPositions.current[category.id] = event.nativeEvent.layout.x;
-                            }}
-                        >
-                            <TabItem 
-                                imageUrl={category.imageUrl}
-                                icon={getCategoryIcon(category.name)}
-                                name={category.name} 
-                                active={activeTab === category.id} 
-                                onPress={() => handleTabPress(category.id)} 
-                            />
-                        </View>
-                    ))}
-                </ScrollView>
-            </View>
 
             <ScrollView 
                 ref={scrollViewRef}
@@ -347,24 +279,82 @@ const MenuScreen = () => {
           </>
       )}
 
+      {/* Bottom Bar (Search & Menu) anchored */}
+      {selectedStore && !loading && (
+          <View style={styles.anchoredBottomBar}>
+              <View style={styles.floatingSearchContainer}>
+                  <Search size={22} color="#6b7280" />
+                  <TextInput
+                      style={styles.floatingSearchInput}
+                      placeholder="Search Menu"
+                      placeholderTextColor="#9ca3af"
+                      value={searchQuery}
+                      onChangeText={setSearchQuery}
+                      returnKeyType="search"
+                  />
+                  {searchQuery.length > 0 && (
+                      <TouchableOpacity onPress={() => setSearchQuery('')}>
+                          <X size={18} color="#6b7280" />
+                      </TouchableOpacity>
+                  )}
+              </View>
+              <TouchableOpacity style={styles.floatingMenuButton} onPress={() => setIsMenuModalVisible(true)}>
+                  <Text style={styles.floatingMenuText}>Menu</Text>
+              </TouchableOpacity>
+          </View>
+      )}
+
+      {/* Categories Modal */}
+      <Modal visible={isMenuModalVisible} transparent={true} animationType="fade">
+          <TouchableOpacity 
+              style={styles.modalOverlay} 
+              activeOpacity={1} 
+              onPress={() => setIsMenuModalVisible(false)}
+          >
+              <TouchableOpacity activeOpacity={1} style={styles.modalContent}>
+                  <View style={styles.modalHeader}>
+                      <Text style={styles.modalTitle}>Menu</Text>
+                      <TouchableOpacity onPress={() => setIsMenuModalVisible(false)} style={styles.modalCloseBtn}>
+                          <X size={20} color="#000" />
+                      </TouchableOpacity>
+                  </View>
+                  <ScrollView style={styles.modalScroll}>
+                      {categories.map(category => (
+                          <TouchableOpacity 
+                              key={category.id} 
+                              style={styles.modalCategoryItem} 
+                              onPress={() => {
+                                  navigation.navigate('CategoryProducts', { category });
+                                  setIsMenuModalVisible(false);
+                              }}
+                          >
+                              <Text style={[styles.modalCategoryText, activeTab === category.id && styles.modalCategoryTextActive]}>
+                                  {category.name}
+                              </Text>
+                              <Text style={styles.modalCategoryCount}>
+                                  ({category.products?.length || 0})
+                              </Text>
+                          </TouchableOpacity>
+                      ))}
+                  </ScrollView>
+              </TouchableOpacity>
+          </TouchableOpacity>
+      </Modal>
+
     </PageLayout>
   );
 };
 
 // Helper Components
 
-const TabItem = ({ icon, imageUrl, name, active, onPress }: any) => (
-    <TouchableOpacity style={styles.tabItem} onPress={onPress}>
-        <View style={[styles.tabIconContainer, active && styles.tabIconActive]}>
-            {imageUrl ? (
-                <Image source={{ uri: imageUrl }} style={styles.tabImage} />
-            ) : (
-                <View style={styles.fallbackIcon}>
-                   {React.cloneElement(icon, { color: active ? '#3c7d48' : '#6b7280', size: 24 })}
-                </View>
-            )}
-        </View>
-        <Text style={[styles.tabText, active && styles.tabTextActive]} numberOfLines={1}>{name}</Text>
+const TabItem = ({ name, active, onPress }: any) => (
+    <TouchableOpacity 
+        style={[styles.tabItemPill, active && styles.tabItemPillActive]} 
+        onPress={onPress}
+    >
+        <Text style={[styles.tabTextPill, active && styles.tabTextPillActive]} numberOfLines={1}>
+            {name}
+        </Text>
     </TouchableOpacity>
 );
 
@@ -396,22 +386,24 @@ const MenuItem = ({ item, onTap }: { item: Product, onTap: () => void }) => {
 
     return (
         <TouchableOpacity style={styles.menuItem} onPress={onTap} activeOpacity={0.9}>
-             <Image source={{ uri: item.imageUrl || 'https://via.placeholder.com/150' }} style={styles.itemImage} />
              <View style={styles.itemContent}>
-                 <View style={styles.vegIndicatorRow}>
-                     <Image 
-                        source={{ uri: item.isVeg 
-                            ? 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b2/Veg_symbol.svg/1200px-Veg_symbol.svg.png' 
-                            : 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Non_veg_symbol.svg/1024px-Non_veg_symbol.svg.png' 
-                        }} 
-                        style={styles.vegIcon} 
-                     />
-                     <Text style={styles.itemName}>{item.name}</Text>
-                 </View>
-                 <Text style={styles.itemDesc} numberOfLines={2}>{item.description}</Text>
-                 <View style={styles.itemFooter}>
-                     <Text style={styles.itemPrice}>${item.basePrice}</Text>
-                     
+                 <Image 
+                    source={{ uri: item.isVeg 
+                        ? 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b2/Veg_symbol.svg/1200px-Veg_symbol.svg.png' 
+                        : 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Non_veg_symbol.svg/1024px-Non_veg_symbol.svg.png' 
+                    }} 
+                    style={styles.vegIcon} 
+                 />
+                 <Text style={styles.itemName}>{item.name}</Text>
+                 <Text style={styles.itemPrice}>${item.basePrice}</Text>
+                 <Text style={styles.itemDesc} numberOfLines={2}>
+                     {item.description}
+                 </Text>
+             </View>
+             
+             <View style={styles.imageContainer}>
+                 <Image source={{ uri: item.imageUrl || 'https://via.placeholder.com/150' }} style={styles.itemImage} />
+                 <View style={styles.addButtonContainer}>
                      {quantity > 0 && !isExternal ? (
                         <View style={styles.qtyContainer}>
                             <TouchableOpacity style={styles.qtyBtnSmall} onPress={handleRemove}>
@@ -424,10 +416,11 @@ const MenuItem = ({ item, onTap }: { item: Product, onTap: () => void }) => {
                         </View>
                      ) : (
                         <TouchableOpacity 
-                            style={[styles.addButton, isExternal && { backgroundColor: '#ea580c' }]} 
+                            style={[styles.addButton, isExternal && { backgroundColor: '#ea580c', borderColor: '#ea580c' }]} 
                             onPress={handleAdd}
                         >
-                            <Text style={styles.addButtonText}>{isExternal ? 'ORDER' : 'ADD +'}</Text>
+                            <Text style={[styles.addButtonText, isExternal && { color: '#fff' }]}>{isExternal ? 'ORDER' : 'ADD'}</Text>
+                            {!isExternal && <Text style={styles.addButtonPlus}> +</Text>}
                         </TouchableOpacity>
                      )}
                  </View>
@@ -507,54 +500,37 @@ const styles = StyleSheet.create({
   },
   tabContainer: {
       backgroundColor: '#fff',
-      paddingVertical: 16,
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: '#f3f4f6',
   },
   tabScroll: {
       paddingHorizontal: 16,
-      gap: 16,
+      gap: 12,
   },
-  tabItem: {
-      alignItems: 'center',
-      gap: 8,
-      width: 70,
+  tabItemPill: {
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderRadius: 20,
+      borderWidth: 1,
+      borderColor: '#e5e7eb',
+      backgroundColor: '#fff',
   },
-  tabIconContainer: {
-      width: 60,
-      height: 60,
-      borderRadius: 30,
-      backgroundColor: '#f3f4f6',
-      justifyContent: 'center',
-      alignItems: 'center',
-      overflow: 'hidden',
-      borderWidth: 2,
-      borderColor: 'transparent',
-  },
-  tabIconActive: {
+  tabItemPillActive: {
       borderColor: '#3c7d48',
-      backgroundColor: 'rgba(60, 125, 72, 0.1)',
+      backgroundColor: 'rgba(60, 125, 72, 0.08)',
   },
-  tabImage: {
-      width: '100%',
-      height: '100%',
-      resizeMode: 'cover',
-  },
-  fallbackIcon: {
-      justifyContent: 'center',
-      alignItems: 'center',
-  },
-  tabText: {
-      fontSize: 11,
+  tabTextPill: {
+      fontSize: 13,
       fontWeight: '600',
       color: '#6b7280',
-      textAlign: 'center',
   },
-  tabTextActive: {
+  tabTextPillActive: {
       color: '#3c7d48',
-      fontWeight: 'bold',
   },
   content: {
       padding: 16,
-      paddingBottom: 100, // Add bottom padding for better scrolling
+      paddingBottom: 20, // Reduced padding since the bottom bar is no longer floating above
   },
   listSection: {
       marginBottom: 24,
@@ -579,98 +555,108 @@ const styles = StyleSheet.create({
       flexDirection: 'row',
       backgroundColor: '#fff',
       borderRadius: 16,
-      padding: 12,
-      marginBottom: 16,
+      padding: 10,
+      paddingBottom: 15,
+      marginBottom: 10,
       borderWidth: 1,
       borderColor: '#f3f4f6',
-      shadowColor: '#000',
-      shadowOpacity: 0.02,
-      shadowRadius: 4,
-      elevation: 2,
-  },
-  itemImage: {
-      width: 100,
-      height: 100,
-      borderRadius: 12,
-      backgroundColor: '#f3f4f6',
+      justifyContent: 'space-between',
   },
   itemContent: {
       flex: 1,
-      marginLeft: 12,
-      justifyContent: 'center',
+      marginRight: 12,
+      justifyContent: 'flex-start',
   },
-  vegIndicatorRow: {
-      flexDirection: 'row',
+  imageContainer: {
+      width: 110,
       alignItems: 'center',
-      marginBottom: 4,
-      gap: 6,
+      justifyContent: 'flex-start',
+      position: 'relative',
+  },
+  itemImage: {
+      width: 110,
+      height: 105,
+      borderRadius: 12,
+      backgroundColor: '#f3f4f6',
+  },
+  addButtonContainer: {
+      position: 'absolute',
+      bottom: -15,
+      alignSelf: 'center',
+      zIndex: 10,
   },
   vegIcon: {
-      width: 12,
-      height: 12,
+      width: 14,
+      height: 14,
       resizeMode: 'contain',
+      marginBottom: 4,
   },
   itemName: {
       fontSize: 14,
       fontWeight: 'bold',
       color: '#000',
-  },
-  itemDesc: {
-      fontSize: 10,
-      color: '#6b7280',
-      lineHeight: 14,
-      marginBottom: 12,
-  },
-  itemFooter: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
+      marginBottom: 2,
   },
   itemPrice: {
-      fontSize: 14,
-      fontWeight: 'bold',
-      color: '#000',
+      fontSize: 13,
+      fontWeight: '600',
+      color: '#374151',
+      marginBottom: 4,
+  },
+  itemDesc: {
+      fontSize: 11,
+      color: '#6b7280',
+      lineHeight: 14,
   },
   addButton: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: '#3c7d48',
+      justifyContent: 'center',
+      backgroundColor: '#fff',
       paddingVertical: 6,
       paddingHorizontal: 16,
       borderRadius: 8,
-      shadowColor: '#3c7d48',
-      shadowOpacity: 0.1,
-      shadowRadius: 4,
-      elevation: 2,
+      borderWidth: 1,
+      borderColor: '#3c7d48',
+      minWidth: 80,
   },
   addButtonText: {
-      color: '#fff',
+      color: '#3c7d48',
       fontSize: 12,
       fontWeight: 'bold',
+  },
+  addButtonPlus: {
+      color: '#3c7d48',
+      fontSize: 12,
+      fontWeight: 'bold',
+      marginLeft: 4,
   },
   qtyContainer: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: '#3c7d48',
+      justifyContent: 'space-between',
+      backgroundColor: '#fff',
       borderRadius: 8,
+      borderWidth: 1,
+      borderColor: '#3c7d48',
       height: 32,
-      overflow: 'hidden',
+      minWidth: 80,
   },
   qtyBtnSmall: {
-      width: 30,
+      width: 32,
       height: '100%',
       justifyContent: 'center',
       alignItems: 'center',
   },
   qtyBtnText: {
-      color: '#fff',
-      fontSize: 16,
+      color: '#3c7d48',
+      fontSize: 18,
       fontWeight: 'bold',
       marginTop: -2,
   },
   qtyTextSmall: {
-      color: '#fff',
-      fontSize: 12,
+      color: '#3c7d48',
+      fontSize: 14,
       fontWeight: 'bold',
       marginHorizontal: 2,
       minWidth: 16,
@@ -703,6 +689,105 @@ const styles = StyleSheet.create({
   cancelText: {
       color: '#3c7d48',
       fontSize: 14,
+      fontWeight: '600',
+  },
+  anchoredBottomBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 8,
+      paddingHorizontal: 12,
+      paddingVertical: 4,
+      backgroundColor: '#fff',
+      borderTopWidth: 1,
+      borderTopColor: '#f3f4f6',
+      zIndex: 10,
+  },
+  floatingSearchContainer: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: '#f3f4f6',
+      borderRadius: 12,
+      paddingHorizontal: 10,
+      height: 38,
+  },
+  floatingSearchInput: {
+      flex: 1,
+      fontSize: 12,
+      color: '#000',
+      marginLeft: 8,
+      paddingVertical: 0,
+  },
+  floatingMenuButton: {
+      backgroundColor: '#374151',
+      height: 38,
+      paddingHorizontal: 16,
+      borderRadius: 12,
+      justifyContent: 'center',
+      alignItems: 'center',
+  },
+  floatingMenuText: {
+      color: '#fff',
+      fontSize: 13,
+      fontWeight: 'bold',
+  },
+  modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      justifyContent: 'center',
+      alignItems: 'center',
+  },
+  modalContent: {
+      width: '85%',
+      maxHeight: '70%',
+      backgroundColor: '#fff',
+      borderRadius: 24,
+      padding: 24,
+      shadowColor: '#000',
+      shadowOpacity: 0.2,
+      shadowOffset: { width: 0, height: 10 },
+      shadowRadius: 20,
+      elevation: 10,
+  },
+  modalHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 16,
+  },
+  modalTitle: {
+      fontSize: 20,
+      fontWeight: 'bold',
+      color: '#000',
+  },
+  modalCloseBtn: {
+      padding: 4,
+      backgroundColor: '#f3f4f6',
+      borderRadius: 20,
+  },
+  modalScroll: {
+      flexGrow: 0,
+  },
+  modalCategoryItem: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: 14,
+      borderBottomWidth: 1,
+      borderBottomColor: '#f3f4f6',
+  },
+  modalCategoryText: {
+      fontSize: 16,
+      color: '#4b5563',
+  },
+  modalCategoryTextActive: {
+      color: '#3c7d48',
+      fontWeight: 'bold',
+  },
+  modalCategoryCount: {
+      fontSize: 14,
+      color: '#6b7280',
       fontWeight: '600',
   },
 });

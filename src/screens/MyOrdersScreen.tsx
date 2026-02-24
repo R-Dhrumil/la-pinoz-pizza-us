@@ -79,9 +79,9 @@ const MyOrdersScreen = () => {
                     <Receipt size={16} color="#6b7280" />
                     <Text style={styles.orderNumber}>#{item.orderNumber || item.id}</Text>
                 </View>
-                <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.orderStatus) + '20' }]}>
-                    <Text style={[styles.statusText, { color: getStatusColor(item.orderStatus) }]}>
-                        {item.orderStatus}
+                <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.orderStatus || 'pending') + '20' }]}>
+                    <Text style={[styles.statusText, { color: getStatusColor(item.orderStatus || 'pending') }]}>
+                        {item.orderStatus || 'Pending'}
                     </Text>
                 </View>
             </View>
@@ -160,7 +160,7 @@ const MyOrdersScreen = () => {
                 <FlatList
                     data={orders}
                     renderItem={renderOrderItem}
-                    keyExtractor={(item) => item.id.toString()}
+                    keyExtractor={(item) => String(item.id)}
                     contentContainerStyle={styles.listContent}
                     showsVerticalScrollIndicator={false}
                     refreshControl={
