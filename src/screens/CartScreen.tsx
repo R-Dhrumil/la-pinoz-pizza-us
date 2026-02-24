@@ -7,7 +7,9 @@ import {
   TouchableOpacity,
   Image,
   SafeAreaView,
+  Platform
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { ArrowLeft, Trash2, Plus, Minus, MoveRight, ChevronDown, ChevronUp, Pencil } from 'lucide-react-native';
@@ -16,6 +18,7 @@ import { useAuth } from '../context/AuthContext';
 import PageLayout from '../components/PageLayout';
 
 const CartScreen = () => {
+  const insets = useSafeAreaInsets();
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   const navigation = useNavigation<any>();
   const { cartItems, totalAmount, addToCart, removeFromCart, deleteItem } = useCart();
@@ -200,7 +203,7 @@ const CartScreen = () => {
       </ScrollView>
 
       {/* Bottom Bar */}
-      <View style={styles.bottomBar}>
+      <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 16) }]}>
            <View>
                <Text style={styles.payLabel}>PAYABLE</Text>
                <Text style={styles.payAmount}>${finalTotal.toFixed(2)}</Text>

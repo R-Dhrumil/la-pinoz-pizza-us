@@ -10,8 +10,10 @@ import {
   ActivityIndicator,
   Modal,
   FlatList,
-  TextInput
+  TextInput,
+  Platform
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../navigation/AuthNavigator';
@@ -26,6 +28,7 @@ import { paymentService, PendingOrderData } from '../services/paymentService';
 import PageLayout from '../components/PageLayout';
 
 const CheckoutScreen = () => {
+    const insets = useSafeAreaInsets();
     const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
     const { cartItems, totalAmount, clearCart } = useCart();
     const { selectedStore } = useStore();
@@ -411,7 +414,7 @@ const CheckoutScreen = () => {
 
             </ScrollView>
 
-            <View style={styles.footer}>
+            <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
                  <View>
                      <Text style={styles.footerTotalLabel}>PAYING</Text>
                      <Text style={styles.footerTotalValue}>${finalTotal.toFixed(2)}</Text>

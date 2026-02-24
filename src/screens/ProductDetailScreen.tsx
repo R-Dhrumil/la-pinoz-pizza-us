@@ -11,7 +11,9 @@ import {
   Dimensions,
   Linking,
   Alert,
+  Platform
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../navigation/AuthNavigator';
@@ -26,6 +28,7 @@ const { width } = Dimensions.get('window');
 
 
 const ProductDetailScreen = () => {
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
   const route = useRoute<RouteProp<AuthStackParamList, 'ProductDetail'>>();
   const { item, editMode, existingCartId, prefill } = route.params || {}; 
@@ -315,7 +318,7 @@ const ProductDetailScreen = () => {
       </ScrollView>
 
       {/* Bottom Bar */}
-      <View style={styles.bottomBar}>
+      <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 20) }]}>
         <View style={styles.priceRow}>
             <View>
                 <Text style={styles.totalLabel}>Total Price</Text>

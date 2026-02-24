@@ -13,6 +13,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../navigation/AuthNavigator';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronLeft, MapPin, Trash2, AlertTriangle } from 'lucide-react-native';
 import { useAddress, Address } from '../context/AddressContext';
 import AddressSkeleton from '../components/AddressSkeleton';
@@ -22,6 +23,7 @@ import AddressSkeleton from '../components/AddressSkeleton';
 import { useAuth } from '../context/AuthContext';
 
 const ManageAddressScreen = () => {
+    const insets = useSafeAreaInsets();
     const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
     const { addresses, deleteAddress, loading: addressLoading, refreshAddresses } = useAddress();
     const { loading: authLoading } = useAuth();
@@ -136,7 +138,7 @@ const ManageAddressScreen = () => {
           )}
         </ScrollView>
 
-        <View style={styles.footer}>
+        <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
           <TouchableOpacity 
             style={styles.addButton}
             onPress={() => navigation.navigate('AddNewAddress')}

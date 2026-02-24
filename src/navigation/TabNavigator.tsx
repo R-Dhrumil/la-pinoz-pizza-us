@@ -22,9 +22,9 @@ const TabNavigator = () => {
           backgroundColor: '#fff',
           borderTopWidth: 1,
           borderTopColor: '#f3f4f6',
-          height: 60 + paddingBottom,
-          paddingBottom: paddingBottom,
-          paddingTop: 10,
+          height: 45 + paddingBottom,
+          paddingBottom: Math.max(paddingBottom - 2, 4),
+          
         },
         tabBarActiveTintColor: '#3c7d48',
         tabBarInactiveTintColor: '#9ca3af',
