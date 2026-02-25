@@ -54,9 +54,30 @@ export const addressService = {
 
     deleteAddress: async (id: number): Promise<void> => {
         try {
-            await apiClient.delete(`/Addresses/${id}`);
+            await apiClient.post(`/Addresses/Delete/${id}`);
         } catch (error: any) {
             console.error(`Error deleting address ${id}:`, error.response?.data || error.message);
+            throw error;
+        }
+    },
+
+    updateAddress: async (id: number, address: Omit<Address, 'id'>): Promise<Address> => {
+        try {
+            const payload = {
+                fullName: address.fullName,
+                phoneNumber: address.phoneNumber,
+                addressLine1: address.addressLine1,
+                addressLine2: address.addressLine2,
+                city: address.city,
+                state: address.state,
+                zipCode: address.zipCode,
+                landmark: address.landmark,
+                isDefault: address.isDefault
+            };
+            const response = await apiClient.post(`/Addresses/Update/${id}`, payload);
+            return response.data;
+        } catch (error: any) {
+            console.error(`Error updating address ${id}:`, error.response?.data || error.message);
             throw error;
         }
     }

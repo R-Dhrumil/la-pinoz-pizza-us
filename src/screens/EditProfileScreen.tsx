@@ -26,7 +26,7 @@ const EditProfileScreen = () => {
   const [fullName, setFullName] = useState(user?.fullName || '');
   const [phoneNumber, setPhoneNumber] = useState(user?.phoneNumber || '');
   const [email, setEmail] = useState(user?.email || '');
-  const [dob, setDob] = useState(user?.dob || '');
+  const [dateOfBirth, setDateOfBirth] = useState(user?.dob || '');
   const [gender, setGender] = useState(user?.gender || '');
   const [loading, setLoading] = useState(false);
 
@@ -42,7 +42,7 @@ const EditProfileScreen = () => {
     } else {
       formatted = `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6, 8)}`;
     }
-    setDob(formatted);
+    setDateOfBirth(formatted);
   };
 
   // Auto-format phone number to US format (XXX) XXX-XXXX
@@ -88,7 +88,7 @@ const EditProfileScreen = () => {
         fullName,
         phoneNumber: phoneNumber.replace(/\D/g, ''),
         email,
-        dob,
+        dateOfBirth,
         gender,
       });
       
@@ -181,7 +181,7 @@ const EditProfileScreen = () => {
             <Calendar size={20} color="#6b7280" style={styles.inputIcon} />
             <TextInput
               style={styles.input}
-              value={dob}
+              value={dateOfBirth}
               onChangeText={handleDobChange}
               placeholder="YYYY-MM-DD"
               placeholderTextColor="#9ca3af"

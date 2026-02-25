@@ -14,7 +14,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../navigation/AuthNavigator';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ChevronLeft, MapPin, Trash2, AlertTriangle } from 'lucide-react-native';
+import { ChevronLeft, MapPin, Trash2, AlertTriangle, Pencil } from 'lucide-react-native';
 import { useAddress, Address } from '../context/AddressContext';
 import AddressSkeleton from '../components/AddressSkeleton';
 
@@ -116,13 +116,20 @@ const ManageAddressScreen = () => {
                         {address.city}, {address.state} - {address.zipCode}
                     </Text>
                 </View>
-                <TouchableOpacity style={styles.deleteButton} onPress={() => {
-                  if (address.id !== undefined) {
-                    handleDeleteAddress(address.id);
-                  }
-                }}>
-                  <Trash2 size={20} color="#ef4444" />
-                </TouchableOpacity>
+                <View style={styles.actionButtons}>
+                    <TouchableOpacity style={styles.editButton} onPress={() => {
+                      navigation.navigate('AddNewAddress', { editAddress: address });
+                    }}>
+                      <Pencil size={18} color="#3c7d48" />
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.deleteButton} onPress={() => {
+                      if (address.id !== undefined) {
+                        handleDeleteAddress(address.id);
+                      }
+                    }}>
+                      <Trash2 size={20} color="#ef4444" />
+                    </TouchableOpacity>
+                </View>
               </View>
               
               {!address.isDeliverable && (
@@ -224,6 +231,14 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   deleteButton: {
+    padding: 4,
+  },
+  actionButtons: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 12,
+  },
+  editButton: {
     padding: 4,
   },
   warningContainer: {

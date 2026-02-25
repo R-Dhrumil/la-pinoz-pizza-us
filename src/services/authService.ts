@@ -18,8 +18,9 @@ interface UpdateProfileParams {
     fullName?: string;
     phoneNumber?: string;
     email?: string;
-    dob?: string;
+    dateOfBirth?: string;
     gender?: string;
+    anniversary?: string;
 }
 
 export const authService = {
@@ -43,8 +44,8 @@ export const authService = {
         return response.data;
     },
 
-    getProfile: async () => {
-        const response = await apiClient.get('/auth/profile');
+    getProfile: async (id: number | string) => {
+        const response = await apiClient.get(`/User/profile/${id}`);
         return response.data;
     },
     
@@ -54,7 +55,28 @@ export const authService = {
     },
 
     updateProfile: async (data: UpdateProfileParams) => {
-        const response = await apiClient.put('/auth/profile', data);
+        // Convert date strings to full ISO 8601 format (e.g. 2000-01-15T00:00:00.000Z)
+        const formatDate = (dateStr?: string): string | null => {
+            if (!dateStr) return null;
+            try {
+                // If already in ISO format, return as-is
+                if (dateStr.includes('T')) return dateStr;
+                // Convert YYYY-MM-DD to full ISO datetime
+                return new Date(dateStr).toISOString();
+            } catch {
+                return null;
+            }
+        };
+
+        const payload = {
+            fullName: data.fullName || '',
+            email: data.email || '',
+            phoneNumber: data.phoneNumber || '',
+            gender: data.gender || '',
+            dateOfBirth: formatDate(data.dateOfBirth),
+            anniversary: formatDate(data.anniversary),
+        };
+        const response = await apiClient.post('/User/profile', payload);
         return response.data;
     }
 };

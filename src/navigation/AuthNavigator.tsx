@@ -18,6 +18,7 @@ import PaymentWebViewScreen from '../screens/PaymentWebViewScreen';
 import { Product, ProductVariant } from '../services/categoryService';
 import { PendingOrderData } from '../services/paymentService';
 import { Category } from '../services/categoryService';
+import { Address } from '../services/addressService';
 
 export type AuthStackParamList = {
   Login: undefined;
@@ -37,7 +38,7 @@ export type AuthStackParamList = {
   Cart: undefined;
   MyOrders: undefined;
   ManageAddress: undefined;
-  AddNewAddress: undefined;
+  AddNewAddress: { editAddress?: Address } | undefined;
   StoreLocation: undefined;
   Checkout: undefined;
   PaymentWebView: { url: string; transactionId: string; orderData: PendingOrderData };

@@ -8,6 +8,7 @@ interface AddressContextType {
   refreshAddresses: () => Promise<void>;
   addAddress: (address: Omit<Address, 'id'>) => Promise<void>;
   deleteAddress: (id: number) => Promise<void>;
+  updateAddress: (id: number, address: Omit<Address, 'id'>) => Promise<void>;
 }
 
 const AddressContext = createContext<AddressContextType | undefined>(undefined);
@@ -69,8 +70,21 @@ export const AddressProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const updateAddress = async (id: number, address: Omit<Address, 'id'>) => {
+    setLoading(true);
+    try {
+        await addressService.updateAddress(id, address);
+        await fetchAddresses(); // Refresh list after update
+    } catch (error) {
+        console.error("Failed to update address", error);
+        throw error;
+    } finally {
+        setLoading(false);
+    }
+  };
+
   return (
-    <AddressContext.Provider value={{ addresses, loading, refreshAddresses: fetchAddresses, addAddress, deleteAddress }}>
+    <AddressContext.Provider value={{ addresses, loading, refreshAddresses: fetchAddresses, addAddress, deleteAddress, updateAddress }}>
       {children}
     </AddressContext.Provider>
   );

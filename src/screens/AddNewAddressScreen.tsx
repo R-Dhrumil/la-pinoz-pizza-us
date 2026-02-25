@@ -14,7 +14,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { WebView } from 'react-native-webview';
 import Geolocation from 'react-native-geolocation-service';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../navigation/AuthNavigator';
 import { useAddress } from '../context/AddressContext';
@@ -22,20 +22,23 @@ import { ChevronLeft, MapPin, Navigation, Home, Briefcase, Map } from 'lucide-re
 
 const AddNewAddressScreen = () => {
     const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
-    const { addAddress } = useAddress();
+    const route = useRoute<RouteProp<AuthStackParamList, 'AddNewAddress'>>();
+    const { addAddress, updateAddress } = useAddress();
     const webViewRef = useRef<WebView>(null);
 
+    const editAddress = route.params?.editAddress;
+    const isEditMode = !!editAddress;
 
     // Form State
-    const [fullName, setFullName] = useState('');
-    const [phoneNumber, setPhoneNumber] = useState('');
-    const [houseNo, setHouseNo] = useState('');
-    const [street, setStreet] = useState('');
-    const [landmark, setLandmark] = useState('');
-    const [city, setCity] = useState('');
-    const [state, setState] = useState('');
-    const [pincode, setPincode] = useState('');
-    const [addressType, setAddressType] = useState<'Home' | 'Work' | 'Other'>('Home');
+    const [fullName, setFullName] = useState(editAddress?.fullName || '');
+    const [phoneNumber, setPhoneNumber] = useState(editAddress?.phoneNumber || '');
+    const [houseNo, setHouseNo] = useState(editAddress?.addressLine1 || '');
+    const [street, setStreet] = useState(editAddress?.addressLine2 || '');
+    const [landmark, setLandmark] = useState(editAddress?.landmark || '');
+    const [city, setCity] = useState(editAddress?.city || '');
+    const [state, setState] = useState(editAddress?.state || '');
+    const [pincode, setPincode] = useState(editAddress?.zipCode || '');
+    const [addressType, setAddressType] = useState<'Home' | 'Work' | 'Other'>(editAddress?.type || 'Home');
     
     // Map State
     const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
@@ -98,7 +101,7 @@ const AddNewAddressScreen = () => {
         }
 
         try {
-            await addAddress({
+            const addressData = {
                 fullName,
                 phoneNumber,
                 addressLine1: houseNo,
@@ -107,14 +110,20 @@ const AddNewAddressScreen = () => {
                 city,
                 state,
                 zipCode: pincode,
-                isDefault: false,
+                isDefault: editAddress?.isDefault || false,
                 type: addressType,
                 coordinates: currentLocation || undefined,
                 isDeliverable: true
-            });
+            };
+
+            if (isEditMode && editAddress?.id) {
+                await updateAddress(editAddress.id, addressData);
+            } else {
+                await addAddress(addressData);
+            }
             navigation.goBack();
         } catch (error) {
-            Alert.alert("Error", "Failed to save address. Please try again.");
+            Alert.alert("Error", `Failed to ${isEditMode ? 'update' : 'save'} address. Please try again.`);
         }
     };
 
@@ -195,7 +204,7 @@ const AddNewAddressScreen = () => {
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                     <ChevronLeft size={24} color="#000" />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Add New Address</Text>
+                <Text style={styles.headerTitle}>{isEditMode ? 'Edit Address' : 'Add New Address'}</Text>
             </View>
 
             <View style={styles.mapContainer}>
@@ -338,7 +347,7 @@ const AddNewAddressScreen = () => {
                     </View>
 
                     <TouchableOpacity style={styles.saveButton} onPress={handleSaveAddress}>
-                        <Text style={styles.saveButtonText}>Save Address</Text>
+                        <Text style={styles.saveButtonText}>{isEditMode ? 'Update Address' : 'Save Address'}</Text>
                     </TouchableOpacity>
 
                 </ScrollView>
