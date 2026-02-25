@@ -4,9 +4,7 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  SafeAreaView,
   StatusBar,
-  ScrollView,
   Image,
   Dimensions,
   TextInput,
@@ -14,7 +12,9 @@ import {
   FlatList,
   RefreshControl,
   Linking,
+  ScrollView,
 } from 'react-native';
+import { ScreenContainer } from '../components/ScreenContainer';
 import React, { useRef, useEffect, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -39,7 +39,6 @@ import {
 
 import { useCart } from '../context/CartContext';
 import { useStore } from '../context/StoreContext';
-import PageLayout from '../components/PageLayout';
 
 import { storeService } from '../services/storeService';
 import { categoryService, Category } from '../services/categoryService';
@@ -128,7 +127,7 @@ const HomeScreen = () => {
   }, [bestSellers]); // Add dependency on bestSellers
 
   return (
-    <PageLayout style={styles.container}>
+    <ScreenContainer useScrollView={false} containerStyle={styles.container}>
       <StatusBar
         barStyle="light-content"
         backgroundColor="#3c7d48"
@@ -344,7 +343,7 @@ const HomeScreen = () => {
         </View>
       </ScrollView>
       )}
-    </PageLayout>
+    </ScreenContainer>
   );
 };
 

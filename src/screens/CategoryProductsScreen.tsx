@@ -15,7 +15,7 @@ import { ArrowLeft } from 'lucide-react-native';
 import { useCart } from '../context/CartContext';
 import { useStore } from '../context/StoreContext';
 import { Product } from '../services/categoryService';
-import PageLayout from '../components/PageLayout';
+import { ScreenContainer } from '../components/ScreenContainer';
 
 type CategoryProductsRouteProp = RouteProp<AuthStackParamList, 'CategoryProducts'>;
 
@@ -25,7 +25,7 @@ const CategoryProductsScreen = () => {
   const { category } = route.params;
 
   return (
-    <PageLayout>
+    <ScreenContainer useScrollView={false} containerStyle={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <ArrowLeft size={24} color="#000" />
@@ -61,8 +61,7 @@ const CategoryProductsScreen = () => {
             )}
         </View>
       </ScrollView>
-
-    </PageLayout>
+    </ScreenContainer>
   );
 };
 

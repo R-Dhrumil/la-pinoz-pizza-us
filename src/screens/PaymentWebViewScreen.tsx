@@ -3,7 +3,6 @@ import {
     View,
     Text,
     StyleSheet,
-    SafeAreaView,
     TouchableOpacity,
     ActivityIndicator,
     Alert,
@@ -16,6 +15,7 @@ import { AuthStackParamList } from '../navigation/AuthNavigator';
 import { ArrowLeft, ShieldCheck, AlertTriangle, CheckCircle2 } from 'lucide-react-native';
 import { paymentService, PendingOrderData } from '../services/paymentService';
 import { useCart } from '../context/CartContext';
+import { ScreenContainer } from '../components/ScreenContainer';
 
 type PaymentWebViewRouteProp = RouteProp<AuthStackParamList, 'PaymentWebView'>;
 
@@ -128,7 +128,7 @@ const PaymentWebViewScreen = () => {
     // --- Result screens ---
     if (paymentProcessing) {
         return (
-            <SafeAreaView style={styles.container}>
+            <ScreenContainer useScrollView={false} containerStyle={styles.container}>
                 <StatusBar barStyle="dark-content" />
                 <View style={styles.centerContent}>
                     <ActivityIndicator size="large" color="#3c7d48" />
@@ -137,13 +137,13 @@ const PaymentWebViewScreen = () => {
                         Please wait while we confirm your payment with PhonePe...
                     </Text>
                 </View>
-            </SafeAreaView>
+            </ScreenContainer>
         );
     }
 
     if (paymentResult === 'success') {
         return (
-            <SafeAreaView style={styles.container}>
+            <ScreenContainer useScrollView={false} containerStyle={styles.container}>
                 <StatusBar barStyle="dark-content" />
                 <View style={styles.centerContent}>
                     <View style={styles.successIconWrapper}>
@@ -157,13 +157,13 @@ const PaymentWebViewScreen = () => {
                         <Text style={styles.doneBtnText}>VIEW MY ORDERS</Text>
                     </TouchableOpacity>
                 </View>
-            </SafeAreaView>
+            </ScreenContainer>
         );
     }
 
     if (paymentResult === 'failure') {
         return (
-            <SafeAreaView style={styles.container}>
+            <ScreenContainer useScrollView={false} containerStyle={styles.container}>
                 <StatusBar barStyle="dark-content" />
                 <View style={styles.centerContent}>
                     <View style={styles.failureIconWrapper}>
@@ -183,13 +183,13 @@ const PaymentWebViewScreen = () => {
                         <Text style={styles.cancelBtnText}>Go Back to Checkout</Text>
                     </TouchableOpacity>
                 </View>
-            </SafeAreaView>
+            </ScreenContainer>
         );
     }
 
     // --- WebView ---
     return (
-        <SafeAreaView style={styles.container}>
+        <ScreenContainer useScrollView={false} containerStyle={styles.container}>
             <StatusBar barStyle="dark-content" />
             <View style={styles.header}>
                 <TouchableOpacity onPress={handleGoBack} style={styles.backBtn}>
@@ -250,7 +250,7 @@ const PaymentWebViewScreen = () => {
                     Secured by PhonePe Payment Gateway
                 </Text>
             </View>
-        </SafeAreaView>
+        </ScreenContainer>
     );
 };
 

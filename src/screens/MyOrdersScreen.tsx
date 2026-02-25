@@ -8,15 +8,14 @@ import {
     TouchableOpacity,
     RefreshControl,
     StatusBar,
-    Image,
-    SafeAreaView
+    Image
 } from 'react-native';
+import { ScreenContainer } from '../components/ScreenContainer';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../navigation/AuthNavigator';
 import { orderService, Order } from '../services/orderService';
 import { ChevronLeft, Clock, MapPin, Receipt, ShoppingBag, AlertCircle } from 'lucide-react-native';
-import PageLayout from '../components/PageLayout';
 import MyOrdersSkeleton from '../components/MyOrdersSkeleton';
 
 const MyOrdersScreen = () => {
@@ -131,7 +130,7 @@ const MyOrdersScreen = () => {
     );
 
     return (
-        <SafeAreaView style={styles.container}>
+        <ScreenContainer useScrollView={false} containerStyle={styles.container}>
             <StatusBar barStyle="dark-content" backgroundColor="#fff" />
             
             <View style={styles.header}>
@@ -168,7 +167,7 @@ const MyOrdersScreen = () => {
                     }
                 />
             )}
-        </SafeAreaView>
+        </ScreenContainer>
     );
 };
 

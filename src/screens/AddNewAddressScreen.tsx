@@ -9,9 +9,9 @@ import {
     Alert,
     Platform,
     PermissionsAndroid,
-    KeyboardAvoidingView
+    StatusBar
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { ScreenContainer } from '../components/ScreenContainer';
 import { WebView } from 'react-native-webview';
 import Geolocation from 'react-native-geolocation-service';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -199,7 +199,8 @@ const AddNewAddressScreen = () => {
     `;
 
     return (
-        <SafeAreaView style={styles.container}>
+        <ScreenContainer useScrollView={false} containerStyle={styles.container}>
+            <StatusBar barStyle="dark-content" backgroundColor="#fff" />
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                     <ChevronLeft size={24} color="#000" />
@@ -228,10 +229,7 @@ const AddNewAddressScreen = () => {
                 </TouchableOpacity>
             </View>
 
-            <KeyboardAvoidingView 
-                behavior={Platform.OS === "ios" ? "padding" : undefined}
-                style={styles.formContainer}
-            >
+            <View style={styles.formContainer}>
                 <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
                     <Text style={styles.sectionTitle}>Contact Details</Text>
                     <View style={styles.inputGroup}>
@@ -351,8 +349,8 @@ const AddNewAddressScreen = () => {
                     </TouchableOpacity>
 
                 </ScrollView>
-            </KeyboardAvoidingView>
-        </SafeAreaView>
+            </View>
+        </ScreenContainer>
     );
 };
 

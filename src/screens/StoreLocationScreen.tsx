@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   TextInput,
   FlatList,
-  SafeAreaView,
   StatusBar,
   Image,
   ScrollView,
@@ -16,6 +15,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { ArrowLeft, Search, MapPin, Navigation, X, SlidersHorizontal } from 'lucide-react-native';
+import { ScreenContainer } from '../components/ScreenContainer';
 import axios from 'axios';
 import { useStore } from '../context/StoreContext';
 import { useCart } from '../context/CartContext';
@@ -205,7 +205,7 @@ const StoreLocationScreen = () => {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <ScreenContainer useScrollView={false} containerStyle={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
       
       {/* Header */}
@@ -324,7 +324,7 @@ const StoreLocationScreen = () => {
             />
         )}
       </View>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 };
 

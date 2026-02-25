@@ -4,12 +4,12 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  ScrollView,
-  SafeAreaView,
   StatusBar,
   RefreshControl,
   Alert,
+  ScrollView,
 } from 'react-native';
+import { ScreenContainer } from '../components/ScreenContainer';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../navigation/AuthNavigator';
@@ -70,7 +70,7 @@ const ManageAddressScreen = () => {
     
 
   return (
-    <SafeAreaView style={styles.container}>
+    <ScreenContainer useScrollView={false}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
       
       {/* Header */}
@@ -154,7 +154,7 @@ const ManageAddressScreen = () => {
           </TouchableOpacity>
         </View>
       </View>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 };
 

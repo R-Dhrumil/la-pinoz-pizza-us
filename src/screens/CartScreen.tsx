@@ -6,8 +6,8 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  SafeAreaView,
-  Platform
+  Platform,
+  StatusBar
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useState } from 'react';
@@ -15,7 +15,7 @@ import { useNavigation } from '@react-navigation/native';
 import { ArrowLeft, Trash2, Plus, Minus, MoveRight, ChevronDown, ChevronUp, Pencil } from 'lucide-react-native';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import PageLayout from '../components/PageLayout';
+import { ScreenContainer } from '../components/ScreenContainer';
 
 const CartScreen = () => {
   const insets = useSafeAreaInsets();
@@ -35,7 +35,7 @@ const CartScreen = () => {
 
   if (cartItems.length === 0) {
     return (
-      <SafeAreaView style={styles.container}>
+      <ScreenContainer useScrollView={false}>
         <View style={styles.header}>
             <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
                 <ArrowLeft size={24} color="#000" />
@@ -54,7 +54,7 @@ const CartScreen = () => {
                 <Text style={styles.browseBtnText}> BROWSE OUR MENU</Text>
             </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </ScreenContainer>
     );
   }
 
@@ -64,7 +64,8 @@ const CartScreen = () => {
   const finalTotal = totalAmount + tax + deliveryFee;
 
   return (
-    <PageLayout showCart={false} style={styles.container}>
+    <ScreenContainer useScrollView={false} containerStyle={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
@@ -214,7 +215,7 @@ const CartScreen = () => {
             </TouchableOpacity>
       </View>
 
-    </PageLayout>
+    </ScreenContainer>
   );
 };
 

@@ -9,6 +9,7 @@ import {
   Image,
   Linking,
 } from 'react-native';
+import { ScreenContainer } from '../components/ScreenContainer';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../navigation/AuthNavigator';
@@ -100,8 +101,9 @@ const ProfileScreen = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#3c7d48" />
+    <ScreenContainer useScrollView={false} containerStyle={[styles.container, { backgroundColor: '#3c7d48' }]}>
+      <View style={{ flex: 1, backgroundColor: '#fff' }}>
+        <StatusBar barStyle="light-content" backgroundColor="#3c7d48" />
       
       {/* Header Card */}
       <View style={styles.headerContainer}>
@@ -176,8 +178,9 @@ const ProfileScreen = () => {
             <Text style={styles.logoutText}>Sign Out</Text>
         </TouchableOpacity>
 
-      </ScrollView>
-    </View>
+        </ScrollView>
+      </View>
+    </ScreenContainer>
   );
 };
 

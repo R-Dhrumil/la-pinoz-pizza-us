@@ -16,6 +16,7 @@ import { AuthStackParamList } from '../navigation/AuthNavigator';
 import { useAuth } from '../context/AuthContext';
 import { ChevronLeft, User, Phone, Mail, Calendar } from 'lucide-react-native';
 import { authService } from '../services/authService';
+import { ScreenContainer } from '../components/ScreenContainer';
 
 const EditProfileScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
@@ -114,8 +115,9 @@ const EditProfileScreen = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#3c7d48" />
+    <ScreenContainer useScrollView={false} containerStyle={[styles.container, { backgroundColor: '#3c7d48' }]}>
+      <View style={{ flex: 1, backgroundColor: '#fff' }}>
+        <StatusBar barStyle="light-content" backgroundColor="#3c7d48" />
       
       {/* Header */}
       <View style={styles.header}>
@@ -224,8 +226,9 @@ const EditProfileScreen = () => {
           )}
         </TouchableOpacity>
 
-      </ScrollView>
-    </View>
+        </ScrollView>
+      </View>
+    </ScreenContainer>
   );
 };
 

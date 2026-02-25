@@ -34,7 +34,7 @@ import {
 } from 'lucide-react-native';
 import { useCart } from '../context/CartContext';
 import { useStore } from '../context/StoreContext';
-import PageLayout from '../components/PageLayout';
+import { ScreenContainer } from '../components/ScreenContainer';
 import MenuSkeleton from '../components/MenuSkeleton';
 import { categoryService, Category, Product } from '../services/categoryService';
 
@@ -201,7 +201,7 @@ const MenuScreen = () => {
   }).filter(category => category.products.length > 0); // Remove empty categories
 
   return (
-    <PageLayout>
+      <ScreenContainer useScrollView={false} containerStyle={styles.containerStyleOverride}>
       {/* Header */}
       <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.navigate('StoreLocation')}>
@@ -341,7 +341,7 @@ const MenuScreen = () => {
           </TouchableOpacity>
       </Modal>
 
-    </PageLayout>
+      </ScreenContainer>
   );
 };
 
@@ -431,6 +431,10 @@ const MenuItem = ({ item, onTap }: { item: Product, onTap: () => void }) => {
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+    backgroundColor: '#f9f9f9',
+  },
+  containerStyleOverride: {
     flex: 1,
     backgroundColor: '#f9f9f9',
   },

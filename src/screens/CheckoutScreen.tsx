@@ -11,7 +11,8 @@ import {
   Modal,
   FlatList,
   TextInput,
-  Platform
+  Platform,
+  StatusBar
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -25,7 +26,7 @@ import { useAuth } from '../context/AuthContext';
 // import { addressService } from '../services/addressService';
 import { orderService } from '../services/orderService';
 import { paymentService, PendingOrderData } from '../services/paymentService';
-import PageLayout from '../components/PageLayout';
+import { ScreenContainer } from '../components/ScreenContainer';
 
 const CheckoutScreen = () => {
     const insets = useSafeAreaInsets();
@@ -292,7 +293,8 @@ const CheckoutScreen = () => {
     );
 
     return (
-        <SafeAreaView style={styles.container}>
+        <ScreenContainer useScrollView={false} containerStyle={styles.container}>
+            <StatusBar barStyle="dark-content" backgroundColor="#fff" />
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
                     <ArrowLeft size={24} color="#000" />
@@ -432,7 +434,7 @@ const CheckoutScreen = () => {
                  </TouchableOpacity>
             </View>
             {renderAddressModal()}
-        </SafeAreaView>
+        </ScreenContainer>
     );
 };
 

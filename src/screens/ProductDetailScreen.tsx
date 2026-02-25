@@ -21,7 +21,7 @@ import { X, Star, Minus, Plus, Check } from 'lucide-react-native';
 import { useCart } from '../context/CartContext';
 import { useStore } from '../context/StoreContext';
 import { Product, ProductVariant, ModifierGroup, ModifierOption } from '../services/categoryService';
-import PageLayout from '../components/PageLayout';
+import { ScreenContainer } from '../components/ScreenContainer';
 
 const { width } = Dimensions.get('window');
 
@@ -210,7 +210,8 @@ const ProductDetailScreen = () => {
   };
 
   return (
-    <PageLayout showCart={false} style={styles.container}>
+    <ScreenContainer useScrollView={false} containerStyle={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
       {/* Scrollable Content */}
       <ScrollView bounces={false} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
         
@@ -371,7 +372,7 @@ const ProductDetailScreen = () => {
             )}
         </View>
       </View>
-    </PageLayout>
+    </ScreenContainer>
   );
 };
 
