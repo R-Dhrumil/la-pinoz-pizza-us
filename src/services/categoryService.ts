@@ -41,7 +41,7 @@ export interface Product {
     description: string;
     basePrice: number;
     imageUrl: string;
-    isVeg: boolean;
+    isVeg: boolean | null;
     isBestseller: boolean;
     subcategoryId?: number;
     variants?: ProductVariant[];

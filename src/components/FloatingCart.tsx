@@ -28,7 +28,7 @@ const FloatingCart = () => {
       <View style={styles.cartBar}>
         <View style={styles.leftSection}>
             <View style={styles.iconContainer}>
-              
+              <ShoppingBag size={22} color="#fff" />
             </View>
             <View style={styles.textContainer}>
                 <Text style={styles.itemCount}>{totalItems} ITEMS</Text>
@@ -58,25 +58,23 @@ const FloatingCart = () => {
 
 const styles = StyleSheet.create({
   container: {
-    position: 'absolute',
-    bottom: 10,
-    left: 16,
-    right: 16,
-    zIndex: 100, // Ensure it's above other content
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: '#fff',
   },
   cartBar: {
     backgroundColor: '#3c7d48',
-    borderRadius: 16,
+    borderRadius: 14,
     padding: 5,
     paddingHorizontal: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 4,
   },
   leftSection: {
       flexDirection: 'row',

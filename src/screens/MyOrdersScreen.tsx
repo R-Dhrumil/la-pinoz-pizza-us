@@ -8,14 +8,16 @@ import {
     TouchableOpacity,
     RefreshControl,
     StatusBar,
-    Image
+    Image,
+    Modal,
+    ScrollView
 } from 'react-native';
 import { ScreenContainer } from '../components/ScreenContainer';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../navigation/AuthNavigator';
 import { orderService, Order } from '../services/orderService';
-import { ChevronLeft, Clock, MapPin, Receipt, ShoppingBag, AlertCircle } from 'lucide-react-native';
+import { ChevronLeft, Clock, MapPin, Receipt, ShoppingBag, AlertCircle, X } from 'lucide-react-native';
 import MyOrdersSkeleton from '../components/MyOrdersSkeleton';
 
 const MyOrdersScreen = () => {
@@ -23,6 +25,7 @@ const MyOrdersScreen = () => {
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
     useEffect(() => {
         fetchOrders();
@@ -34,6 +37,8 @@ const MyOrdersScreen = () => {
             // Sort by date descending
             const sorted = data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
             setOrders(sorted);
+            console.log(orders);
+            
         } catch (error) {
             console.error("Failed to load orders", error);
         } finally {
@@ -119,11 +124,17 @@ const MyOrdersScreen = () => {
             </View>
             
             <View style={styles.cardFooter}>
-                 <TouchableOpacity style={styles.reorderBtn}>
+                 <TouchableOpacity style={styles.footerBtn}>
                      <Text style={styles.reorderText}>Reorder</Text>
                  </TouchableOpacity>
-                 <TouchableOpacity style={styles.trackBtn}>
+                 <TouchableOpacity style={styles.footerBtn}>
                      <Text style={styles.trackText}>Track Order</Text>
+                 </TouchableOpacity>
+                 <TouchableOpacity 
+                     style={styles.footerBtnLast}
+                     onPress={() => setSelectedOrder(item)}
+                 >
+                     <Text style={styles.viewDetailsText}>View Details</Text>
                  </TouchableOpacity>
             </View>
         </TouchableOpacity>
@@ -167,6 +178,115 @@ const MyOrdersScreen = () => {
                     }
                 />
             )}
+
+            {/* Order Details Modal */}
+            <Modal
+                visible={!!selectedOrder}
+                animationType="slide"
+                transparent={true}
+                onRequestClose={() => setSelectedOrder(null)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>Order Details</Text>
+                            <TouchableOpacity onPress={() => setSelectedOrder(null)} style={styles.closeBtn}>
+                                <X size={24} color="#000" />
+                            </TouchableOpacity>
+                        </View>
+                        
+                        {selectedOrder && (
+                            <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
+                                <View style={styles.modalSection}>
+                                    <View style={styles.modalRow}>
+                                        <Text style={styles.modalLabel}>Order #</Text>
+                                        <Text style={styles.modalValue}>{selectedOrder.orderNumber || selectedOrder.id}</Text>
+                                    </View>
+                                    <View style={styles.modalRow}>
+                                        <Text style={styles.modalLabel}>Date</Text>
+                                        <Text style={styles.modalValue}>{formatDate(selectedOrder.createdAt)}</Text>
+                                    </View>
+                                    <View style={styles.modalRow}>
+                                        <Text style={styles.modalLabel}>Status</Text>
+                                        <Text style={[styles.modalValue, { color: getStatusColor(selectedOrder.orderStatus || 'pending'), textTransform: 'capitalize', fontWeight: 'bold' }]}>
+                                            {selectedOrder.orderStatus || 'Pending'}
+                                        </Text>
+                                    </View>
+                                    <View style={styles.modalRow}>
+                                        <Text style={styles.modalLabel}>Payment</Text>
+                                        <Text style={styles.modalValue}>{selectedOrder.paymentMethod || 'N/A'} - {selectedOrder.paymentStatus || 'Pending'}</Text>
+                                    </View>
+                                </View>
+
+                                {selectedOrder.address && (
+                                    <View style={styles.modalSection}>
+                                        <Text style={styles.modalSectionTitle}>Delivery Address</Text>
+                                        <Text style={styles.addressText}><Text style={{fontWeight: 'bold'}}>{selectedOrder.address.fullName}</Text></Text>
+                                        <Text style={styles.addressText}>{selectedOrder.address.addressLine1}</Text>
+                                        {selectedOrder.address.addressLine2 ? <Text style={styles.addressText}>{selectedOrder.address.addressLine2}</Text> : null}
+                                        <Text style={styles.addressText}>{selectedOrder.address.city}, {selectedOrder.address.state} {selectedOrder.address.zipCode}</Text>
+                                        <Text style={styles.addressText}>Phone: {selectedOrder.address.phoneNumber}</Text>
+                                    </View>
+                                )}
+
+                                <View style={styles.modalSection}>
+                                    <Text style={styles.modalSectionTitle}>Items</Text>
+                                    {selectedOrder.items?.map((item, index) => (
+                                        <View key={index} style={styles.orderItem}>
+                                            <View style={styles.orderItemMain}>
+                                                <View style={styles.orderItemLeft}>
+                                                    {item.isVeg !== null && item.isVeg !== undefined && (
+                                                        <View style={[styles.vegIcon, { borderColor: item.isVeg ? '#3c7d48' : '#ef4444' }]}>
+                                                            <View style={[styles.vegDot, { backgroundColor: item.isVeg ? '#3c7d48' : '#ef4444' }]} />
+                                                        </View>
+                                                    )}
+                                                    <Text style={styles.orderItemName}>{item.quantity} x {item.productName}</Text>
+                                                </View>
+                                                <Text style={styles.orderItemPrice}>${item.totalPrice.toFixed(2)}</Text>
+                                            </View>
+                                            {(item.size || item.crust) ? (
+                                                <Text style={styles.itemMeta}>{item.size ? item.size : ''} {item.crust ? `| ${item.crust}` : ''}</Text>
+                                            ) : null}
+                                            {item.modifiers ? (
+                                                <Text style={styles.itemMeta}>Modifiers: {item.modifiers}</Text> 
+                                            ) : null}
+                                        </View>
+                                    ))}
+                                </View>
+
+                                <View style={styles.modalSection}>
+                                    <Text style={styles.modalSectionTitle}>Bill Details</Text>
+                                    <View style={styles.billRow}>
+                                        <Text style={styles.billLabel}>Item Total</Text>
+                                        <Text style={styles.billValue}>${selectedOrder.subtotal?.toFixed(2) || '0.00'}</Text>
+                                    </View>
+                                    <View style={styles.billRow}>
+                                        <Text style={styles.billLabel}>Tax</Text>
+                                        <Text style={styles.billValue}>${selectedOrder.tax?.toFixed(2) || '0.00'}</Text>
+                                    </View>
+                                    <View style={styles.billRow}>
+                                        <Text style={styles.billLabel}>Delivery Fee</Text>
+                                        <Text style={styles.billValue}>${selectedOrder.deliveryFee?.toFixed(2) || '0.00'}</Text>
+                                    </View>
+                                    {selectedOrder.discount > 0 && (
+                                        <View style={styles.billRow}>
+                                            <Text style={styles.billLabel}>Discount</Text>
+                                            <Text style={styles.discountValue}>-${selectedOrder.discount?.toFixed(2)}</Text>
+                                        </View>
+                                    )}
+                                    <View style={[styles.divider, { marginVertical: 12 }]} />
+                                    <View style={styles.billRowTotal}>
+                                        <Text style={styles.billTotalLabel}>Grand Total</Text>
+                                        <Text style={styles.billTotalValue}>${selectedOrder.total?.toFixed(2) || '0.00'}</Text>
+                                    </View>
+                                </View>
+                                
+                                <View style={{height: 40}} />
+                            </ScrollView>
+                        )}
+                    </View>
+                </View>
+            </Modal>
         </ScreenContainer>
     );
 };
@@ -294,7 +414,7 @@ const styles = StyleSheet.create({
         borderTopWidth: 1,
         borderTopColor: '#f3f4f6',
     },
-    reorderBtn: {
+    footerBtn: {
         flex: 1,
         paddingVertical: 14,
         alignItems: 'center',
@@ -302,21 +422,26 @@ const styles = StyleSheet.create({
         borderRightWidth: 1,
         borderRightColor: '#f3f4f6',
     },
-    reorderText: {
-        color: '#3c7d48',
-        fontWeight: 'bold',
-        fontSize: 14,
-    },
-    trackBtn: {
+    footerBtnLast: {
         flex: 1,
         paddingVertical: 14,
         alignItems: 'center',
         justifyContent: 'center',
     },
+    reorderText: {
+        color: '#3c7d48',
+        fontWeight: 'bold',
+        fontSize: 13,
+    },
     trackText: {
         color: '#374151',
-        fontWeight: '600', // Slightly less bold than reorder
-        fontSize: 14,
+        fontWeight: '600',
+        fontSize: 13,
+    },
+    viewDetailsText: {
+        color: '#3b82f6',
+        fontWeight: '600',
+        fontSize: 13,
     },
     emptyTitle: {
         fontSize: 20,
@@ -341,6 +466,153 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontWeight: 'bold',
         fontSize: 16,
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'flex-end',
+    },
+    modalContent: {
+        backgroundColor: '#fff',
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+        height: '85%',
+        paddingTop: 16,
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        paddingBottom: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: '#f3f4f6',
+    },
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#111827',
+    },
+    closeBtn: {
+        padding: 4,
+    },
+    modalScroll: {
+        padding: 20,
+    },
+    modalSection: {
+        marginBottom: 24,
+        backgroundColor: '#f9fafb',
+        padding: 16,
+        borderRadius: 12,
+    },
+    modalSectionTitle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#111827',
+        marginBottom: 12,
+    },
+    modalRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 8,
+    },
+    modalLabel: {
+        fontSize: 14,
+        color: '#6b7280',
+    },
+    modalValue: {
+        fontSize: 14,
+        color: '#111827',
+        fontWeight: '500',
+    },
+    addressText: {
+        fontSize: 14,
+        color: '#4b5563',
+        marginBottom: 4,
+        lineHeight: 20,
+    },
+    orderItem: {
+        marginBottom: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: '#e5e7eb',
+        paddingBottom: 12,
+    },
+    orderItemMain: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        marginBottom: 4,
+    },
+    orderItemLeft: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        flex: 1,
+        paddingRight: 12,
+    },
+    vegIcon: {
+        width: 12,
+        height: 12,
+        borderWidth: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 8,
+        marginTop: 4,
+    },
+    vegDot: {
+        width: 6,
+        height: 6,
+        borderRadius: 3,
+    },
+    orderItemName: {
+        fontSize: 15,
+        fontWeight: '600',
+        color: '#111827',
+        flex: 1,
+        lineHeight: 20,
+    },
+    orderItemPrice: {
+        fontSize: 15,
+        fontWeight: 'bold',
+        color: '#111827',
+    },
+    itemMeta: {
+        fontSize: 13,
+        color: '#6b7280',
+        marginLeft: 20,
+        marginTop: 2,
+    },
+    billRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 8,
+    },
+    billLabel: {
+        fontSize: 14,
+        color: '#4b5563',
+    },
+    billValue: {
+        fontSize: 14,
+        color: '#111827',
+    },
+    discountValue: {
+        fontSize: 14,
+        color: '#10b981',
+        fontWeight: '500',
+    },
+    billRowTotal: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    billTotalLabel: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#111827',
+    },
+    billTotalValue: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#3c7d48',
     },
 });
 

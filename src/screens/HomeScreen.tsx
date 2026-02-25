@@ -44,6 +44,7 @@ import { storeService } from '../services/storeService';
 import { categoryService, Category } from '../services/categoryService';
 import { productService } from '../services/productService';
 import HomeSkeleton from '../components/HomeSkeleton';
+import FloatingCart from '../components/FloatingCart';
 
 const { width } = Dimensions.get('window');
 
@@ -343,6 +344,7 @@ const HomeScreen = () => {
         </View>
       </ScrollView>
       )}
+      <FloatingCart />
     </ScreenContainer>
   );
 };

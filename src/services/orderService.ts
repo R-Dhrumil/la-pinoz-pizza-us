@@ -11,7 +11,7 @@ export interface OrderItem {
     modifiers?: string | null;
     specialInstructions?: string | null;
     imageUrl?: string | null;
-    isVeg: boolean;
+    isVeg: boolean | null;
 }
 
 export interface Address {

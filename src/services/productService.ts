@@ -7,7 +7,7 @@ export interface Product {
     price: number;
     image: string;
     categories: string[];
-    isVeg: boolean;
+    isVeg: boolean | null;
     rating?: number;
     externalLink?: string;
 }

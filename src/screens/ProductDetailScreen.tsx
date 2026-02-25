@@ -230,16 +230,18 @@ const ProductDetailScreen = () => {
         <View style={styles.detailsContainer}>
           {/* Title and Rating */}
           <View style={styles.headerRow}>
-             <View style={styles.vegTag}>
-                <Image 
-                    source={{ uri: item.isVeg 
-                        ? 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b2/Veg_symbol.svg/1200px-Veg_symbol.svg.png' 
-                        : 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Non_veg_symbol.svg/1024px-Non_veg_symbol.svg.png' 
-                    }} 
-                    style={styles.vegIcon} 
-                />
-                <Text style={styles.vegText}>{item.isVeg ? 'VEG' : 'NON-VEG'}</Text>
-             </View>
+             {item.isVeg !== null && item.isVeg !== undefined && (
+                 <View style={styles.vegTag}>
+                    <Image 
+                        source={{ uri: item.isVeg 
+                            ? 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b2/Veg_symbol.svg/1200px-Veg_symbol.svg.png' 
+                            : 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Non_veg_symbol.svg/1024px-Non_veg_symbol.svg.png' 
+                        }} 
+                        style={styles.vegIcon} 
+                    />
+                    <Text style={styles.vegText}>{item.isVeg ? 'VEG' : 'NON-VEG'}</Text>
+                 </View>
+             )}
              <View style={styles.ratingContainer}>
                  <Star size={14} color="#FBBF24" fill="#FBBF24" />
                  <Text style={styles.ratingText}>4.8</Text>

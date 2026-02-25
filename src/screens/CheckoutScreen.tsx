@@ -110,7 +110,7 @@ const CheckoutScreen = () => {
                     modifiers: item.toppings ? item.toppings.map((t: any) => t.name).join(', ') : '',
                     specialInstructions: '',
                     imageUrl: item.image || '',
-                    isVeg: item.isVeg || false,
+                    isVeg: item.isVeg !== undefined ? item.isVeg : null,
                     size: item.size || null,
                     crust: item.crust || null
                 };

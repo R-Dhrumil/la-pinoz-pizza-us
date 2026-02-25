@@ -7,7 +7,7 @@ export interface CartItem {
   price: number;
   quantity: number;
   image: string;
-  isVeg: boolean;
+  isVeg: boolean | null;
   description: string;
   variant?: any;
   toppings?: any[];

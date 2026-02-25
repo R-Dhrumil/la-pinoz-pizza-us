@@ -37,6 +37,7 @@ import { useStore } from '../context/StoreContext';
 import { ScreenContainer } from '../components/ScreenContainer';
 import MenuSkeleton from '../components/MenuSkeleton';
 import { categoryService, Category, Product } from '../services/categoryService';
+import FloatingCart from '../components/FloatingCart';
 
 const { width } = Dimensions.get('window');
 
@@ -279,6 +280,8 @@ const MenuScreen = () => {
           </>
       )}
 
+      <FloatingCart />
+
       {/* Bottom Bar (Search & Menu) anchored */}
       {selectedStore && !loading && (
           <View style={styles.anchoredBottomBar}>
@@ -387,13 +390,15 @@ const MenuItem = ({ item, onTap }: { item: Product, onTap: () => void }) => {
     return (
         <TouchableOpacity style={styles.menuItem} onPress={onTap} activeOpacity={0.9}>
              <View style={styles.itemContent}>
-                 <Image 
-                    source={{ uri: item.isVeg 
-                        ? 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b2/Veg_symbol.svg/1200px-Veg_symbol.svg.png' 
-                        : 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Non_veg_symbol.svg/1024px-Non_veg_symbol.svg.png' 
-                    }} 
-                    style={styles.vegIcon} 
-                 />
+                 {item.isVeg !== null && item.isVeg !== undefined && (
+                     <Image 
+                        source={{ uri: item.isVeg 
+                            ? 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b2/Veg_symbol.svg/1200px-Veg_symbol.svg.png' 
+                            : 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Non_veg_symbol.svg/1024px-Non_veg_symbol.svg.png' 
+                        }} 
+                        style={styles.vegIcon} 
+                     />
+                 )}
                  <Text style={styles.itemName}>{item.name}</Text>
                  <Text style={styles.itemPrice}>${item.basePrice}</Text>
                  <Text style={styles.itemDesc} numberOfLines={2}>
