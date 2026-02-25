@@ -35,7 +35,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             const token = await AsyncStorage.getItem('userToken');
             
             if (userJson && token) {
-                setUser(JSON.parse(userJson));
+                const parsedUser = JSON.parse(userJson);
+                // Support legacy properties
+                if (!parsedUser.fullName && parsedUser.name) {
+                    parsedUser.fullName = parsedUser.name;
+                }
+                if (!parsedUser.phoneNumber && parsedUser.phone) {
+                    parsedUser.phoneNumber = parsedUser.phone;
+                }
+                setUser(parsedUser);
             }
         } catch (e) {
             console.error("Failed to restore auth state", e);

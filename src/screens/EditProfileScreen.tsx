@@ -17,6 +17,7 @@ import { useAuth } from '../context/AuthContext';
 import { ChevronLeft, User, Phone, Mail, Calendar } from 'lucide-react-native';
 import { authService } from '../services/authService';
 import { ScreenContainer } from '../components/ScreenContainer';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const EditProfileScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
@@ -100,7 +101,23 @@ const EditProfileScreen = () => {
       
       
       if (updatedUser) {
-        setUser(updatedUser);
+        // Also update AsyncStorage so changes persist after app restarted
+        const currentUserJson = await AsyncStorage.getItem('userInfo');
+        if (currentUserJson) {
+           const currentUserInfo = JSON.parse(currentUserJson);
+           const mergedUserInfo = {
+               ...currentUserInfo,
+               fullName: updatedUser.fullName || fullName,
+               phoneNumber: updatedUser.phoneNumber || phoneNumber.replace(/\D/g, ''),
+               email: updatedUser.email || email,
+               gender: updatedUser.gender || gender,
+               dateOfBirth: updatedUser.dateOfBirth || dateOfBirth,
+           };
+           await AsyncStorage.setItem('userInfo', JSON.stringify(mergedUserInfo));
+           setUser(mergedUserInfo);
+        } else {
+           setUser(updatedUser);
+        }
       }
       
       Alert.alert('Success', 'Profile updated successfully!', [

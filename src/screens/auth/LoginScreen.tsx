@@ -53,24 +53,20 @@ const LoginScreen = () => {
                 // Store the authentication token
                 await AsyncStorage.setItem('userToken', response.token);
                 
-                // Store user details
+                // Store user details with corrected property names from Swagger response
                 const userInfo = {
                     id: response.id,
                     email: response.email,
-                    name: response.name,
+                    fullName: response.fullName || response.name || '',
+                    phoneNumber: response.phoneNumber || response.phone || '',
                     role: response.role,
-                    points: response.points,
-                    isElite: response.isElite,
+                    points: response.pizzaPoints || response.points || 0,
+                    isElite: response.eliteMembershipExpiry ? new Date(response.eliteMembershipExpiry) > new Date() : !!response.isElite,
                 };
                 await AsyncStorage.setItem('userInfo', JSON.stringify(userInfo));
                 
                 // Store user data in AuthContext
-                setUser({
-                    id: response.id,
-                    fullName: response.name,
-                    email: response.email,
-                    phoneNumber: response.phone || '',
-                });
+                setUser(userInfo);
                 
                 // Navigate to main app
                 navigation.replace('MainTabs');
