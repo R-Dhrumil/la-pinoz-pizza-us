@@ -1,4 +1,5 @@
 import React from 'react';
+import { View, ActivityIndicator, StyleSheet, Image } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import TabNavigator from './TabNavigator';
 import LoginScreen from '../screens/auth/LoginScreen';
@@ -19,6 +20,7 @@ import { Product, ProductVariant } from '../services/categoryService';
 import { PendingOrderData } from '../services/paymentService';
 import { Category } from '../services/categoryService';
 import { Address } from '../services/addressService';
+import { useAuth } from '../context/AuthContext';
 
 export type AuthStackParamList = {
   Login: undefined;
@@ -48,10 +50,48 @@ export type AuthStackParamList = {
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 
+// Splash screen shown while AsyncStorage session is being restored
+const SplashScreen = () => (
+  <View style={splashStyles.container}>
+    <Image
+      source={require('../assets/images/logo.png')}
+      style={splashStyles.logo}
+      resizeMode="contain"
+    />
+    <ActivityIndicator size="large" color="#3c7d48" style={splashStyles.spinner} />
+  </View>
+);
+
+const splashStyles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  logo: {
+    width: 200,
+    height: 200,
+    marginBottom: 24,
+  },
+  spinner: {
+    marginTop: 8,
+  },
+});
+
 const AuthNavigator = () => {
+  const { isAuthenticated, loading } = useAuth();
+
+  // While AsyncStorage session is being restored, show a splash screen.
+  // This prevents the Login screen from flashing before the session is known.
+  if (loading) {
+    return <SplashScreen />;
+  }
+
   return (
     <Stack.Navigator
-      initialRouteName="MainTabs"
+      // Dynamically choose initial route based on restored session
+      initialRouteName={isAuthenticated ? 'MainTabs' : 'Login'}
       screenOptions={{
         headerShown: false,
         animation: 'slide_from_right'
@@ -71,9 +111,9 @@ const AuthNavigator = () => {
         options={{ animation: 'slide_from_bottom' }} 
       />
       <Stack.Screen
-      name='AddNewAddress'
-      component={AddNewAddressScreen}
-      options={{ animation: 'slide_from_bottom' }} 
+        name='AddNewAddress'
+        component={AddNewAddressScreen}
+        options={{ animation: 'slide_from_bottom' }} 
       />
       <Stack.Screen 
         name="StoreLocation" 

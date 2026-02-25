@@ -232,14 +232,12 @@ const ProductDetailScreen = () => {
           <View style={styles.headerRow}>
              {item.isVeg !== null && item.isVeg !== undefined && (
                  <View style={styles.vegTag}>
-                    <Image 
-                        source={{ uri: item.isVeg 
-                            ? 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b2/Veg_symbol.svg/1200px-Veg_symbol.svg.png' 
-                            : 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Non_veg_symbol.svg/1024px-Non_veg_symbol.svg.png' 
-                        }} 
-                        style={styles.vegIcon} 
-                    />
-                    <Text style={styles.vegText}>{item.isVeg ? 'VEG' : 'NON-VEG'}</Text>
+                    <View style={[styles.vegSquare, { borderColor: item.isVeg ? '#3c7d48' : '#b91c1c' }]}>
+                       <View style={[styles.vegDot, { backgroundColor: item.isVeg ? '#3c7d48' : '#b91c1c' }]} />
+                    </View>
+                    <Text style={[styles.vegText, { color: item.isVeg ? '#3c7d48' : '#b91c1c', fontSize: 10 }]}>
+                      {item.isVeg ? 'VEG' : 'NON-VEG'}
+                    </Text>
                  </View>
              )}
              <View style={styles.ratingContainer}>
@@ -305,7 +303,7 @@ const ProductDetailScreen = () => {
                                  <Check size={12} color="#fff" strokeWidth={4} />
                             ) : (
                                  /* Radio style for single select? Or just dot? Keeping consistent for now */
-                                 <View style={styles.vegDot} />
+                                 <View style={styles.checkboxDot} />
                             )} 
                         </View>
                         <Text style={styles.toppingName}>{option.name}</Text>
@@ -427,15 +425,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
   },
-  vegIcon: {
+  vegSquare: {
     width: 14,
     height: 14,
-    resizeMode: 'contain',
+    borderWidth: 1.5,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+  },
+  vegDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
   },
   vegText: {
     fontSize: 10,
     fontWeight: 'bold',
-    color: '#6b7280',
     letterSpacing: 0.5,
   },
   ratingContainer: {
@@ -539,7 +544,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#3c7d48',
     borderColor: '#3c7d48',
   },
-  vegDot: {
+  checkboxDot: {
     width: 6,
     height: 6,
     borderRadius: 3,

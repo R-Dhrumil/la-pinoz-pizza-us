@@ -38,6 +38,7 @@ import { ScreenContainer } from '../components/ScreenContainer';
 import MenuSkeleton from '../components/MenuSkeleton';
 import { categoryService, Category, Product } from '../services/categoryService';
 import FloatingCart from '../components/FloatingCart';
+import MenuItem from '../components/MenuItem';
 
 const { width } = Dimensions.get('window');
 
@@ -361,78 +362,7 @@ const TabItem = ({ name, active, onPress }: any) => (
     </TouchableOpacity>
 );
 
-const MenuItem = ({ item, onTap }: { item: Product, onTap: () => void }) => {
-    const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
-    const { cartItems, addToCart, removeFromCart } = useCart();
-    const { selectedStore } = useStore();
-    
-    // Check if this specific item ID is in the cart
-    const cartItem = cartItems.find(i => i.id === item.id.toString());
-    const quantity = cartItem ? cartItem.quantity : 0;
-    
-    // External link check
-    const isExternal = item.externalLink;
-
-    const handleAdd = () => {
-        if (isExternal) {
-             const link = item.externalLink || 'https://lapinozpizza.us/order-online/';
-             Linking.openURL(link).catch(err => Alert.alert("Error", "Could not open link"));
-             return;
-        }
-        // Instead of adding directly, navigate to details for customization
-        navigation.navigate('ProductDetail', { item });
-    };
-
-    const handleRemove = () => {
-        removeFromCart(item.id.toString());
-    };
-
-    return (
-        <TouchableOpacity style={styles.menuItem} onPress={onTap} activeOpacity={0.9}>
-             <View style={styles.itemContent}>
-                 {item.isVeg !== null && item.isVeg !== undefined && (
-                     <Image 
-                        source={{ uri: item.isVeg 
-                            ? 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b2/Veg_symbol.svg/1200px-Veg_symbol.svg.png' 
-                            : 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Non_veg_symbol.svg/1024px-Non_veg_symbol.svg.png' 
-                        }} 
-                        style={styles.vegIcon} 
-                     />
-                 )}
-                 <Text style={styles.itemName}>{item.name}</Text>
-                 <Text style={styles.itemPrice}>${item.basePrice}</Text>
-                 <Text style={styles.itemDesc} numberOfLines={2}>
-                     {item.description}
-                 </Text>
-             </View>
-             
-             <View style={styles.imageContainer}>
-                 <Image source={item.imageUrl ? { uri: item.imageUrl } : require('../assets/images/pizza_placeholder.jpg')} style={[styles.itemImage, !item.imageUrl && { resizeMode: 'contain' }]} />
-                 <View style={styles.addButtonContainer}>
-                     {quantity > 0 && !isExternal ? (
-                        <View style={styles.qtyContainer}>
-                            <TouchableOpacity style={styles.qtyBtnSmall} onPress={handleRemove}>
-                                <Text style={styles.qtyBtnText}>-</Text>
-                            </TouchableOpacity>
-                            <Text style={styles.qtyTextSmall}>{quantity}</Text>
-                            <TouchableOpacity style={styles.qtyBtnSmall} onPress={handleAdd}>
-                                <Text style={styles.qtyBtnText}>+</Text>
-                            </TouchableOpacity>
-                        </View>
-                     ) : (
-                        <TouchableOpacity 
-                            style={[styles.addButton, isExternal && { backgroundColor: '#ea580c', borderColor: '#ea580c' }]} 
-                            onPress={handleAdd}
-                        >
-                            <Text style={[styles.addButtonText, isExternal && { color: '#fff' }]}>{isExternal ? 'ORDER' : 'ADD'}</Text>
-                            {!isExternal && <Text style={styles.addButtonPlus}> +</Text>}
-                        </TouchableOpacity>
-                     )}
-                 </View>
-             </View>
-        </TouchableOpacity>
-    );
-};
+// MenuItem component removed and replaced with shared component in ../components/MenuItem
 
 const styles = StyleSheet.create({
   container: {
@@ -560,117 +490,7 @@ const styles = StyleSheet.create({
       color: '#9ca3af',
       fontWeight: '600',
   },
-  menuItem: {
-      flexDirection: 'row',
-      backgroundColor: '#fff',
-      borderRadius: 16,
-      padding: 10,
-      paddingBottom: 15,
-      marginBottom: 10,
-      borderWidth: 1,
-      borderColor: '#f3f4f6',
-      justifyContent: 'space-between',
-  },
-  itemContent: {
-      flex: 1,
-      marginRight: 12,
-      justifyContent: 'flex-start',
-  },
-  imageContainer: {
-      width: 110,
-      alignItems: 'center',
-      justifyContent: 'flex-start',
-      position: 'relative',
-  },
-  itemImage: {
-      width: 110,
-      height: 105,
-      borderRadius: 12,
-      backgroundColor: '#f3f4f6',
-  },
-  addButtonContainer: {
-      position: 'absolute',
-      bottom: -15,
-      alignSelf: 'center',
-      zIndex: 10,
-  },
-  vegIcon: {
-      width: 14,
-      height: 14,
-      resizeMode: 'contain',
-      marginBottom: 4,
-  },
-  itemName: {
-      fontSize: 14,
-      fontWeight: 'bold',
-      color: '#000',
-      marginBottom: 2,
-  },
-  itemPrice: {
-      fontSize: 13,
-      fontWeight: '600',
-      color: '#374151',
-      marginBottom: 4,
-  },
-  itemDesc: {
-      fontSize: 11,
-      color: '#6b7280',
-      lineHeight: 14,
-  },
-  addButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: '#fff',
-      paddingVertical: 6,
-      paddingHorizontal: 16,
-      borderRadius: 8,
-      borderWidth: 1,
-      borderColor: '#3c7d48',
-      minWidth: 80,
-  },
-  addButtonText: {
-      color: '#3c7d48',
-      fontSize: 12,
-      fontWeight: 'bold',
-  },
-  addButtonPlus: {
-      color: '#3c7d48',
-      fontSize: 12,
-      fontWeight: 'bold',
-      marginLeft: 4,
-  },
-  qtyContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      backgroundColor: '#fff',
-      borderRadius: 8,
-      borderWidth: 1,
-      borderColor: '#3c7d48',
-      height: 32,
-      minWidth: 80,
-  },
-  qtyBtnSmall: {
-      width: 32,
-      height: '100%',
-      justifyContent: 'center',
-      alignItems: 'center',
-  },
-  qtyBtnText: {
-      color: '#3c7d48',
-      fontSize: 18,
-      fontWeight: 'bold',
-      marginTop: -2,
-  },
-  qtyTextSmall: {
-      color: '#3c7d48',
-      fontSize: 14,
-      fontWeight: 'bold',
-      marginHorizontal: 2,
-      minWidth: 16,
-      textAlign: 'center',
-  },
+// MenuItem styles removed as they are now in the shared MenuItem component
   searchHeaderContainer: {
       flex: 1,
       flexDirection: 'row',
