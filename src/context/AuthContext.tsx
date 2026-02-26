@@ -7,7 +7,7 @@ interface User {
   email: string;
   phoneNumber: string;
   image?: string;
-  dob?: string;
+  dateOfBirth?: string;
   gender?: string;
 }
 

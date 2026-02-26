@@ -28,7 +28,7 @@ const EditProfileScreen = () => {
   const [fullName, setFullName] = useState(user?.fullName || '');
   const [phoneNumber, setPhoneNumber] = useState(user?.phoneNumber || '');
   const [email, setEmail] = useState(user?.email || '');
-  const [dateOfBirth, setDateOfBirth] = useState(user?.dob || '');
+  const [dateOfBirth, setDateOfBirth] = useState(user?.dateOfBirth || '');
   const [gender, setGender] = useState(user?.gender || '');
   const [loading, setLoading] = useState(false);
 

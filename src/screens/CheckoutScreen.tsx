@@ -94,7 +94,6 @@ const CheckoutScreen = () => {
 
         setPlacingOrder(true);
         try {
-            console.log("Preparing order payload...");
             
             const items = cartItems.map(item => {
                 const productId = item.originalProduct?.id 
@@ -131,7 +130,6 @@ const CheckoutScreen = () => {
                     specialInstructions: orderInstructions || ''
                 };
 
-                console.log("COD Order Payload:", JSON.stringify(orderData, null, 2));
                 await orderService.createOrder(orderData);
                 
                 Alert.alert("Success", "Order placed successfully!", [
@@ -148,14 +146,12 @@ const CheckoutScreen = () => {
                 ]);
             } else {
                 // --- Online Payment: PhonePe flow ---
-                console.log("Initiating PhonePe payment session...");
                 
                 const sessionResponse = await paymentService.initiateSession(
                     finalTotal,
                     selectedAddress.phoneNumber || undefined
                 );
 
-                console.log("PhonePe session created:", JSON.stringify(sessionResponse));
 
                 // Prepare order data for after payment
                 const pendingOrderData: PendingOrderData = {
@@ -193,7 +189,6 @@ const CheckoutScreen = () => {
             
             let errorMessage = "Failed to process your order. Please try again.";
             if (error.response?.data) {
-                console.log("API Error Data:", error.response.data);
                 if (typeof error.response.data === 'string') {
                     errorMessage = error.response.data;
                 } else if (error.response.data.title) {

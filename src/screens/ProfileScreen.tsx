@@ -41,7 +41,6 @@ const ProfileScreen = () => {
       const fetchActiveOrders = async () => {
         try {
           const orders = await orderService.getMyOrders();
-          console.log(orders);
           
           const active = orders.filter(o => 
             ['placed', 'confirmed', 'preparing', 'outfordelivery', 'pending'].includes(o.orderStatus?.toLowerCase() ?? '')

@@ -37,7 +37,6 @@ const MyOrdersScreen = () => {
             // Sort by date descending
             const sorted = data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
             setOrders(sorted);
-            console.log(orders);
             
         } catch (error) {
             console.error("Failed to load orders", error);
@@ -81,7 +80,7 @@ const MyOrdersScreen = () => {
             <View style={styles.cardHeader}>
                 <View style={styles.orderIdRow}>
                     <Receipt size={16} color="#6b7280" />
-                    <Text style={styles.orderNumber}>#{item.orderNumber || item.id}</Text>
+                    <Text style={styles.orderNumber}>#{String(item.orderNumber || item.id)}</Text>
                 </View>
                 <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.orderStatus || 'pending') + '20' }]}>
                     <Text style={[styles.statusText, { color: getStatusColor(item.orderStatus || 'pending') }]}>

@@ -17,11 +17,8 @@ apiClient.interceptors.request.use(
     async (config) => {
         const token = await AsyncStorage.getItem('userToken');
 
-        console.log(`[API Request] Method: ${config.method?.toUpperCase()} URL: ${config.url}`);
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
-        } else {
-            console.warn("[API Request] No token found - request might fail if auth required");
         }
         return config;
     },

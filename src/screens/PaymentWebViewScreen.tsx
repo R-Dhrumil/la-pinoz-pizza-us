@@ -28,8 +28,6 @@ const PaymentWebViewScreen = () => {
     const { url, transactionId, orderData } = route.params;
     const { clearCart } = useCart();
 
-    console.log('[PaymentWebView] Loading URL:', url);
-    console.log('[PaymentWebView] TransactionId:', transactionId);
 
     const webViewRef = useRef<WebView>(null);
     const [paymentProcessing, setPaymentProcessing] = useState(false);
@@ -43,9 +41,7 @@ const PaymentWebViewScreen = () => {
 
         try {
             // Step 1: Verify the payment
-            console.log('[PaymentWebView] Verifying payment for TX:', transactionId);
             const verifyResult = await paymentService.verifyPayment(transactionId);
-            console.log('[PaymentWebView] Verify result:', JSON.stringify(verifyResult));
 
             const status = (verifyResult.status || '').toUpperCase();
 
@@ -63,11 +59,9 @@ const PaymentWebViewScreen = () => {
                 }
             } else if (status === 'PENDING') {
                 // Payment still pending — poll again after a delay
-                console.log('[PaymentWebView] Status PENDING, will poll again...');
                 hasHandledRedirect.current = false;
                 setTimeout(() => handlePaymentVerification(), 3000);
             } else {
-                console.log('[PaymentWebView] Payment status non-success:', status);
                 setPaymentResult('failure');
             }
         } catch (error) {
@@ -82,14 +76,12 @@ const PaymentWebViewScreen = () => {
         const { url: currentUrl } = navState;
         if (!currentUrl) return;
         
-        console.log('[PaymentWebView] Navigation:', currentUrl);
 
         // Detect when PhonePe redirects back to our redirect URL (Production OR Fallback)
         const isMatchedRedirect = currentUrl.startsWith(REDIRECT_URL) || currentUrl.startsWith(FALLBACK_REDIRECT_URL);
         const isResultPath = currentUrl.includes('payment-result');
 
         if ((isMatchedRedirect || isResultPath) && !hasHandledRedirect.current) {
-            console.log('[PaymentWebView] Detected redirect path, triggering verification...');
             handlePaymentVerification();
         }
     };
@@ -226,18 +218,15 @@ const PaymentWebViewScreen = () => {
                 userAgent="Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
                 onError={(syntheticEvent) => {
                     const { nativeEvent } = syntheticEvent;
-                    console.log('[PaymentWebView] WebView error occurred:', nativeEvent.description);
                     
                     // If we get an error on a result URL (like localhost refusing connection)
                     // we should still try to verify because the backend has likely received the status
                     if (nativeEvent.url && (nativeEvent.url.includes('payment-result') || nativeEvent.url.includes('localhost')) && !hasHandledRedirect.current) {
-                        console.log('[PaymentWebView] Error on result URL, triggering verification fallback...');
                         handlePaymentVerification();
                     }
                 }}
                 onHttpError={(syntheticEvent) => {
                     const { nativeEvent } = syntheticEvent;
-                    console.log('[PaymentWebView] HTTP error:', nativeEvent.statusCode, nativeEvent.url);
                     if (nativeEvent.url && (nativeEvent.url.includes('payment-result') || nativeEvent.url.includes('localhost')) && !hasHandledRedirect.current) {
                         handlePaymentVerification();
                     }

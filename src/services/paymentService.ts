@@ -63,12 +63,8 @@ export const paymentService = {
                 amount,
                 mobileNumber: mobileNumber || null,
             };
-            console.log('[PaymentService] Initiating session:', JSON.stringify(payload));
             const response = await apiClient.post('/Payment/initiate-session', payload);
             
-            // Log the RAW response to debug field names
-            console.log('[PaymentService] RAW response data:', JSON.stringify(response.data));
-            console.log('[PaymentService] Response keys:', Object.keys(response.data || {}));
             
             // The backend may return different field names — try common patterns
             const data = response.data;
@@ -85,10 +81,8 @@ export const paymentService = {
                     || '',
             };
             
-            console.log('[PaymentService] Parsed result:', JSON.stringify(result));
             
             if (!result.redirectUrl) {
-                console.error('[PaymentService] No redirectUrl found in response! Available fields:', JSON.stringify(data));
                 throw new Error('No payment URL received from server. Please try again.');
             }
             
@@ -104,9 +98,7 @@ export const paymentService = {
      */
     verifyPayment: async (transactionId: string): Promise<PaymentVerifyResponse> => {
         try {
-            console.log('[PaymentService] Verifying payment:', transactionId);
             const response = await apiClient.get(`/Payment/verify/${transactionId}`);
-            console.log('[PaymentService] Verify response:', JSON.stringify(response.data));
             return response.data;
         } catch (error) {
             console.error('[PaymentService] Error verifying payment:', error);
@@ -126,9 +118,7 @@ export const paymentService = {
                 transactionId,
                 orderData,
             };
-            console.log('[PaymentService] Creating order after payment:', JSON.stringify(payload, null, 2));
             const response = await apiClient.post('/Payment/create-order-after-payment', payload);
-            console.log('[PaymentService] Order created:', JSON.stringify(response.data));
             return response.data;
         } catch (error) {
             console.error('[PaymentService] Error creating order after payment:', error);
