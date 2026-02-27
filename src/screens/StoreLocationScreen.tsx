@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import FocusAwareStatusBar from '../components/FocusAwareStatusBar';
 import {
   View,
   Text,
@@ -206,7 +207,7 @@ const StoreLocationScreen = () => {
 
   return (
     <ScreenContainer useScrollView={false} containerStyle={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <FocusAwareStatusBar barStyle="dark-content" backgroundColor="#fff" />
       
       {/* Header */}
       <View style={styles.header}>

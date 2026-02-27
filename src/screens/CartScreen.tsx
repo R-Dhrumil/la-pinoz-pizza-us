@@ -1,4 +1,5 @@
 import React from 'react';
+import FocusAwareStatusBar from '../components/FocusAwareStatusBar';
 import {
   View,
   Text,
@@ -65,7 +66,7 @@ const CartScreen = () => {
 
   return (
     <ScreenContainer useScrollView={false} containerStyle={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <FocusAwareStatusBar barStyle="dark-content" backgroundColor="#fff" />
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>

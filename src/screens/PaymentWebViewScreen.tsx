@@ -1,4 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
+import FocusAwareStatusBar from '../components/FocusAwareStatusBar';
 import {
     View,
     Text,
@@ -121,7 +122,7 @@ const PaymentWebViewScreen = () => {
     if (paymentProcessing) {
         return (
             <ScreenContainer useScrollView={false} containerStyle={styles.container}>
-                <StatusBar barStyle="dark-content" />
+                <FocusAwareStatusBar barStyle="dark-content" />
                 <View style={styles.centerContent}>
                     <ActivityIndicator size="large" color="#3c7d48" />
                     <Text style={styles.processingTitle}>Verifying Payment</Text>
@@ -136,7 +137,7 @@ const PaymentWebViewScreen = () => {
     if (paymentResult === 'success') {
         return (
             <ScreenContainer useScrollView={false} containerStyle={styles.container}>
-                <StatusBar barStyle="dark-content" />
+                <FocusAwareStatusBar barStyle="dark-content" />
                 <View style={styles.centerContent}>
                     <View style={styles.successIconWrapper}>
                         <CheckCircle2 size={64} color="#3c7d48" />
@@ -156,7 +157,7 @@ const PaymentWebViewScreen = () => {
     if (paymentResult === 'failure') {
         return (
             <ScreenContainer useScrollView={false} containerStyle={styles.container}>
-                <StatusBar barStyle="dark-content" />
+                <FocusAwareStatusBar barStyle="dark-content" />
                 <View style={styles.centerContent}>
                     <View style={styles.failureIconWrapper}>
                         <AlertTriangle size={64} color="#ef4444" />
@@ -182,7 +183,7 @@ const PaymentWebViewScreen = () => {
     // --- WebView ---
     return (
         <ScreenContainer useScrollView={false} containerStyle={styles.container}>
-            <StatusBar barStyle="dark-content" />
+            <FocusAwareStatusBar barStyle="dark-content" />
             <View style={styles.header}>
                 <TouchableOpacity onPress={handleGoBack} style={styles.backBtn}>
                     <ArrowLeft size={24} color="#000" />

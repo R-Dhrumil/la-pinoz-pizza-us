@@ -20,7 +20,7 @@
 
 //   return (
 //     <View style={styles.container}>
-//       <StatusBar barStyle="light-content" backgroundColor={BG} />
+//       <FocusAwareStatusBar barStyle="light-content" backgroundColor={BG} />
 
 //       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
 //         {/* HEADER */}
@@ -633,6 +633,7 @@
 //   },
 // });
 import React, { useState } from 'react';
+import FocusAwareStatusBar from './components/FocusAwareStatusBar';
 import { View, Text, Button, Alert } from 'react-native';
 import { requestLocationPermission } from './utils/requestLocation';
 import getCurrentLocation from './services/getCurrentLocation'

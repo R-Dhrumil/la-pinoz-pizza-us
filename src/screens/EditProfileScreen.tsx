@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import FocusAwareStatusBar from '../components/FocusAwareStatusBar';
 import {
   View,
   Text,
@@ -132,9 +133,9 @@ const EditProfileScreen = () => {
   };
 
   return (
-    <ScreenContainer useScrollView={false} containerStyle={[styles.container, { backgroundColor: '#3c7d48' }]}>
+    <ScreenContainer useScrollView={false} containerStyle={[styles.container, { backgroundColor: '#3c7d48' }]} edges={['top']}>
       <View style={{ flex: 1, backgroundColor: '#fff' }}>
-        <StatusBar barStyle="light-content" backgroundColor="#3c7d48" />
+        <FocusAwareStatusBar barStyle="light-content" backgroundColor="#3c7d48" />
       
       {/* Header */}
       <View style={styles.header}>
@@ -261,7 +262,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 16,
-    paddingTop: StatusBar.currentHeight ? StatusBar.currentHeight + 16 : 16,
   },
   backBtn: {
     width: 40,

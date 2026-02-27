@@ -6,6 +6,7 @@ export interface ScreenContainerProps extends ScrollViewProps {
   children: React.ReactNode;
   useScrollView?: boolean;
   containerStyle?: StyleProp<ViewStyle>;
+  edges?: any[];
 }
 
 export const ScreenContainer: React.FC<ScreenContainerProps> = ({ 
@@ -13,10 +14,11 @@ export const ScreenContainer: React.FC<ScreenContainerProps> = ({
   useScrollView = true,
   contentContainerStyle,
   containerStyle,
+  edges = ['top', 'bottom'],
   ...scrollViewProps 
 }) => {
   return (
-    <SafeAreaView style={[styles.safeArea, containerStyle]} edges={['top', 'bottom']}>
+    <SafeAreaView style={[styles.safeArea, containerStyle]} edges={edges}>
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}

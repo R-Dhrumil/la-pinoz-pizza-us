@@ -203,7 +203,7 @@ const MenuScreen = () => {
   }).filter(category => category.products.length > 0); // Remove empty categories
 
   return (
-      <ScreenContainer useScrollView={false} containerStyle={styles.containerStyleOverride}>
+      <ScreenContainer useScrollView={false} containerStyle={styles.containerStyleOverride} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.navigate('StoreLocation')}>

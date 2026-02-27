@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import FocusAwareStatusBar from '../../components/FocusAwareStatusBar';
 import {
   View,
   Text,
@@ -15,6 +16,7 @@ import {
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { Pizza, User, Mail, Phone, Lock, Eye, EyeOff } from 'lucide-react-native';
 
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../navigation/AuthNavigator';
@@ -25,6 +27,7 @@ const { width } = Dimensions.get('window');
 
 const SignupScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
+  const insets = useSafeAreaInsets();
   const { setUser } = useAuth();
   const [secure, setSecure] = useState(true);
   
@@ -142,7 +145,7 @@ const SignupScreen = () => {
 
   return (
     <View style={styles.mainContainer}>
-      <StatusBar barStyle="light-content" backgroundColor="#3c7d48" />
+      <FocusAwareStatusBar barStyle="light-content" backgroundColor="#3c7d48" />
       <KeyboardAwareScrollView 
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
@@ -150,7 +153,7 @@ const SignupScreen = () => {
         extraScrollHeight={20}
       >
           {/* Hero Header */}
-          <View style={styles.heroContainer}>
+          <View style={[styles.heroContainer, { paddingTop: Math.max(insets.top, 20) }]}>
             <View style={styles.heroBrandRow}>
               <Pizza size={22} color="#fff" />
               <Text style={styles.heroBrandText}>La Pino'z USA</Text>

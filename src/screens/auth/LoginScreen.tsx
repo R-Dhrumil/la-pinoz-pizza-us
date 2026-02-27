@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import FocusAwareStatusBar from '../../components/FocusAwareStatusBar';
 import {
   View,
   Text,
@@ -91,7 +92,7 @@ const LoginScreen = () => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#3c7d48" />
+      <FocusAwareStatusBar barStyle="light-content" backgroundColor="#3c7d48" />
     
       
       {/* Top Header Bar */}

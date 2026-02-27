@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import FocusAwareStatusBar from '../components/FocusAwareStatusBar';
 import {
   View,
   Text,
@@ -100,9 +101,9 @@ const ProfileScreen = () => {
   };
 
   return (
-    <ScreenContainer useScrollView={false} containerStyle={[styles.container, { backgroundColor: '#3c7d48' }]}>
+    <ScreenContainer useScrollView={false} containerStyle={[styles.container, { backgroundColor: '#3c7d48' }]} edges={['top']}>
       <View style={{ flex: 1, backgroundColor: '#fff' }}>
-        <StatusBar barStyle="light-content" backgroundColor="#3c7d48" />
+        <FocusAwareStatusBar barStyle="light-content" backgroundColor="#3c7d48" />
       
       {/* Header Card */}
       <View style={styles.headerContainer}>
@@ -190,7 +191,7 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     backgroundColor: '#3c7d48', // Green header
-    paddingTop: 16,
+    paddingTop: 8,
     paddingBottom: 32,
     paddingHorizontal: 20,
     borderBottomLeftRadius: 30,

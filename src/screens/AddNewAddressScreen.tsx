@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import FocusAwareStatusBar from '../components/FocusAwareStatusBar';
 import {
     View,
     Text,
@@ -200,7 +201,7 @@ const AddNewAddressScreen = () => {
 
     return (
         <ScreenContainer useScrollView={false} containerStyle={styles.container}>
-            <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+            <FocusAwareStatusBar barStyle="dark-content" backgroundColor="#fff" />
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                     <ChevronLeft size={24} color="#000" />

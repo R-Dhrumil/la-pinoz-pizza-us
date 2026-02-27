@@ -11,6 +11,7 @@ import ProductDetailScreen from '../screens/ProductDetailScreen';
 import ManageAddressScreen from '../screens/ManageAddressScreen';
 
 import PracticeScreen from '../PracticeScreen';
+import TrackOrderScreen from '../screens/TrackOrderScreen';
 
 import AddNewAddressScreen from '../screens/AddNewAddressScreen';
 import StoreLocationScreen from '../screens/StoreLocationScreen';
@@ -46,6 +47,7 @@ export type AuthStackParamList = {
   PaymentWebView: { url: string; transactionId: string; orderData: PendingOrderData };
   Practice: undefined;
   EditProfile: undefined;
+  TrackOrder: { orderId: number };
 };
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
@@ -154,6 +156,11 @@ const AuthNavigator = () => {
         name="EditProfile" 
         component={require('../screens/EditProfileScreen').default} 
         options={{ animation: 'slide_from_right' }} 
+      />
+      <Stack.Screen 
+        name="TrackOrder" 
+        component={TrackOrderScreen} 
+        options={{ animation: 'slide_from_bottom' }} 
       />
     </Stack.Navigator>
   );

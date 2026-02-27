@@ -126,7 +126,10 @@ const MyOrdersScreen = () => {
                  <TouchableOpacity style={styles.footerBtn}>
                      <Text style={styles.reorderText}>Reorder</Text>
                  </TouchableOpacity>
-                 <TouchableOpacity style={styles.footerBtn}>
+                 <TouchableOpacity 
+                     style={styles.footerBtn}
+                     onPress={() => navigation.navigate('TrackOrder', { orderId: item.id })}
+                 >
                      <Text style={styles.trackText}>Track Order</Text>
                  </TouchableOpacity>
                  <TouchableOpacity 
@@ -141,7 +144,7 @@ const MyOrdersScreen = () => {
 
     return (
         <ScreenContainer useScrollView={false} containerStyle={styles.container}>
-            <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+            
             
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>

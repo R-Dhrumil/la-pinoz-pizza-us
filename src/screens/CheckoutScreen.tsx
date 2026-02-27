@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import FocusAwareStatusBar from '../components/FocusAwareStatusBar';
 import {
   View,
   Text,
@@ -288,8 +289,8 @@ const CheckoutScreen = () => {
     );
 
     return (
-        <ScreenContainer useScrollView={false} containerStyle={styles.container}>
-            <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+        <ScreenContainer useScrollView={false} containerStyle={styles.container} edges={['top']}>
+            <FocusAwareStatusBar barStyle="dark-content" backgroundColor="#fff" />
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
                     <ArrowLeft size={24} color="#000" />
@@ -298,7 +299,8 @@ const CheckoutScreen = () => {
                 <View style={{ width: 24 }} />
             </View>
 
-            <ScrollView contentContainerStyle={styles.scrollContent}>
+            <View style={styles.contentWrapper}>
+            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                 
                 {/* Delivery Address Section */}
                 <View style={styles.section}>
@@ -410,6 +412,7 @@ const CheckoutScreen = () => {
                 </View>
 
             </ScrollView>
+            </View>
 
             <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
                  <View>
@@ -458,7 +461,9 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         padding: 16,
-        paddingBottom: 100,
+    },
+    contentWrapper: {
+        flex: 1,
     },
     section: {
         marginBottom: 24,
@@ -591,10 +596,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
     },
     footerTotalLabel: {
         fontSize: 10,

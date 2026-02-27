@@ -1,4 +1,5 @@
 
+import FocusAwareStatusBar from '../components/FocusAwareStatusBar';
 import {
   View,
   Text,
@@ -128,8 +129,8 @@ const HomeScreen = () => {
   }, [bestSellers]); // Add dependency on bestSellers
 
   return (
-    <ScreenContainer useScrollView={false} containerStyle={styles.container}>
-      <StatusBar
+    <ScreenContainer useScrollView={false} containerStyle={styles.container} edges={['top']}>
+      <FocusAwareStatusBar
         barStyle="light-content"
         backgroundColor="#3c7d48"
       />

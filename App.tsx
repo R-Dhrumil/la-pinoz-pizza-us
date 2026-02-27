@@ -8,9 +8,11 @@ import { AddressProvider } from './src/context/AddressContext';
 import { CartProvider } from './src/context/CartContext';
 import AuthNavigator from './src/navigation/AuthNavigator';
 
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+
 const App = () => {
   return (
-    <>
+    <SafeAreaProvider>
       <AuthProvider>
         <StoreProvider>
         <AddressProvider>
@@ -23,7 +25,7 @@ const App = () => {
         </StoreProvider>
       </AuthProvider>
       <Toast />
-    </>
+    </SafeAreaProvider>
   );
 };
 
