@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import FocusAwareStatusBar from '../components/FocusAwareStatusBar';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+
 import {
   View,
   Text,
@@ -7,7 +9,6 @@ import {
   Image,
   TouchableOpacity,
   ScrollView,
-  SafeAreaView,
   StatusBar,
   Dimensions,
   Linking,
@@ -211,169 +212,248 @@ const ProductDetailScreen = () => {
   };
 
   return (
-    <ScreenContainer useScrollView={false} containerStyle={styles.container}>
-      <FocusAwareStatusBar barStyle="dark-content" backgroundColor="#fff" />
-      {/* Scrollable Content */}
-      <ScrollView bounces={false} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
-        
-        {/* Header Image */}
-        <View style={styles.imageContainer}>
-          <Image source={item.imageUrl ? { uri: item.imageUrl } : require('../assets/images/pizza_placeholder.jpg')} style={[styles.image, !item.imageUrl && { resizeMode: 'contain' }]} />
-          <TouchableOpacity 
-            style={styles.closeButton} 
-            onPress={() => navigation.goBack()}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+    <SafeAreaProvider>
+      <SafeAreaView style={{ flex: 1 }}>
+        <ScreenContainer
+          useScrollView={false}
+          containerStyle={styles.container}
+        >
+          <FocusAwareStatusBar barStyle="dark-content" backgroundColor="#fff" />
+          {/* Scrollable Content */}
+          <ScrollView
+            bounces={false}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: 120 }}
           >
-            <X size={20} color="#000" />
-          </TouchableOpacity>
-        </View>
+            {/* Header Image */}
+            <View style={styles.imageContainer}>
+              <Image
+                source={
+                  item.imageUrl
+                    ? { uri: item.imageUrl }
+                    : require('../assets/images/pizza_placeholder.jpg')
+                }
+                style={[
+                  styles.image,
+                  !item.imageUrl && { resizeMode: 'contain' },
+                ]}
+              />
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => navigation.goBack()}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <X size={20} color="#000" />
+              </TouchableOpacity>
+            </View>
 
-        <View style={styles.detailsContainer}>
-          {/* Title and Rating */}
-          <View style={styles.headerRow}>
-             {item.isVeg !== null && item.isVeg !== undefined && (
-                 <View style={styles.vegTag}>
-                    <View style={[styles.vegSquare, { borderColor: item.isVeg ? '#3c7d48' : '#b91c1c' }]}>
-                       <View style={[styles.vegDot, { backgroundColor: item.isVeg ? '#3c7d48' : '#b91c1c' }]} />
+            <View style={styles.detailsContainer}>
+              {/* Title and Rating */}
+              <View style={styles.headerRow}>
+                {item.isVeg !== null && item.isVeg !== undefined && (
+                  <View style={styles.vegTag}>
+                    <View
+                      style={[
+                        styles.vegSquare,
+                        { borderColor: item.isVeg ? '#3c7d48' : '#b91c1c' },
+                      ]}
+                    >
+                      <View
+                        style={[
+                          styles.vegDot,
+                          {
+                            backgroundColor: item.isVeg ? '#3c7d48' : '#b91c1c',
+                          },
+                        ]}
+                      />
                     </View>
-                    <Text style={[styles.vegText, { color: item.isVeg ? '#3c7d48' : '#b91c1c', fontSize: 10 }]}>
+                    <Text
+                      style={[
+                        styles.vegText,
+                        {
+                          color: item.isVeg ? '#3c7d48' : '#b91c1c',
+                          fontSize: 10,
+                        },
+                      ]}
+                    >
                       {item.isVeg ? 'VEG' : 'NON-VEG'}
                     </Text>
-                 </View>
-             )}
-             <View style={styles.ratingContainer}>
-                 <Star size={14} color="#FBBF24" fill="#FBBF24" />
-                 <Text style={styles.ratingText}>4.8</Text>
-             </View>
-          </View>
-
-          <Text style={styles.title}>{item.name}</Text>
-          <Text style={styles.description}>{item.description}</Text>
-
-          {/* Dynamic Variants */}
-          {item.variants && item.variants.length > 0 && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>SELECT VARIANT</Text>
-                <View style={styles.variantsGrid}>
-                  {item.variants.map((variant) => (
-                    <TouchableOpacity
-                      key={variant.id}
-                      style={[
-                        styles.variantCard,
-                        selectedVariant?.id === variant.id && styles.variantCardActive,
-                      ]}
-                      onPress={() => setSelectedVariant(variant)}
-                    >
-                      <Text style={[
-                          styles.variantName, 
-                          selectedVariant?.id === variant.id && styles.variantTextActive
-                      ]}>{variant.size}</Text>
-                      <Text style={[
-                          styles.variantPrice,
-                          selectedVariant?.id === variant.id && styles.variantTextActive
-                      ]}>${variant.price}</Text>
-                    </TouchableOpacity>
-                  ))}
+                  </View>
+                )}
+                <View style={styles.ratingContainer}>
+                  <Star size={14} color="#FBBF24" fill="#FBBF24" />
+                  <Text style={styles.ratingText}>4.8</Text>
                 </View>
               </View>
-          )}
 
-          {/* Dynamic Modifier Groups */}
-          {item.modifierGroups && item.modifierGroups.map(group => (
-              <View key={group.id} style={styles.section}>
-                <View style={styles.toppingsHeader}>
-                    <Text style={styles.sectionTitle}>{group.name.toUpperCase()}</Text>
-                    {group.maxSelection > 0 && (
-                        <Text style={styles.maxText}>MAX {group.maxSelection}</Text>
-                    )}
+              <Text style={styles.title}>{item.name}</Text>
+              <Text style={styles.description}>{item.description}</Text>
+
+              {/* Dynamic Variants */}
+              {item.variants && item.variants.length > 0 && (
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>SELECT VARIANT</Text>
+                  <View style={styles.variantsGrid}>
+                    {item.variants.map(variant => (
+                      <TouchableOpacity
+                        key={variant.id}
+                        style={[
+                          styles.variantCard,
+                          selectedVariant?.id === variant.id &&
+                            styles.variantCardActive,
+                        ]}
+                        onPress={() => setSelectedVariant(variant)}
+                      >
+                        <Text
+                          style={[
+                            styles.variantName,
+                            selectedVariant?.id === variant.id &&
+                              styles.variantTextActive,
+                          ]}
+                        >
+                          {variant.size}
+                        </Text>
+                        <Text
+                          style={[
+                            styles.variantPrice,
+                            selectedVariant?.id === variant.id &&
+                              styles.variantTextActive,
+                          ]}
+                        >
+                          ${variant.price}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
                 </View>
-                
-                {group.modifierOptions.map((option) => {
-                  const isSelected = (selectedModifiers[group.id] || []).includes(option.id);
-                  const price = getOptionPrice(option);
-                  
-                  return (
-                    <TouchableOpacity
-                      key={option.id}
-                      style={styles.toppingRow}
-                      onPress={() => toggleModifier(group, option.id)}
-                    >
-                      <View style={styles.toppingInfo}>
-                        <View style={[styles.checkboxBase, isSelected && styles.checkboxChecked]}>
-                            {isSelected ? (
-                                 <Check size={12} color="#fff" strokeWidth={4} />
-                            ) : (
-                                 /* Radio style for single select? Or just dot? Keeping consistent for now */
-                                 <View style={styles.checkboxDot} />
-                            )} 
-                        </View>
-                        <Text style={styles.toppingName}>{option.name}</Text>
-                      </View>
-                      <Text style={styles.toppingPrice}>+${price}</Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-          ))}
+              )}
 
-        </View>
-      </ScrollView>
+              {/* Dynamic Modifier Groups */}
+              {item.modifierGroups &&
+                item.modifierGroups.map(group => (
+                  <View key={group.id} style={styles.section}>
+                    <View style={styles.toppingsHeader}>
+                      <Text style={styles.sectionTitle}>
+                        {group.name.toUpperCase()}
+                      </Text>
+                      {group.maxSelection > 0 && (
+                        <Text style={styles.maxText}>
+                          MAX {group.maxSelection}
+                        </Text>
+                      )}
+                    </View>
 
-      {/* Bottom Bar */}
-      <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 20) }]}>
-        <View style={styles.priceRow}>
-            <View>
+                    {group.modifierOptions.map(option => {
+                      const isSelected = (
+                        selectedModifiers[group.id] || []
+                      ).includes(option.id);
+                      const price = getOptionPrice(option);
+
+                      return (
+                        <TouchableOpacity
+                          key={option.id}
+                          style={styles.toppingRow}
+                          onPress={() => toggleModifier(group, option.id)}
+                        >
+                          <View style={styles.toppingInfo}>
+                            <View
+                              style={[
+                                styles.checkboxBase,
+                                isSelected && styles.checkboxChecked,
+                              ]}
+                            >
+                              {isSelected ? (
+                                <Check size={12} color="#fff" strokeWidth={4} />
+                              ) : (
+                                /* Radio style for single select? Or just dot? Keeping consistent for now */
+                                <View style={styles.checkboxDot} />
+                              )}
+                            </View>
+                            <Text style={styles.toppingName}>
+                              {option.name}
+                            </Text>
+                          </View>
+                          <Text style={styles.toppingPrice}>+${price}</Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                ))}
+            </View>
+          </ScrollView>
+
+          {/* Bottom Bar */}
+          <View
+            style={[
+              styles.bottomBar,
+              { paddingBottom: Math.max(insets.bottom, 20) },
+            ]}
+          >
+            <View style={styles.priceRow}>
+              <View>
                 <Text style={styles.totalLabel}>Total Price</Text>
                 <Text style={styles.totalBig}>${calculateTotal()}</Text>
-            </View>
-            <View style={styles.quantityControl}>
-                <TouchableOpacity 
-                    style={styles.qtyBtn} 
-                    onPress={() => quantity > 1 && setQuantity(q => q - 1)}
+              </View>
+              <View style={styles.quantityControl}>
+                <TouchableOpacity
+                  style={styles.qtyBtn}
+                  onPress={() => quantity > 1 && setQuantity(q => q - 1)}
                 >
-                    <Minus size={20} color="#000" />
+                  <Minus size={20} color="#000" />
                 </TouchableOpacity>
                 <Text style={styles.qtyText}>{quantity}</Text>
-                <TouchableOpacity 
-                    style={styles.qtyBtn} 
-                    onPress={() => setQuantity(q => q + 1)}
+                <TouchableOpacity
+                  style={styles.qtyBtn}
+                  onPress={() => setQuantity(q => q + 1)}
                 >
-                    <Plus size={20} color="#000" />
+                  <Plus size={20} color="#000" />
                 </TouchableOpacity>
+              </View>
             </View>
-        </View>
 
-        <View style={styles.actionButtons}>
-            {item.externalLink ? (
-                 <TouchableOpacity 
-                    style={[styles.btn, styles.btnPrimary, { backgroundColor: '#ea580c' }]} 
-                    onPress={() => {
-                        const link = item.externalLink || 'https://lapinozpizza.us/order-online/';
-                        Linking.openURL(link).catch(err => Alert.alert("Error", "Could not open link"));
-                    }}
+            <View style={styles.actionButtons}>
+              {item.externalLink ? (
+                <TouchableOpacity
+                  style={[
+                    styles.btn,
+                    styles.btnPrimary,
+                    { backgroundColor: '#ea580c' },
+                  ]}
+                  onPress={() => {
+                    const link =
+                      item.externalLink ||
+                      'https://lapinozpizza.us/order-online/';
+                    Linking.openURL(link).catch(err =>
+                      Alert.alert('Error', 'Could not open link'),
+                    );
+                  }}
                 >
                   <Text style={styles.btnTextPrimary}>ORDER ON WEB</Text>
                 </TouchableOpacity>
-            ) : (
+              ) : (
                 <>
-                    <TouchableOpacity 
-                        style={[styles.btn, styles.btnSecondary]} 
-                        onPress={() => handleAddToCart(false)}
-                    >
+                  <TouchableOpacity
+                    style={[styles.btn, styles.btnSecondary]}
+                    onPress={() => handleAddToCart(false)}
+                  >
                     <Text style={styles.btnTextSecondary}>ADD TO CART</Text>
-                    </TouchableOpacity>
+                  </TouchableOpacity>
 
-                    <TouchableOpacity 
-                        style={[styles.btn, styles.btnPrimary]} 
-                        onPress={() => handleAddToCart(true)}
-                    >
-                    <Text style={styles.btnTextPrimary}>{editMode ? 'UPDATE CART' : 'BUY NOW'}</Text>
-                    </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.btn, styles.btnPrimary]}
+                    onPress={() => handleAddToCart(true)}
+                  >
+                    <Text style={styles.btnTextPrimary}>
+                      {editMode ? 'UPDATE CART' : 'BUY NOW'}
+                    </Text>
+                  </TouchableOpacity>
                 </>
-            )}
-        </View>
-      </View>
-    </ScreenContainer>
+              )}
+            </View>
+          </View>
+        </ScreenContainer>
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 };
 

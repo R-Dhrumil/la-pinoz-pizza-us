@@ -34,6 +34,8 @@ const MyOrdersScreen = () => {
     const fetchOrders = async () => {
         try {
             const data = await orderService.getMyOrders();
+            console.log(data);
+            
             // Sort by date descending
             const sorted = data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
             setOrders(sorted);
@@ -227,7 +229,7 @@ const MyOrdersScreen = () => {
                                         <Text style={styles.addressText}>{selectedOrder.address.addressLine1}</Text>
                                         {selectedOrder.address.addressLine2 ? <Text style={styles.addressText}>{selectedOrder.address.addressLine2}</Text> : null}
                                         <Text style={styles.addressText}>{selectedOrder.address.city}, {selectedOrder.address.state} {selectedOrder.address.zipCode}</Text>
-                                        <Text style={styles.addressText}>Phone: {selectedOrder.address.phoneNumber}</Text>
+                                        <Text style={styles.addressText}>Phone: {selectedOrder.address.phoneNumber}</Text><Text style={styles.addressText}>Order Instruction: {selectedOrder.specialInstructions}</Text>
                                     </View>
                                 )}
 

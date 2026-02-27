@@ -108,7 +108,7 @@ const CheckoutScreen = () => {
                     unitPrice: item.price,
                     totalPrice: item.price * item.quantity,
                     modifiers: item.toppings ? item.toppings.map((t: any) => t.name).join(', ') : '',
-                    specialInstructions: '',
+                    specialInstructions: orderInstructions,
                     imageUrl: item.image || '',
                     isVeg: item.isVeg !== undefined ? item.isVeg : null,
                     size: item.size || null,
