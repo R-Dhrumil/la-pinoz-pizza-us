@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import FocusAwareStatusBar from '../components/FocusAwareStatusBar';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+
 
 import {
   View,
@@ -212,13 +212,12 @@ const ProductDetailScreen = () => {
   };
 
   return (
-    <SafeAreaProvider>
-      <SafeAreaView style={{ flex: 1 }}>
-        <ScreenContainer
-          useScrollView={false}
-          containerStyle={styles.container}
-        >
-          <FocusAwareStatusBar barStyle="dark-content" backgroundColor="#fff" />
+    <ScreenContainer
+      useScrollView={false}
+      containerStyle={styles.container}
+      edges={[]}
+    >
+      <FocusAwareStatusBar barStyle="dark-content" backgroundColor="#fff" />
           {/* Scrollable Content */}
           <ScrollView
             bounces={false}
@@ -450,16 +449,14 @@ const ProductDetailScreen = () => {
                 </>
               )}
             </View>
-          </View>
-        </ScreenContainer>
-      </SafeAreaView>
-    </SafeAreaProvider>
+      </View>
+    </ScreenContainer>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     backgroundColor: '#fff',
   },
   imageContainer: {
