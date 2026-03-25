@@ -30,10 +30,13 @@ apiClient.interceptors.request.use(
 // Response Interceptor
 apiClient.interceptors.response.use(
     (response) => response,
-    (error) => {
+    async (error) => {
         // Handle global errors (e.g., 401 Unauthorized)
         if (error.response && error.response.status === 401) {
-            // TODO: dispatch logout action
+            // Clear stored user data
+            await AsyncStorage.multiRemove(['userToken', 'userInfo']);
+            // The app state will react to AuthContext changes if appropriately handled there
+            // or we could use a navigation ref to jump to Login
         }
         return Promise.reject(error);
     }

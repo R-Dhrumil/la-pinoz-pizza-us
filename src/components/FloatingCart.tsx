@@ -59,8 +59,9 @@ const FloatingCart = () => {
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: '#fff',
+    paddingTop: 8,
+    paddingBottom: 0,
+    backgroundColor: 'transparent',
   },
   cartBar: {
     backgroundColor: '#3c7d48',

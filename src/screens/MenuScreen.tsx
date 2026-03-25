@@ -43,6 +43,7 @@ import {
 } from '../services/categoryService';
 import FloatingCart from '../components/FloatingCart';
 import MenuItem from '../components/MenuItem';
+import { getTabHeight } from '../utils/constants';
 
 const { width } = Dimensions.get('window');
 
@@ -56,10 +57,7 @@ const MenuScreen = () => {
   const { addToCart, totalItems, totalAmount } = useCart();
   const { selectedStore } = useStore();
   const insets = useSafeAreaInsets();
-  const tabHeight =
-    Platform.OS === 'ios'
-      ? 55 + insets.bottom
-      : 60 + Math.max(insets.bottom, 0);
+  const tabHeight = getTabHeight(insets.bottom);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -341,8 +339,8 @@ const MenuScreen = () => {
         </>
       )}
 
-      {/* Floating Cart at the bottom */}
-      <View style={styles.absoluteBottomWrapper}>
+      {/* Floating Cart at the bottom, above the Tab Bar */}
+      <View style={[styles.absoluteBottomWrapperWithTab, { bottom: tabHeight - 60 }]}>
         <FloatingCart />
       </View>
 
@@ -618,6 +616,12 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
+    zIndex: 10,
+  },
+  absoluteBottomWrapperWithTab: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
     zIndex: 10,
   },
   modalOverlay: {

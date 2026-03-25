@@ -2,6 +2,7 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, Text, StyleSheet, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { getTabHeight } from '../utils/constants';
 import HomeScreen from '../screens/HomeScreen';
 import MenuScreen from '../screens/MenuScreen';
 
@@ -14,8 +15,7 @@ const Tab = createBottomTabNavigator();
 const TabNavigator = () => {
   const insets = useSafeAreaInsets();
   
-  // Compact height for a sleeker look
-  const tabHeight = Platform.OS === 'ios' ? 55 + insets.bottom : 60 + Math.max(insets.bottom, 0);
+  const tabHeight = getTabHeight(insets.bottom);
 
   return (
     <Tab.Navigator

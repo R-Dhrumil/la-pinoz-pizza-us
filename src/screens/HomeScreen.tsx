@@ -15,8 +15,10 @@ import {
   Linking,
   ScrollView,
 } from 'react-native';
+import Toast from 'react-native-toast-message';
 import { ScreenContainer } from '../components/ScreenContainer';
 import React, { useRef, useEffect, useState } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../navigation/AuthNavigator';
@@ -46,6 +48,7 @@ import { categoryService, Category } from '../services/categoryService';
 import { productService } from '../services/productService';
 import HomeSkeleton from '../components/HomeSkeleton';
 import FloatingCart from '../components/FloatingCart';
+import { getTabHeight } from '../utils/constants';
 
 const { width } = Dimensions.get('window');
 
@@ -57,6 +60,8 @@ const HomeScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
   const { totalItems, addToCart } = useCart();
   const { selectedStore, setSelectedStore } = useStore();
+  const insets = useSafeAreaInsets();
+  const tabHeight = getTabHeight(insets.bottom);
   const [deliveryMode, setDeliveryMode] = useState<'delivery' | 'pickup'>('delivery');
   const [categories, setCategories] = useState<Category[]>([]);
   const [bestSellers, setBestSellers] = useState<any[]>([]);
@@ -89,6 +94,11 @@ const HomeScreen = () => {
         setBestSellers(best);
       } catch (error) {
         console.error("Error fetching home data:", error);
+        Toast.show({
+            type: 'error',
+            text1: 'Network Error',
+            text2: 'Failed to load menu data'
+        });
       } finally {
         setIsLoading(false);
       }
@@ -200,14 +210,18 @@ const HomeScreen = () => {
                         <Text style={[styles.toggleText, deliveryMode === 'pickup' && styles.toggleTextActive]}>Pickup</Text>
                     </TouchableOpacity>
                 </View>
-                <View style={styles.inputContainer}>
+                <TouchableOpacity 
+                    style={styles.inputContainer}
+                    onPress={() => navigation.navigate('StoreLocation' as any)}
+                >
                     <MapPin size={20} color="#3c7d48" style={styles.inputIcon} />
                     <TextInput 
                         placeholder="Enter your delivery location" 
                         style={styles.input}
                         placeholderTextColor="#9ca3af"
+                        editable={false}
                     />
-                </View>
+                </TouchableOpacity>
             </View>
         </View>
 
@@ -218,7 +232,7 @@ const HomeScreen = () => {
         <View style={styles.section}>
             <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Our Best Sellers</Text>
-                <TouchableOpacity>
+                <TouchableOpacity onPress={() => navigation.navigate('Menu' as any)}>
                      <Text style={styles.viewAll}>View All</Text>
                 </TouchableOpacity>
             </View>
@@ -345,7 +359,9 @@ const HomeScreen = () => {
         </View>
       </ScrollView>
       )}
-      <FloatingCart />
+      <View style={{ position: 'absolute', bottom: tabHeight - 60, left: 0, right: 0, zIndex: 10 }}>
+        <FloatingCart />
+      </View>
     </ScreenContainer>
   );
 };

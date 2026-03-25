@@ -28,6 +28,7 @@ import { useAuth } from '../context/AuthContext';
 import { orderService } from '../services/orderService';
 import { paymentService, PendingOrderData } from '../services/paymentService';
 import { ScreenContainer } from '../components/ScreenContainer';
+import { PRICING } from '../utils/constants';
 
 const CheckoutScreen = () => {
     const insets = useSafeAreaInsets();
@@ -45,9 +46,8 @@ const CheckoutScreen = () => {
     const [showAddressModal, setShowAddressModal] = useState(false);
     const [orderInstructions, setOrderInstructions] = useState('');
 
-    // Calculate totals
-    const tax = totalAmount * 0.05;
-    const deliveryFee = 2.99;
+    const tax = totalAmount * PRICING.TAX_RATE;
+    const deliveryFee = PRICING.DELIVERY_FEE;
     const finalTotal = totalAmount + tax + deliveryFee;
 
     useFocusEffect(

@@ -17,6 +17,7 @@ import { ArrowLeft, Trash2, Plus, Minus, MoveRight, ChevronDown, ChevronUp, Penc
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { ScreenContainer } from '../components/ScreenContainer';
+import { PRICING } from '../utils/constants';
 
 const CartScreen = () => {
   const insets = useSafeAreaInsets();
@@ -59,9 +60,8 @@ const CartScreen = () => {
     );
   }
 
-  // Calculate taxes and delivery (Mock)
-  const tax = totalAmount * 0.05;
-  const deliveryFee = 2.99;
+  const tax = totalAmount * PRICING.TAX_RATE;
+  const deliveryFee = PRICING.DELIVERY_FEE;
   const finalTotal = totalAmount + tax + deliveryFee;
 
   return (

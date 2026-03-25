@@ -45,6 +45,16 @@ const LoginScreen = () => {
             return;
         }
 
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            Toast.show({
+                type: 'error',
+                text1: 'Invalid Email',
+                text2: 'Please enter a valid email address'
+            });
+            return;
+        }
+
         setLoading(true);
         try {
             const response = await authService.login({ email, password });
