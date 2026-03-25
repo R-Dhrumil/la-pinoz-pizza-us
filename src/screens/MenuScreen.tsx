@@ -1,4 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
+import FocusAwareStatusBar from '../components/FocusAwareStatusBar';
 import {
   View,
   TextInput,
@@ -221,6 +222,7 @@ const MenuScreen = () => {
 
   return (
     <SafeAreaView style={styles.containerStyleOverride} edges={['top']}>
+      <FocusAwareStatusBar barStyle="dark-content" backgroundColor="#fff" />
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.navigate('StoreLocation')}>
@@ -449,7 +451,8 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#f3f4f6',
@@ -576,7 +579,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: 6,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
