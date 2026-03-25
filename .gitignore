@@ -2,7 +2,7 @@
 #
 .DS_Store
 bugs
-
+test_output
 # Xcode
 #
 build/
