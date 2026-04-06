@@ -6,9 +6,8 @@ import { getTabHeight } from '../utils/constants';
 import HomeScreen from '../screens/HomeScreen';
 import MenuScreen from '../screens/MenuScreen';
 
-import CartScreen from '../screens/CartScreen';
 import ProfileScreen from '../screens/ProfileScreen';
-import { Home, Menu, ShoppingCart, User } from 'lucide-react-native';
+import { Home, Menu, User } from 'lucide-react-native';
 
 const Tab = createBottomTabNavigator();
 
@@ -52,13 +51,7 @@ const TabNavigator = () => {
           tabBarIcon: ({ color }: { color: string }) => <Menu color={color} size={24} />,
         }}
       />
-      <Tab.Screen
-        name="Cart"
-        component={CartScreen}
-        options={{
-          tabBarIcon: ({ color }: { color: string }) => <ShoppingCart color={color} size={24} />,
-        }}
-      />
+
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}

@@ -33,7 +33,6 @@ import {
   Utensils,
   X, // Import X for close button
 } from 'lucide-react-native';
-import { useCart } from '../context/CartContext';
 import { useStore } from '../context/StoreContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MenuSkeleton from '../components/MenuSkeleton';
@@ -42,7 +41,6 @@ import {
   Category,
   Product,
 } from '../services/categoryService';
-import FloatingCart from '../components/FloatingCart';
 import MenuItem from '../components/MenuItem';
 import { getTabHeight } from '../utils/constants';
 
@@ -55,7 +53,6 @@ const MenuScreen = () => {
     useRoute<RouteProp<{ params: { categoryId?: number } }, 'params'>>();
   const { categoryId: targetCategoryId } = route.params || {};
 
-  const { addToCart, totalItems, totalAmount } = useCart();
   const { selectedStore } = useStore();
   const insets = useSafeAreaInsets();
   const tabHeight = getTabHeight(insets.bottom);
@@ -320,9 +317,6 @@ const MenuScreen = () => {
                     <MenuItem
                       key={item.id}
                       item={item}
-                      onTap={() =>
-                        navigation.navigate('ProductDetail', { item })
-                      }
                     />
                   ))}
               </View>
@@ -341,10 +335,6 @@ const MenuScreen = () => {
         </>
       )}
 
-      {/* Floating Cart at the bottom, above the Tab Bar */}
-      <View style={[styles.absoluteBottomWrapperWithTab, { bottom: tabHeight - 60 }]}>
-        <FloatingCart />
-      </View>
 
       {/* Categories Modal */}
       <Modal

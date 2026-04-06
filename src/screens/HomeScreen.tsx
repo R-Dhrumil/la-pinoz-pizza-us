@@ -14,6 +14,7 @@ import {
   RefreshControl,
   Linking,
   ScrollView,
+  Alert,
 } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { ScreenContainer } from '../components/ScreenContainer';
@@ -40,14 +41,12 @@ import {
   ChevronDown,
 } from 'lucide-react-native';
 
-import { useCart } from '../context/CartContext';
 import { useStore } from '../context/StoreContext';
 
 import { storeService } from '../services/storeService';
 import { categoryService, Category } from '../services/categoryService';
 import { productService } from '../services/productService';
 import HomeSkeleton from '../components/HomeSkeleton';
-import FloatingCart from '../components/FloatingCart';
 import { getTabHeight } from '../utils/constants';
 
 const { width } = Dimensions.get('window');
@@ -58,7 +57,6 @@ const SPACING = 16;
 
 const HomeScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
-  const { totalItems, addToCart } = useCart();
   const { selectedStore, setSelectedStore } = useStore();
   const insets = useSafeAreaInsets();
   const tabHeight = getTabHeight(insets.bottom);
@@ -137,6 +135,14 @@ const HomeScreen = () => {
 
     return () => clearInterval(interval);
   }, [bestSellers]); // Add dependency on bestSellers
+
+  const handleRedirect = () => {
+    if (selectedStore?.skyTabUrl) {
+      Linking.openURL(selectedStore.skyTabUrl).catch(err => Alert.alert("Error", "Could not open link"));
+    } else {
+      Linking.openURL('https://lapinozpizza.us/order-online/').catch(err => Alert.alert("Error", "Could not open link"));
+    }
+  };
 
   return (
     <ScreenContainer useScrollView={false} containerStyle={styles.container} edges={['top']}>
@@ -252,7 +258,7 @@ const HomeScreen = () => {
                             description: item.description || 'Delicious pizza',
                             price: item.basePrice || item.price 
                         }}
-                        onAdd={() => navigation.navigate('ProductDetail' as any, { item })}
+                        onAdd={handleRedirect}
                     />
                 )}
                 snapToInterval={CARD_WIDTH + SPACING}
@@ -359,9 +365,7 @@ const HomeScreen = () => {
         </View>
       </ScrollView>
       )}
-      <View style={{ position: 'absolute', bottom: tabHeight - 60, left: 0, right: 0, zIndex: 10 }}>
-        <FloatingCart />
-      </View>
+      {/* Floating cart removed */}
     </ScreenContainer>
   );
 };

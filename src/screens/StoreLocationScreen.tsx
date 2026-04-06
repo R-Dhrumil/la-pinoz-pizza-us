@@ -17,15 +17,14 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { ArrowLeft, Search, MapPin, Navigation, X, SlidersHorizontal } from 'lucide-react-native';
 import { ScreenContainer } from '../components/ScreenContainer';
-import axios from 'axios';
+import { storeService } from '../services/storeService';
 import { useStore } from '../context/StoreContext';
-import { useCart } from '../context/CartContext';
 import getCurrentLocation from '../services/getCurrentLocation';
 import { calculateDistance } from '../utils/calculateDistance';
 import { requestLocationPermission } from '../utils/requestLocation';
 import { Store } from '../types';
 
-const API_URL = 'https://api.lapinozusa.com/api/storelocations';
+
 
 const StoreLocationScreen = () => {
   const navigation = useNavigation();
@@ -47,9 +46,9 @@ const StoreLocationScreen = () => {
 
   const fetchStores = async () => {
     try {
-      const response = await axios.get(API_URL);
-      setAllStores(response.data);
-      setFilteredStores(response.data);
+      const data = await storeService.getAllStores();
+      setAllStores(data);
+      setFilteredStores(data);
     } catch (error) {
       console.error('Error fetching stores:', error);
       setAllStores([]);
@@ -98,33 +97,9 @@ const StoreLocationScreen = () => {
         .map(store => store.city)
   )).sort();
 
-  const { clearCart, cartItems } = useCart();
-
   const handleSelectLocation = (store: Store) => {
-    if (cartItems.length > 0) {
-      Alert.alert(
-        'Change Store?',
-        'Changing the store will clear your current cart. Do you want to proceed?',
-        [
-          {
-            text: 'Cancel',
-            style: 'cancel',
-          },
-          {
-            text: 'Yes, Change Store',
-            onPress: () => {
-              clearCart();
-              setSelectedStore(store);
-              navigation.goBack();
-            },
-            style: 'destructive',
-          },
-        ]
-      );
-    } else {
-      setSelectedStore(store);
-      navigation.goBack();
-    }
+    setSelectedStore(store);
+    navigation.goBack();
   };
 
   const handleUseCurrentLocation = async () => {

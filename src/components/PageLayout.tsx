@@ -1,8 +1,6 @@
 import React, { ReactNode } from 'react';
 import FocusAwareStatusBar from './FocusAwareStatusBar';
 import { View, StyleSheet, SafeAreaView, StatusBar, ViewStyle } from 'react-native';
-import FloatingCart from './FloatingCart';
-import { useCart } from '../context/CartContext';
 
 interface PageLayoutProps {
   children: ReactNode;
@@ -17,8 +15,7 @@ const PageLayout = ({ children, style, showCart = true }: PageLayoutProps) => {
         <View style={styles.content}>
             {children}
         </View>
-        
-        {showCart && <FloatingCart />}
+
     </View>
   );
 };

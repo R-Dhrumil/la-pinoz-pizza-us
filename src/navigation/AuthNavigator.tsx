@@ -4,19 +4,17 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import TabNavigator from './TabNavigator';
 import LoginScreen from '../screens/auth/LoginScreen';
 import SignupScreen from '../screens/auth/SignupScreen';
-import CartScreen from '../screens/CartScreen';
+
 import MyOrdersScreen from '../screens/MyOrdersScreen';
 
-import ProductDetailScreen from '../screens/ProductDetailScreen';
+
 import ManageAddressScreen from '../screens/ManageAddressScreen';
 
-import PracticeScreen from '../PracticeScreen';
+
 import TrackOrderScreen from '../screens/TrackOrderScreen';
 
 import AddNewAddressScreen from '../screens/AddNewAddressScreen';
 import StoreLocationScreen from '../screens/StoreLocationScreen';
-import CheckoutScreen from '../screens/CheckoutScreen';
-import PaymentWebViewScreen from '../screens/PaymentWebViewScreen';
 import { Product, ProductVariant } from '../services/categoryService';
 import { PendingOrderData } from '../services/paymentService';
 import { Category } from '../services/categoryService';
@@ -38,13 +36,13 @@ export type AuthStackParamList = {
       quantity: number;
     };
   };
-  Cart: undefined;
+
   MyOrders: undefined;
   ManageAddress: undefined;
   AddNewAddress: { editAddress?: Address } | undefined;
   StoreLocation: undefined;
-  Checkout: undefined;
-  PaymentWebView: { url: string; transactionId: string; orderData: PendingOrderData };
+
+
   Practice: undefined;
   EditProfile: undefined;
   TrackOrder: { orderId: number };
@@ -107,11 +105,7 @@ const AuthNavigator = () => {
         component={require('../screens/CategoryProductsScreen').default} 
         options={{ animation: 'slide_from_right' }}
       />
-      <Stack.Screen 
-        name="ProductDetail" 
-        component={ProductDetailScreen} 
-        options={{ animation: 'slide_from_bottom' }} 
-      />
+
       <Stack.Screen
         name='AddNewAddress'
         component={AddNewAddressScreen}
@@ -122,16 +116,8 @@ const AuthNavigator = () => {
         component={StoreLocationScreen} 
         options={{ animation: 'slide_from_bottom' }} 
       />
-      <Stack.Screen 
-        name="Cart" 
-        component={CartScreen} 
-        options={{ animation: 'slide_from_bottom' }} 
-      />
-      <Stack.Screen 
-        name="Checkout" 
-        component={CheckoutScreen} 
-        options={{ animation: 'slide_from_right' }} 
-      />
+
+
       <Stack.Screen 
         name="MyOrders" 
         component={MyOrdersScreen} 
@@ -142,16 +128,8 @@ const AuthNavigator = () => {
         component={ManageAddressScreen} 
         options={{ animation: 'slide_from_right' }} 
       />
-      <Stack.Screen 
-        name="PaymentWebView" 
-        component={PaymentWebViewScreen} 
-        options={{ animation: 'slide_from_bottom' }} 
-      />
-      <Stack.Screen 
-        name="Practice" 
-        component={PracticeScreen} 
-        options={{ animation: 'slide_from_bottom' }} 
-      />
+
+     
       <Stack.Screen 
         name="EditProfile" 
         component={require('../screens/EditProfileScreen').default} 

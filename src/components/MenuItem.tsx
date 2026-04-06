@@ -11,39 +11,33 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../navigation/AuthNavigator';
-import { useCart } from '../context/CartContext';
 import { useStore } from '../context/StoreContext';
 import { Product } from '../services/categoryService';
 
 interface MenuItemProps {
   item: Product;
-  onTap: () => void;
+  onTap?: () => void;
 }
 
 const MenuItem = ({ item, onTap }: MenuItemProps) => {
-  const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
-  const { cartItems, removeFromCart } = useCart();
+  const { selectedStore } = useStore();
   const [isExpanded, setIsExpanded] = useState(false);
   
-  // Check if this specific item ID is in the cart
-  const cartItem = cartItems.find(i => i.id === item.id.toString());
-  const quantity = cartItem ? cartItem.quantity : 0;
-  
-  // External link check
-  const isExternal = item.externalLink;
-
-  const handleAdd = () => {
-    if (isExternal) {
-      const link = item.externalLink || 'https://lapinozpizza.us/order-online/';
-      Linking.openURL(link).catch(err => Alert.alert("Error", "Could not open link"));
-      return;
+  const handleRedirect = () => {
+    if (selectedStore?.skyTabUrl) {
+      Linking.openURL(selectedStore.skyTabUrl).catch(err => Alert.alert("Error", "Could not open link"));
+    } else {
+      Linking.openURL('https://lapinozpizza.us/order-online/').catch(err => Alert.alert("Error", "Could not open link"));
     }
-    // Instead of adding directly, navigate to details for customization
-    navigation.navigate('ProductDetail', { item });
+  };
+  
+  const handleAdd = () => {
+    handleRedirect();
   };
 
-  const handleRemove = () => {
-    removeFromCart(item.id.toString());
+  const handleItemPress = () => {
+    handleRedirect();
+    if (onTap) onTap();
   };
 
   const toggleExpand = () => {
@@ -51,7 +45,7 @@ const MenuItem = ({ item, onTap }: MenuItemProps) => {
   };
 
   return (
-    <TouchableOpacity style={styles.menuItem} onPress={onTap} activeOpacity={0.9}>
+    <TouchableOpacity style={styles.menuItem} onPress={handleItemPress} activeOpacity={0.9}>
       <View style={styles.itemContent}>
         {item.isVeg !== null && item.isVeg !== undefined && (
           <View style={styles.vegIndicatorRow}>
@@ -85,25 +79,12 @@ const MenuItem = ({ item, onTap }: MenuItemProps) => {
           style={[styles.itemImage, !item.imageUrl && { resizeMode: 'contain' }]} 
         />
         <View style={styles.addButtonContainer}>
-          {quantity > 0 && !isExternal ? (
-            <View style={styles.qtyContainer}>
-              <TouchableOpacity style={styles.qtyBtnSmall} onPress={handleRemove}>
-                <Text style={styles.qtyBtnText}>-</Text>
-              </TouchableOpacity>
-              <Text style={styles.qtyTextSmall}>{quantity}</Text>
-              <TouchableOpacity style={styles.qtyBtnSmall} onPress={handleAdd}>
-                <Text style={styles.qtyBtnText}>+</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <TouchableOpacity 
-              style={[styles.addButton, isExternal && { backgroundColor: '#ea580c', borderColor: '#ea580c' }]} 
-              onPress={handleAdd}
-            >
-              <Text style={[styles.addButtonText, isExternal && { color: '#fff' }]}>{isExternal ? 'ORDER' : 'ADD'}</Text>
-              {!isExternal && <Text style={styles.addButtonPlus}> +</Text>}
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity 
+            style={[styles.addButton, { backgroundColor: '#ea580c', borderColor: '#ea580c' }]} 
+            onPress={handleAdd}
+          >
+            <Text style={[styles.addButtonText, { color: '#fff' }]}>ORDER</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </TouchableOpacity>

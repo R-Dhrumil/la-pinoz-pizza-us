@@ -1,0 +1,26 @@
+src/components/FloatingCart.tsx(48,52): error TS2769: No overload matches this call.
+  Argument of type '["Cart"]' is not assignable to parameter of type '[screen: "Login", params?: undefined, options?: { merge?: boolean | undefined; pop?: boolean | undefined; } | undefined] | [screen: "Signup", params?: undefined, options?: { merge?: boolean | undefined; pop?: boolean | undefined; } | undefined] | ... 9 more ... | [screen: ...]'.
+    Type '["Cart"]' is not assignable to type '[screen: "Login", params?: undefined, options?: { merge?: boolean | undefined; pop?: boolean | undefined; } | undefined] | [screen: "Signup", params?: undefined, options?: { merge?: boolean | undefined; pop?: boolean | undefined; } | undefined] | ... 6 more ... | [screen: ...]'.
+      Type '["Cart"]' is not assignable to type '[screen: "EditProfile", params?: undefined, options?: { merge?: boolean | undefined; pop?: boolean | undefined; } | undefined]'.
+        Type at position 0 in source is not compatible with type at position 0 in target.
+          Type '"Cart"' is not assignable to type '"EditProfile"'.
+  Overload 2 of 2, '(options: { name: "Login"; params: undefined; path?: string | undefined; merge?: boolean | undefined; pop?: boolean | undefined; } | { name: "Signup"; params: undefined; path?: string | undefined; merge?: boolean | undefined; pop?: boolean | undefined; } | ... 9 more ... | { ...; }): void', gave the following error.
+    Argument of type 'string' is not assignable to parameter of type '{ name: "Login"; params: undefined; path?: string | undefined; merge?: boolean | undefined; pop?: boolean | undefined; } | { name: "Signup"; params: undefined; path?: string | undefined; merge?: boolean | undefined; pop?: boolean | undefined; } | ... 9 more ... | { ...; }'.
+src/screens/CheckoutScreen.tsx(181,37): error TS2345: Argument of type '["PaymentWebView", { url: string; transactionId: string; orderData: PendingOrderData; }]' is not assignable to parameter of type '[screen: "Login", params?: undefined, options?: { merge?: boolean | undefined; pop?: boolean | undefined; } | undefined] | [screen: "Signup", params?: undefined, options?: { merge?: boolean | undefined; pop?: boolean | undefined; } | undefined] | ... 9 more ... | [screen: ...]'.
+  Type '["PaymentWebView", { url: string; transactionId: string; orderData: PendingOrderData; }]' is not assignable to type '[screen: "TrackOrder", params: { orderId: number; }, options?: { merge?: boolean | undefined; pop?: boolean | undefined; } | undefined]'.
+    Type at position 0 in source is not compatible with type at position 0 in target.
+      Type '"PaymentWebView"' is not assignable to type '"TrackOrder"'.
+src/screens/HomeScreen.tsx(140,61): error TS2304: Cannot find name 'Alert'.
+src/screens/HomeScreen.tsx(142,77): error TS2304: Cannot find name 'Alert'.
+src/screens/PaymentWebViewScreen.tsx(21,62): error TS2344: Type '"PaymentWebView"' does not satisfy the constraint 'keyof AuthStackParamList'.
+src/screens/PaymentWebViewScreen.tsx(29,13): error TS2339: Property 'url' does not exist on type 'Readonly<unknown> | undefined'.
+src/screens/PaymentWebViewScreen.tsx(29,18): error TS2339: Property 'transactionId' does not exist on type 'Readonly<unknown> | undefined'.
+src/screens/PaymentWebViewScreen.tsx(29,33): error TS2339: Property 'orderData' does not exist on type 'Readonly<unknown> | undefined'.
+src/screens/ProductDetailScreen.tsx(208,29): error TS2769: No overload matches this call.
+  Argument of type '["Cart"]' is not assignable to parameter of type '[screen: "Login", params?: undefined, options?: { merge?: boolean | undefined; pop?: boolean | undefined; } | undefined] | [screen: "Signup", params?: undefined, options?: { merge?: boolean | undefined; pop?: boolean | undefined; } | undefined] | ... 9 more ... | [screen: ...]'.
+    Type '["Cart"]' is not assignable to type '[screen: "Login", params?: undefined, options?: { merge?: boolean | undefined; pop?: boolean | undefined; } | undefined] | [screen: "Signup", params?: undefined, options?: { merge?: boolean | undefined; pop?: boolean | undefined; } | undefined] | ... 6 more ... | [screen: ...]'.
+      Type '["Cart"]' is not assignable to type '[screen: "EditProfile", params?: undefined, options?: { merge?: boolean | undefined; pop?: boolean | undefined; } | undefined]'.
+        Type at position 0 in source is not compatible with type at position 0 in target.
+          Type '"Cart"' is not assignable to type '"EditProfile"'.
+  Overload 2 of 2, '(options: { name: "Login"; params: undefined; path?: string | undefined; merge?: boolean | undefined; pop?: boolean | undefined; } | { name: "Signup"; params: undefined; path?: string | undefined; merge?: boolean | undefined; pop?: boolean | undefined; } | ... 9 more ... | { ...; }): void', gave the following error.
+    Argument of type 'string' is not assignable to parameter of type '{ name: "Login"; params: undefined; path?: string | undefined; merge?: boolean | undefined; pop?: boolean | undefined; } | { name: "Signup"; params: undefined; path?: string | undefined; merge?: boolean | undefined; pop?: boolean | undefined; } | ... 9 more ... | { ...; }'.

@@ -12,7 +12,6 @@ import {
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { AuthStackParamList } from '../navigation/AuthNavigator';
 import { ArrowLeft } from 'lucide-react-native';
-import { useCart } from '../context/CartContext';
 import { useStore } from '../context/StoreContext';
 import { Product } from '../services/categoryService';
 import { ScreenContainer } from '../components/ScreenContainer';
@@ -51,7 +50,6 @@ const CategoryProductsScreen = () => {
                 <MenuItem 
                     key={item.id} 
                     item={item} 
-                    onTap={() => navigation.navigate('ProductDetail', { item })} 
                 />
             ))}
             
