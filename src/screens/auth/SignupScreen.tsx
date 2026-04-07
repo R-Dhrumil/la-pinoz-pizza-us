@@ -260,13 +260,13 @@ const SignupScreen = () => {
               By creating an account, you agree to La Pino'z{' '}
               <Text 
                 style={styles.linkText}
-                onPress={() => Linking.openURL('https://www.lapinozusa.com/terms')}
+                onPress={() => navigation.navigate('WebView', { url: 'https://www.lapinozusa.com/terms', title: 'Terms of Service' })}
               >
                 Terms of Service
               </Text> and{' '}
               <Text 
                 style={styles.linkText}
-                onPress={() => Linking.openURL('https://www.lapinozusa.com/privacy')}
+                onPress={() => navigation.navigate('WebView', { url: 'https://www.lapinozusa.com/privacy', title: 'Privacy Policy' })}
               >
                 Privacy Policy
               </Text>.

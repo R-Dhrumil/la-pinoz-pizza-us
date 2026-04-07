@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React from 'react';
 import FocusAwareStatusBar from '../components/FocusAwareStatusBar';
 import {
   View,
@@ -11,15 +11,12 @@ import {
   Linking,
 } from 'react-native';
 import { ScreenContainer } from '../components/ScreenContainer';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../navigation/AuthNavigator';
 import { useAuth } from '../context/AuthContext';
-import { orderService } from '../services/orderService';
 import {
   User,
-  Receipt,
-  MapPin,
   Gift,
   BadgeDollarSign,
   MessageCircle,
@@ -35,29 +32,6 @@ import {
 const ProfileScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
   const { user, logout } = useAuth();
-  const [activeCount, setActiveCount] = useState(0);
-
-  useFocusEffect(
-    useCallback(() => {
-      const fetchActiveOrders = async () => {
-        try {
-          const orders = await orderService.getMyOrders();
-          
-          const active = orders.filter(o => 
-            ['placed', 'confirmed', 'preparing', 'outfordelivery', 'pending'].includes(o.orderStatus?.toLowerCase() ?? '')
-          );
-          setActiveCount(active.length);
-        } catch (error) {
-          console.error("Error fetching active orders count:", error);
-        }
-      };
-
-      if (user) {
-        fetchActiveOrders();
-      }
-    }, [user])
-  );
-  
 
   // Default user data if not logged in
   const displayUser = {
@@ -76,14 +50,6 @@ const ProfileScreen = () => {
   };
 
   const menuItems: MenuItem[] = [
-    { 
-      id: 'orders', 
-      label: 'My Orders', 
-      icon: Receipt, 
-      badge: activeCount > 0 ? `${activeCount} Active` : null, 
-      badgeColor: '#3c7d48' 
-    },
-    { id: 'address', label: 'Manage Address', icon: MapPin, badge: null },
     { id: 'refund', label: 'Track My Refund', icon: BadgeDollarSign, badge: null },
     { id: 'concern', label: 'Raise a Concern', icon: MessageCircle, badge: null },
     { id: 'share', label: 'Share this app', icon: Share2, badge: null },
@@ -141,16 +107,15 @@ const ProfileScreen = () => {
                         key={item.id} 
                         style={[styles.menuItem, index !== menuItems.length - 1 && styles.menuItemBorder]}
                         onPress={() => {
-                            if (item.id === 'address') {
-                                navigation.navigate('ManageAddress');
-                            } else if (item.id === 'orders') {
-                                navigation.navigate('MyOrders');
+                            if (item.id === 'concern') {
+                                navigation.navigate('RaiseConcern');
                             } else if (item.id === 'privacy') {
-                                Linking.openURL('https://www.lapinozusa.com/privacy');
+                                navigation.navigate('WebView', { url: 'https://www.lapinozusa.com/privacy', title: 'Privacy Policy' });
                             } else if (item.id === 'terms') {
-                                Linking.openURL('https://www.lapinozusa.com/terms');
+                                navigation.navigate('WebView', { url: 'https://www.lapinozusa.com/terms', title: 'Terms and Conditions' });
+                            } else if (item.id === 'faqs') {
+                                navigation.navigate('WebView', { url: 'https://www.lapinozusa.com/faq', title: 'FAQs' });
                             }
-                            // Add other navigation cases here if needed
                         }}
                     >
                         <View style={styles.menuLeft}>

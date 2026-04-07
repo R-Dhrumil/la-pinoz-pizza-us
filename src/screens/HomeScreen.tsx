@@ -328,7 +328,7 @@ const HomeScreen = () => {
                         </View>
                     </View>
 
-                    <TouchableOpacity style={styles.learnMoreRow} onPress={() => Linking.openURL('https://www.lapinozusa.com/about')}>
+                    <TouchableOpacity style={styles.learnMoreRow} onPress={() => navigation.navigate('WebView', { url: 'https://www.lapinozusa.com/about', title: 'Our Story' })}>
                         <Text style={styles.learnMoreText}>Read our full story</Text>
                         <ArrowRight size={16} color="#ffbe33" />
                     </TouchableOpacity>
