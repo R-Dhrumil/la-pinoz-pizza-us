@@ -10,7 +10,6 @@ import MyOrdersScreen from '../screens/MyOrdersScreen';
 import ProductDetailScreen from '../screens/ProductDetailScreen';
 import ManageAddressScreen from '../screens/ManageAddressScreen';
 
-import PracticeScreen from '../PracticeScreen';
 import TrackOrderScreen from '../screens/TrackOrderScreen';
 
 import AddNewAddressScreen from '../screens/AddNewAddressScreen';
@@ -147,11 +146,7 @@ const AuthNavigator = () => {
         component={PaymentWebViewScreen} 
         options={{ animation: 'slide_from_bottom' }} 
       />
-      <Stack.Screen 
-        name="Practice" 
-        component={PracticeScreen} 
-        options={{ animation: 'slide_from_bottom' }} 
-      />
+      
       <Stack.Screen 
         name="EditProfile" 
         component={require('../screens/EditProfileScreen').default} 
