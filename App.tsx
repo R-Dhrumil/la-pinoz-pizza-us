@@ -9,19 +9,22 @@ import { AddressProvider } from './src/context/AddressContext';
 import AuthNavigator from './src/navigation/AuthNavigator';
 
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import ErrorBoundary from './src/components/ErrorBoundary';
 
 const App = () => {
   return (
     <SafeAreaProvider>
-      <AuthProvider>
-        <StoreProvider>
-        <AddressProvider>
-            <NavigationContainer>
-              <AuthNavigator />
-            </NavigationContainer>
-        </AddressProvider>
-        </StoreProvider>
-      </AuthProvider>
+      <ErrorBoundary>
+        <AuthProvider>
+          <StoreProvider>
+          <AddressProvider>
+              <NavigationContainer>
+                <AuthNavigator />
+              </NavigationContainer>
+          </AddressProvider>
+          </StoreProvider>
+        </AuthProvider>
+      </ErrorBoundary>
       <Toast />
     </SafeAreaProvider>
   );

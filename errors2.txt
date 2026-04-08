@@ -1,4 +1,0 @@
-src/components/PageLayout.tsx(4,26): error TS2307: Cannot find module './FloatingCart' or its corresponding type declarations.
-src/components/PageLayout.tsx(5,25): error TS2307: Cannot find module '../context/CartContext' or its corresponding type declarations.
-src/navigation/AuthNavigator.tsx(10,33): error TS2307: Cannot find module '../screens/ProductDetailScreen' or its corresponding type declarations.
-src/screens/CategoryProductsScreen.tsx(15,25): error TS2307: Cannot find module '../context/CartContext' or its corresponding type declarations.

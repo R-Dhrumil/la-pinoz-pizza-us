@@ -1,1 +1,0 @@
-src/navigation/AuthNavigator.tsx(110,20): error TS2304: Cannot find name 'ProductDetailScreen'.
