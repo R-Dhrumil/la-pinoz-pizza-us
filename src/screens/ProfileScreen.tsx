@@ -88,7 +88,7 @@ const ProfileScreen = () => {
         <View style={styles.profileSection}>
             <Image source={{ uri: displayUser.image }} style={styles.avatar} />
             <View style={styles.userInfo}>
-                <Text style={styles.userName}>{displayUser.name}</Text>
+                <Text style={styles.userName} numberOfLines={1} ellipsizeMode="tail">{displayUser.name}</Text>
                 <Text style={styles.userPhone}>{displayUser.phone}</Text>
             </View>
         </View>
@@ -107,7 +107,9 @@ const ProfileScreen = () => {
                         key={item.id} 
                         style={[styles.menuItem, index !== menuItems.length - 1 && styles.menuItemBorder]}
                         onPress={() => {
-                            if (item.id === 'concern') {
+                            if (item.id === 'refund') {
+                                navigation.navigate('TrackRefund');
+                            } else if (item.id === 'concern') {
                                 navigation.navigate('RaiseConcern');
                             } else if (item.id === 'privacy') {
                                 navigation.navigate('WebView', { url: 'https://www.lapinozusa.com/privacy', title: 'Privacy Policy' });
@@ -201,6 +203,7 @@ const styles = StyleSheet.create({
   },
   userInfo: {
     justifyContent: 'center',
+    flex: 1,
   },
   userName: {
     fontSize: 20,
