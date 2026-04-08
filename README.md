@@ -1,97 +1,137 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# La Pino'z Pizza US - Mobile Application
 
-# Getting Started
+![React Native](https://img.shields.io/badge/React_Native-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
+![React Navigation](https://img.shields.io/badge/React_Navigation-8a2bba?style=for-the-badge&logo=react&logoColor=white)
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+A high-performance React Native application for **La Pino'z Pizza US**. This application allows users to discover local stores, view menus, manage their orders, track refunds, and manage their address and profile information. 
 
-## Step 1: Start Metro
+## 🍕 Key Features
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+- **Store Discovery & Geolocation**: Utilizes real-time geolocation to find the nearest La Pino'z Pizza stores.
+- **SkyTab POS Redirection**: Seamless web redirection to external SkyTab Point-of-Sale links for placing orders per store.
+- **Authentication System**: Secure Login and Signup flows managed via a robust Context API setup.
+- **In-App WebView**: Integrated webviews for FAQ and Privacy Policy, removing the need for external browser redirects.
+- **Order & Refund Tracking**: Dedicated screens (Track Order, Track Refund, Raise Concern) to seamlessly follow up on previous interactions.
+- **Profile & Address Management**: Comprehensive user data management including adding new delivery locations, editing addresses, and updating profile info.
+- **Skeleton Loaders**: Modern skeleton loading states (Home, Menu, Orders) for enhanced User Experience (UX).
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+## 🛠️ Technology Stack
 
+- **Framework**: [React Native CLI](https://reactnative.dev/docs/environment-setup) (v0.83.1)
+- **Language**: TypeScript
+- **Navigation**: React Navigation v7 (Native Stack & Bottom Tabs)
+- **State Management**: React Context API (`AuthProvider`, `StoreProvider`, `AddressProvider`)
+- **Networking/API**: Axios & `apiClient` configurations
+- **Styling**: Native StyleSheet & SafeArea support
+- **Icons**: Lucide React Native / React Native Vector Icons
+- **Testing**: Jest & React Test Renderer
+
+## 📂 Project Structure
+
+```
+.
+├── android/                   # Android native code
+├── ios/                       # iOS native code
+├── src/
+│   ├── assets/                # Images, fonts, and static resources
+│   ├── components/            # Reusable UI components & Skeletons
+│   ├── context/               # Global Context Providers (Auth, Address, Store)
+│   ├── navigation/            # Routers (AuthNavigator, TabNavigator)
+│   ├── screens/               # Main application screens (Home, Profile, TrackRefund, etc.)
+│   │   └── auth/              # Auth-specific screens (Login, Signup)
+│   ├── services/              # API interaction layers (apiClient, authService, etc.)
+│   ├── types/                 # TypeScript global interfaces & definitions
+│   └── utils/                 # Helper functions & utility methods
+├── App.tsx                    # Application entry point
+└── package.json               # Dependencies and scripts definitions
+```
+
+## 🚀 Getting Started
+
+Follow these instructions to get the project up and running on your local machine for development and testing purposes.
+
+### Prerequisites
+
+You need to have the React Native CLI setup completed:
+- **Node.js**: `v20` or higher
+- **Package Manager**: `npm`
+- **Android Studio** (for Android) or **Xcode** (for iOS, Requires MacOS)
+
+### Installation
+
+1. **Clone the repository and install dependencies:**
+   ```sh
+   # Install dependencies
+   npm install
+   ```
+
+2. **iOS dependencies installation:**
+   If you intend to run on iOS, remember to install CocoaPods dependencies:
+   ```sh
+   cd ios
+   bundle install
+   bundle exec pod install
+   cd ..
+   ```
+
+## 🏃‍♂️ Running the Application
+
+### 1. Start Metro Bundler
+Start the Metro JavaScript build tool:
 ```sh
-# Using npm
 npm start
-
-# OR using Yarn
-yarn start
 ```
 
-## Step 2: Build and run your app
+### 2. Run on Device/Simulator
+Keep the Metro bundler running in its terminal and open a new terminal window to build the app for Android or iOS:
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
-
-### Android
-
+**For Android:**
 ```sh
-# Using npm
 npm run android
-
-# OR using Yarn
-yarn android
 ```
 
-### iOS
-
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
-
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
-
+**For iOS:**
 ```sh
-bundle install
-```
-
-Then, and every time you update your native dependencies, run:
-
-```sh
-bundle exec pod install
-```
-
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
-
-```sh
-# Using npm
 npm run ios
-
-# OR using Yarn
-yarn ios
 ```
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+## ⚙️ Backend API Connection (Troubleshooting Localhost)
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+If you are encountering network errors connecting to a local backend API (e.g. running on `localhost:7100`) via a physical Android device, use `adb reverse` to bridge the connection:
 
-## Step 3: Modify your app
+```sh
+adb reverse tcp:7100 tcp:7100
+```
+*Make sure your `apiClient.ts` base URL is appropriately pointing to `http://localhost:7100/api` or `http://10.0.2.2:7100/api` (for Android emulators).*
 
-Now that you have successfully run the app, let's make changes!
+## 🧪 Testing
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+This project uses **Jest** alongside **React Test Renderer** for unit testing. Setup includes native module mocks configured in `jest.setup.js`.
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+To run the test suite:
+```sh
+npm test
+```
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
+## 📱 State & Data Flow Overview
 
-## Congratulations! :tada:
+The app's top-level state is defined in `App.tsx` through a robust provider hierarchy:
 
-You've successfully run and modified your React Native App. :partying_face:
+```tsx
+<SafeAreaProvider>
+  <AuthProvider>
+    <StoreProvider>
+      <AddressProvider>
+        <NavigationContainer>
+          <AuthNavigator />
+        </NavigationContainer>
+      </AddressProvider>
+    </StoreProvider>
+  </AuthProvider>
+</SafeAreaProvider>
+```
 
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+- **AuthProvider**: Manages Access/Refresh tokens securely, and maintains the current user's profile state.
+- **StoreProvider**: Holds data about local stores, manages store context, and the SkyTab menu redirections.
+- **AddressProvider**: Stores all user postal addresses, caching current active delivery locations.
