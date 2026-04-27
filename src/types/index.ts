@@ -12,4 +12,5 @@ export interface Store {
   operatingHours?: any[];
   latitude?: number;
   longitude?: number;
+  skyTabUrl?: string;
 }

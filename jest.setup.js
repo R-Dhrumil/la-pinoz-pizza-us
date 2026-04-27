@@ -88,3 +88,6 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   removeItem: jest.fn(() => Promise.resolve()),
   clear: jest.fn(() => Promise.resolve()),
 }));
+jest.mock('@env', () => ({
+  BASE_URL: 'https://api.lapinozusa.com/api',
+}));

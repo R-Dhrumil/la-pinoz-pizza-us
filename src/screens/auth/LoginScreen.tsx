@@ -14,7 +14,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-
+import { logger } from '../../utils/logger';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { authService } from '../../services/authService';
@@ -34,26 +34,31 @@ const LoginScreen = () => {
     const [password, setPassword] = useState('');
     const [passwordVisible, setPasswordVisible] = useState(false);
     const [loading, setLoading] = useState(false);
-
     const handleLogin = async () => {
-        if (!email || !password) {
-            Toast.show({
-                type: 'error',
-                text1: 'Missing Fields',
-                text2: 'Please enter both email and password'
-            });
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const cleanInput = email.trim();
+        
+        const isEmail = emailRegex.test(cleanInput);
+        const digits = cleanInput.replace(/\D/g, '');
+        const isPhone = /^\d{10}$/.test(digits) && !cleanInput.includes('@');
+
+        if (!isEmail && !isPhone) {
+            if (cleanInput.includes('@') || /[a-zA-Z]/.test(cleanInput)) {
+                Toast.show({
+                    type: 'error',
+                    text1: 'Invalid Email',
+                    text2: 'Please enter a valid email address'
+                });
+            } else {
+                Toast.show({
+                    type: 'error',
+                    text1: 'Invalid Phone',
+                    text2: 'Please enter a valid 10-digit phone number'
+                });
+            }
             return;
         }
 
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            Toast.show({
-                type: 'error',
-                text1: 'Invalid Email',
-                text2: 'Please enter a valid email address'
-            });
-            return;
-        }
 
         setLoading(true);
         try {
@@ -89,12 +94,16 @@ const LoginScreen = () => {
                 });
             }
         } catch (error: any) {
-            console.error(error);
-            Toast.show({
-                type: 'error',
-                text1: 'Login Failed',
-                text2: error.response?.data?.message || 'Invalid credentials or server error'
-            });
+            logger.error(error, 'LoginScreen handleLogin');
+            // apiClient already shows a Toast for network/server errors.
+            // We only show a Toast here if there's a response with a specific message.
+            if (error.response?.data?.message) {
+                Toast.show({
+                    type: 'error',
+                    text1: 'Login Failed',
+                    text2: error.response.data.message
+                });
+            }
         } finally {
             setLoading(false);
         }
@@ -135,10 +144,10 @@ const LoginScreen = () => {
                 <View style={styles.inputWrapper}>
                     <AtSign size={20} color="#9ca3af" style={styles.inputIcon} />
                     <TextInput 
-                        placeholder="example@email.com" 
+                        placeholder="Email or Phone Number" 
                         placeholderTextColor="#9ca3af"
                         style={styles.input}
-                        keyboardType="email-address"
+                        keyboardType="default"
                         autoCapitalize="none"
                         value={email}
                         onChangeText={setEmail}

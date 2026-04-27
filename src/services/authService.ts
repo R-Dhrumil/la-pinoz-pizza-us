@@ -26,13 +26,20 @@ interface UpdateProfileParams {
 export const authService = {
     login: async (credentials: LoginParams) => {
         // Transform the request to match API expectations
+        const identifier = (credentials.email || credentials.phone || '').trim();
+        
+        // A phone number should be all digits (after cleaning) and shouldn't look like an email
+        const digits = identifier.replace(/\D/g, '');
+        const isPhone = /^\d{10}$/.test(digits) && !identifier.includes('@');
+
         const requestBody = {
-            emailOrPhone: credentials.email || credentials.phone,
+            emailOrPhone: isPhone ? digits : identifier,
             password: credentials.password
         };
         const response = await apiClient.post('/Auth/login', requestBody);
         return response.data;
     },
+
 
     register: async (userData: SignupParams) => {
         const response = await apiClient.post('/Auth/register', userData);

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { logger } from '../utils/logger';
 
 interface User {
   id?: string;
@@ -46,7 +47,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 setUser(parsedUser);
             }
         } catch (e) {
-            console.error("Failed to restore auth state", e);
+            logger.error(e, "AuthContext loadUser");
         } finally {
             setLoading(false);
         }
@@ -60,7 +61,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         await AsyncStorage.removeItem('userToken');
         await AsyncStorage.removeItem('userInfo');
     } catch (e) {
-        console.error("Logout failed", e);
+        logger.error(e, "AuthContext logout");
     }
   };
 

@@ -9,21 +9,24 @@ import { CartProvider } from './src/context/CartContext';
 import AuthNavigator from './src/navigation/AuthNavigator';
 
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import ErrorBoundary from './src/components/ErrorBoundary';
 
 const App = () => {
   return (
     <SafeAreaProvider>
-      <AuthProvider>
-        <StoreProvider>
-        <AddressProvider>
-          <CartProvider>
-            <NavigationContainer>
-              <AuthNavigator />
-            </NavigationContainer>
-          </CartProvider>
-        </AddressProvider>
-        </StoreProvider>
-      </AuthProvider>
+      <ErrorBoundary>
+        <AuthProvider>
+          <StoreProvider>
+          <AddressProvider>
+            <CartProvider>
+              <NavigationContainer>
+                <AuthNavigator />
+              </NavigationContainer>
+            </CartProvider>
+          </AddressProvider>
+          </StoreProvider>
+        </AuthProvider>
+      </ErrorBoundary>
       <Toast />
     </SafeAreaProvider>
   );
