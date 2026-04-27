@@ -1,5 +1,6 @@
-import React, { createContext, useState, useContext, ReactNode } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import { Product } from '../services/categoryService';
+import { useAuth } from './AuthContext';
 
 export interface CartItem {
   id: string;
@@ -31,6 +32,16 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const { user } = useAuth();
+
+  const clearCart = () => {
+    setCartItems([]);
+  };
+
+  // Clear cart when user logs out or switches account
+  useEffect(() => {
+    clearCart();
+  }, [user]);
 
   const addToCart = (item: Omit<CartItem, 'quantity'>) => {
     setCartItems((prevItems) => {
@@ -85,10 +96,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         return prevItems.map((item) => (item.id === oldId ? newItem : item));
       }
     });
-  };
-
-  const clearCart = () => {
-    setCartItems([]);
   };
 
   const totalAmount = cartItems.reduce(
