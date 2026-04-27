@@ -13,22 +13,24 @@ import ErrorBoundary from './src/components/ErrorBoundary';
 
 const App = () => {
   return (
-    <SafeAreaProvider>
-      <ErrorBoundary>
-        <AuthProvider>
-          <StoreProvider>
-          <AddressProvider>
-            <CartProvider>
-              <NavigationContainer>
-                <AuthNavigator />
-              </NavigationContainer>
-            </CartProvider>
-          </AddressProvider>
-          </StoreProvider>
-        </AuthProvider>
-      </ErrorBoundary>
+    <>
+      <SafeAreaProvider>
+        <ErrorBoundary>
+          <AuthProvider>
+            <StoreProvider>
+            <AddressProvider>
+              <CartProvider>
+                <NavigationContainer>
+                  <AuthNavigator />
+                </NavigationContainer>
+              </CartProvider>
+            </AddressProvider>
+            </StoreProvider>
+          </AuthProvider>
+        </ErrorBoundary>
+      </SafeAreaProvider>
       <Toast />
-    </SafeAreaProvider>
+    </>
   );
 };
 

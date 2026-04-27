@@ -95,14 +95,21 @@ const LoginScreen = () => {
             }
         } catch (error: any) {
             logger.error(error, 'LoginScreen handleLogin');
-            // apiClient already shows a Toast for network/server errors.
-            // We only show a Toast here if there's a response with a specific message.
-            if (error.response?.data?.message) {
+            
+            const status = error.response?.status;
+            // Handle 4xx errors (except 401 which is handled globally in apiClient)
+            if (status && status >= 400 && status < 500 && status !== 401) {
+                const errorMessage = error.response.data?.message || 
+                                   error.response.data?.error || 
+                                   'Invalid credentials or server error';
                 Toast.show({
                     type: 'error',
                     text1: 'Login Failed',
-                    text2: error.response.data.message
+                    text2: errorMessage
                 });
+            } else if (!error.response) {
+                // Network errors are already handled by apiClient.ts
+                // but we can add a fallback here if needed.
             }
         } finally {
             setLoading(false);
