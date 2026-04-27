@@ -50,7 +50,6 @@ const ProfileScreen = () => {
   };
 
   const menuItems: MenuItem[] = [
-    { id: 'refund', label: 'Track My Refund', icon: BadgeDollarSign, badge: null },
     { id: 'concern', label: 'Raise a Concern', icon: MessageCircle, badge: null },
     { id: 'share', label: 'Share this app', icon: Share2, badge: null },
     { id: 'faqs', label: 'FAQs', icon: HelpCircle, badge: null },
@@ -107,9 +106,7 @@ const ProfileScreen = () => {
                         key={item.id} 
                         style={[styles.menuItem, index !== menuItems.length - 1 && styles.menuItemBorder]}
                         onPress={() => {
-                            if (item.id === 'refund') {
-                                navigation.navigate('TrackRefund');
-                            } else if (item.id === 'concern') {
+                            if (item.id === 'concern') {
                                 navigation.navigate('RaiseConcern');
                             } else if (item.id === 'privacy') {
                                 navigation.navigate('WebView', { url: 'https://www.lapinozusa.com/privacy', title: 'Privacy Policy' });

@@ -48,7 +48,6 @@ export type AuthStackParamList = {
   TrackOrder: { orderId: number };
   WebView: { url: string; title: string };
   RaiseConcern: undefined;
-  TrackRefund: undefined;
 };
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
@@ -151,11 +150,6 @@ const AuthNavigator = () => {
       <Stack.Screen 
         name="RaiseConcern" 
         component={require('../screens/RaiseConcernScreen').default} 
-        options={{ animation: 'slide_from_right' }} 
-      />
-      <Stack.Screen 
-        name="TrackRefund" 
-        component={require('../screens/TrackRefundScreen').default} 
         options={{ animation: 'slide_from_right' }} 
       />
     </Stack.Navigator>

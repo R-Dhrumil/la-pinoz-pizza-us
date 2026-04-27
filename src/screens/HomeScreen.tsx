@@ -60,7 +60,6 @@ const HomeScreen = () => {
   const { selectedStore, setSelectedStore } = useStore();
   const insets = useSafeAreaInsets();
   const tabHeight = getTabHeight(insets.bottom);
-  const [deliveryMode, setDeliveryMode] = useState<'delivery' | 'pickup'>('delivery');
   const [categories, setCategories] = useState<Category[]>([]);
   const [bestSellers, setBestSellers] = useState<any[]>([]);
   
@@ -198,40 +197,6 @@ const HomeScreen = () => {
              </View>
           </View>
         </ImageBackground>
-
-        {/* Search & Toggle Box */}
-        <View style={styles.searchSectionWrapper}>
-            <View style={styles.searchContainer}>
-                <View style={styles.toggleContainer}>
-                    <TouchableOpacity 
-                        style={[styles.toggleButton, deliveryMode === 'delivery' && styles.toggleActive]}
-                        onPress={() => setDeliveryMode('delivery')}
-                    >
-                        <Text style={[styles.toggleText, deliveryMode === 'delivery' && styles.toggleTextActive]}>Delivery</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity 
-                        style={[styles.toggleButton, deliveryMode === 'pickup' && styles.toggleActive]}
-                        onPress={() => setDeliveryMode('pickup')}
-                    >
-                        <Text style={[styles.toggleText, deliveryMode === 'pickup' && styles.toggleTextActive]}>Pickup</Text>
-                    </TouchableOpacity>
-                </View>
-                <TouchableOpacity 
-                    style={styles.inputContainer}
-                    onPress={() => navigation.navigate('StoreLocation' as any)}
-                >
-                    <MapPin size={20} color="#3c7d48" style={styles.inputIcon} />
-                    <TextInput 
-                        placeholder="Enter your delivery location" 
-                        style={styles.input}
-                        placeholderTextColor="#9ca3af"
-                        editable={false}
-                    />
-                </TouchableOpacity>
-            </View>
-        </View>
-
-
 
         {/* Best Sellers */}
         {bestSellers.length > 0 && (
