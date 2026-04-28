@@ -79,32 +79,37 @@ const MenuItem = ({ item, onTap }: MenuItemProps) => {
         </TouchableOpacity>
       </View>
       
-      <View style={styles.imageContainer}>
-        <Image 
-          source={item.imageUrl ? { uri: item.imageUrl } : require('../assets/images/pizza_placeholder.jpg')} 
-          style={[styles.itemImage, !item.imageUrl && { resizeMode: 'contain' }]} 
-        />
-        <View style={styles.addButtonContainer}>
-          {quantity > 0 && !isExternal ? (
-            <View style={styles.qtyContainer}>
-              <TouchableOpacity style={styles.qtyBtnSmall} onPress={handleRemove}>
-                <Text style={styles.qtyBtnText}>-</Text>
+      <View style={styles.imageColumn}>
+        <View style={styles.imageContainer}>
+          <Image 
+            source={item.imageUrl ? { uri: item.imageUrl } : require('../assets/images/pizza_placeholder.jpg')} 
+            style={[styles.itemImage, !item.imageUrl && { resizeMode: 'contain' }]} 
+          />
+          <View style={styles.addButtonContainer}>
+            {quantity > 0 && !isExternal ? (
+              <View style={styles.qtyContainer}>
+                <TouchableOpacity style={styles.qtyBtnSmall} onPress={handleRemove}>
+                  <Text style={styles.qtyBtnText}>-</Text>
+                </TouchableOpacity>
+                <Text style={styles.qtyTextSmall}>{quantity}</Text>
+                <TouchableOpacity style={styles.qtyBtnSmall} onPress={handleAdd}>
+                  <Text style={styles.qtyBtnText}>+</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <TouchableOpacity 
+                style={[styles.addButton, isExternal && { backgroundColor: '#ea580c', borderColor: '#ea580c' }]} 
+                onPress={handleAdd}
+              >
+                <Text style={[styles.addButtonText, isExternal && { color: '#fff' }]}>{isExternal ? 'ORDER' : 'ADD'}</Text>
+                {!isExternal && <Text style={styles.addButtonPlus}> +</Text>}
               </TouchableOpacity>
-              <Text style={styles.qtyTextSmall}>{quantity}</Text>
-              <TouchableOpacity style={styles.qtyBtnSmall} onPress={handleAdd}>
-                <Text style={styles.qtyBtnText}>+</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <TouchableOpacity 
-              style={[styles.addButton, isExternal && { backgroundColor: '#ea580c', borderColor: '#ea580c' }]} 
-              onPress={handleAdd}
-            >
-              <Text style={[styles.addButtonText, isExternal && { color: '#fff' }]}>{isExternal ? 'ORDER' : 'ADD'}</Text>
-              {!isExternal && <Text style={styles.addButtonPlus}> +</Text>}
-            </TouchableOpacity>
-          )}
+            )}
+          </View>
         </View>
+        {((item.variants && item.variants.length > 0) || (item.modifierGroups && item.modifierGroups.length > 0)) && (
+          <Text style={styles.customisableText}>Customisable</Text>
+        )}
       </View>
     </TouchableOpacity>
   );
@@ -116,7 +121,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 16,
     padding: 10,
-    paddingBottom: 15,
+    paddingBottom: 25,
     marginBottom: 10,
     borderWidth: 1,
     borderColor: '#f3f4f6',
@@ -127,11 +132,15 @@ const styles = StyleSheet.create({
     marginRight: 12,
     justifyContent: 'flex-start',
   },
-  imageContainer: {
+  imageColumn: {
     width: 110,
     alignItems: 'center',
-    justifyContent: 'flex-start',
+  },
+  imageContainer: {
+    width: 110,
+    height: 105,
     position: 'relative',
+    marginBottom: 12, // Space for the overlapping button
   },
   itemImage: {
     width: 110,
@@ -141,9 +150,16 @@ const styles = StyleSheet.create({
   },
   addButtonContainer: {
     position: 'absolute',
-    bottom: -15,
+    bottom: -15, // Center on the edge
     alignSelf: 'center',
     zIndex: 10,
+  },
+  customisableText: {
+    fontSize: 10,
+    color: '#6b7280',
+    textAlign: 'center',
+    marginTop: 4,
+    fontWeight: '500',
   },
   vegIndicatorRow: {
     flexDirection: 'row',
