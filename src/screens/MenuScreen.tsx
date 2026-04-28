@@ -31,7 +31,8 @@ import {
   Martini,
   Wheat,
   Utensils,
-  X, // Import X for close button
+  X,
+  ChevronDown, // Import X for close button
 } from 'lucide-react-native';
 import { useCart } from '../context/CartContext';
 import { useStore } from '../context/StoreContext';
@@ -224,20 +225,38 @@ const MenuScreen = () => {
     <SafeAreaView style={styles.containerStyleOverride} edges={['top']}>
       <FocusAwareStatusBar barStyle="dark-content" backgroundColor="#fff" />
       {/* Header */}
-      <View style={styles.header}>
+      {/* <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.navigate('StoreLocation')}>
           <Text style={styles.brandName}>La Pino'z USA</Text>
           <View style={styles.locationContainer}>
             <View style={styles.locationDot} />
             <Text style={styles.locationText}>
               {selectedStore
-                ? `${selectedStore.city}, ${selectedStore.state}`
+                ? `${selectedStore.address}`
                 : 'Select Location'}
             </Text>
             <ChevronRight size={12} color="#3c7d48" />
           </View>
         </TouchableOpacity>
-      </View>
+      </View> */}
+
+      <View style={styles.header}>
+          <TouchableOpacity style={styles.headerLeft} onPress={() => navigation.navigate('StoreLocation' as any)}>
+            <Image 
+              source={require('../assets/images/logo.png')} 
+              style={{ width: 40, height: 40, resizeMode: 'contain' }}
+            />
+            <View>
+              <Text style={styles.brandName2}>La Pino'z USA</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Text style={styles.brandName}>{selectedStore ? selectedStore.address + ',' : 'Click to select'}</Text>
+                <Text style={styles.brandName}>{selectedStore ? selectedStore.city : 'Click to select'}</Text>
+                <ChevronDown size={18} color="#000" />
+              </View>
+            </View>
+          </TouchableOpacity>
+         
+        </View>
 
       {/* Search Bar + Menu Button (top, always visible) */}
       {selectedStore && !loading && (
@@ -457,10 +476,21 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#f3f4f6',
   },
-  brandName: {
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+    brandName2: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#000',
+  },
+  brandName: {
+    fontSize: 10,
+    fontWeight: '500',
+    color: '#000',
+    letterSpacing: -0.5,
   },
   locationContainer: {
     flexDirection: 'row',

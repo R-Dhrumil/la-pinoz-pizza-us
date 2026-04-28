@@ -166,9 +166,10 @@ const HomeScreen = () => {
               style={{ width: 40, height: 40, resizeMode: 'contain' }}
             />
             <View>
-              <Text style={styles.brandName}>{selectedStore ? selectedStore.name : 'Select Outlet'}</Text>
+              <Text style={styles.brandName2}>La Pino'z USA</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                <Text style={{ fontSize: 16, color: '#000', fontWeight: '600' }}>{selectedStore ? selectedStore.city : 'Click to select'}</Text>
+                <Text style={styles.brandName}>{selectedStore ? selectedStore.address + ',' : 'Click to select'}</Text>
+                <Text style={styles.brandName}>{selectedStore ? selectedStore.city : 'Click to select'}</Text>
                 <ChevronDown size={18} color="#000" />
               </View>
             </View>
@@ -459,6 +460,11 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#000',
     letterSpacing: -0.5,
+  },
+  brandName2: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#000',
   },
   headerRight: {
     flexDirection: 'row',
