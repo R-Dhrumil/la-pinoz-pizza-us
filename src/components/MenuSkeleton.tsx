@@ -1,8 +1,12 @@
 import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, Animated } from 'react-native';
+import { View, StyleSheet, Animated, Dimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+const { width } = Dimensions.get('window');
 
 const MenuSkeleton = () => {
   const animatedValue = useRef(new Animated.Value(0)).current;
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     const startAnimation = () => {
@@ -32,6 +36,40 @@ const MenuSkeleton = () => {
 
   return (
     <View style={styles.container}>
+      {/* Cover Image & Header Info Skeleton */}
+      <View style={styles.headerContainer}>
+        <Animated.View style={[styles.coverImage, { opacity }]} />
+        
+        {/* Top Icons Skeleton */}
+        <View style={[styles.topAbsoluteBar, { top: insets.top + 10 }]}>
+          <Animated.View style={[styles.roundIconButton, { opacity }]} />
+          <Animated.View style={[styles.roundIconButton, { opacity }]} />
+        </View>
+
+        {/* Overlapping Info Card Skeleton */}
+        <View style={styles.storeCardWrapper}>
+          <View style={styles.storeCard}>
+            <View style={styles.storeCardTitleRow}>
+              <Animated.View style={[styles.skeletonItem, { width: 140, height: 20, opacity }]} />
+              <Animated.View style={[styles.skeletonItem, { width: 24, height: 24, borderRadius: 12, opacity }]} />
+            </View>
+            <View style={styles.storeCardMetaRow}>
+              <Animated.View style={[styles.skeletonItem, { width: 80, height: 14, opacity }]} />
+              <Animated.View style={[styles.skeletonItem, { width: 120, height: 14, opacity }]} />
+            </View>
+          </View>
+        </View>
+      </View>
+
+      {/* Filter Pills Skeleton */}
+      <View style={styles.filtersScroll}>
+        <View style={styles.filtersContainer}>
+          {[1, 2, 3, 4].map(key => (
+            <Animated.View key={`pill-${key}`} style={[styles.filterPill, { opacity }]} />
+          ))}
+        </View>
+      </View>
+
       {/* Menu List Skeleton */}
       <View style={styles.menuList}>
          {/* Section Header */}
@@ -40,7 +78,7 @@ const MenuSkeleton = () => {
             <Animated.View style={[styles.itemCount, { opacity }]} />
          </View>
 
-        {[1, 2, 3, 4, 5].map((key) => (
+        {[1, 2, 3, 4].map((key) => (
             <View key={key} style={styles.menuItem}>
                 <View style={styles.itemContent}>
                     <Animated.View style={[styles.vegIcon, { opacity }]} />
@@ -66,7 +104,76 @@ const MenuSkeleton = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff', // Match MenuScreen background
+    backgroundColor: '#f3f4f6', // Match MenuScreen background
+  },
+  headerContainer: {
+    position: 'relative',
+    height: 250,
+  },
+  coverImage: {
+    width: '100%',
+    height: 200,
+    backgroundColor: '#e5e7eb',
+  },
+  topAbsoluteBar: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    zIndex: 10,
+  },
+  roundIconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#e5e7eb',
+  },
+  storeCardWrapper: {
+    position: 'absolute',
+    bottom: 0,
+    left: 16,
+    right: 16,
+  },
+  storeCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  storeCardTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  storeCardMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  skeletonItem: {
+    backgroundColor: '#e5e7eb',
+    borderRadius: 4,
+  },
+  filtersScroll: {
+    marginTop: 12,
+    marginBottom: 4,
+  },
+  filtersContainer: {
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    gap: 10,
+  },
+  filterPill: {
+    width: 100,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#e5e7eb',
   },
   menuList: {
     padding: 16,
@@ -96,7 +203,7 @@ const styles = StyleSheet.create({
       borderRadius: 16,
       padding: 10,
       paddingBottom: 15,
-      marginBottom: 10,
+      marginBottom: 16,
       borderWidth: 1,
       borderColor: '#f3f4f6',
       justifyContent: 'space-between',
