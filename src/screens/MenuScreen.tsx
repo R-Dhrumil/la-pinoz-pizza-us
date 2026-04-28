@@ -32,6 +32,12 @@ import {
   SlidersHorizontal,
   Box,
   Sparkles,
+  Check,
+  Star,
+  TrendingUp,
+  BadgePercent,
+  ArrowUpNarrowWide,
+  ArrowDownWideNarrow,
 } from 'lucide-react-native';
 import { useCart } from '../context/CartContext';
 import { useStore } from '../context/StoreContext';
@@ -67,6 +73,10 @@ const MenuScreen = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isMenuModalVisible, setIsMenuModalVisible] = useState(false);
   const searchInputRef = useRef<TextInput>(null);
+
+  const [activeSort, setActiveSort] = useState<string | null>(null);
+  const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
+  const [activeFilters, setActiveFilters] = useState<string[]>([]);
 
   // Simple scroll ref to jump to sections (visual only for MVP)
   const scrollViewRef = useRef<ScrollView>(null);
@@ -185,23 +195,66 @@ const MenuScreen = () => {
     }
   };
 
-  // Filter categories based on search
+  // Filter and sort categories based on search, active filters, and active sort
   const filteredCategories = categories
     .map(category => {
-      if (!searchQuery.trim()) return category;
+      let filteredProducts = category.products;
 
-      const filteredProducts = category.products.filter(
-        p =>
-          p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          p.description.toLowerCase().includes(searchQuery.toLowerCase()),
-      );
+      // 1. Search Query Filter
+      if (searchQuery.trim()) {
+        filteredProducts = filteredProducts.filter(
+          p =>
+            p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            p.description.toLowerCase().includes(searchQuery.toLowerCase()),
+        );
+      }
+
+      // 2. Modal Filters
+      if (activeFilters.length > 0) {
+        filteredProducts = filteredProducts.filter(p => {
+          let passVeg = true;
+          let passBestseller = true;
+
+          const hasVegFilter = activeFilters.includes('Veg');
+          const hasNonVegFilter = activeFilters.includes('Non-Veg');
+
+          if (hasVegFilter || hasNonVegFilter) {
+            if (hasVegFilter && hasNonVegFilter) {
+              passVeg = true;
+            } else if (hasVegFilter) {
+              passVeg = p.isVeg === true;
+            } else if (hasNonVegFilter) {
+              passVeg = p.isVeg === false;
+            }
+          }
+
+          if (activeFilters.includes('Bestseller')) {
+            passBestseller = p.isBestseller === true;
+          }
+
+          return passVeg && passBestseller;
+        });
+      }
+
+      // 3. Sorting
+      if (activeSort === 'price_asc') {
+        filteredProducts = [...filteredProducts].sort((a, b) => a.basePrice - b.basePrice);
+      } else if (activeSort === 'price_desc') {
+        filteredProducts = [...filteredProducts].sort((a, b) => b.basePrice - a.basePrice);
+      } else if (activeSort === 'rating_desc') {
+        filteredProducts = [...filteredProducts].sort((a, b) => {
+          const ratingA = a.isBestseller ? 5 : 4;
+          const ratingB = b.isBestseller ? 5 : 4;
+          return ratingB - ratingA;
+        });
+      }
 
       return {
         ...category,
         products: filteredProducts,
       };
     })
-    .filter(category => category.products.length > 0);
+    .filter(category => category.products?.length > 0);
 
   return (
     <View style={styles.containerStyleOverride}>
@@ -297,16 +350,43 @@ const MenuScreen = () => {
               style={styles.filtersScroll} 
               contentContainerStyle={styles.filtersContainer}
             >
+              <TouchableOpacity
+                style={[styles.filterPill, activeFilters.length > 0 && styles.filterPillActive]}
+                onPress={() => setIsFilterModalVisible(true)}
+              >
+                <SlidersHorizontal size={14} color={activeFilters.length > 0 ? "#3c7d48" : "#374151"} />
+                <Text style={[styles.filterPillText, activeFilters.length > 0 && styles.filterPillTextActive]}>
+                  Filter {activeFilters.length > 0 ? `(${activeFilters.length})` : ''}
+                </Text>
+                <ChevronDown size={14} color={activeFilters.length > 0 ? "#3c7d48" : "#374151"} />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.filterPill, activeSort === 'price_asc' && styles.filterPillActive]}
+                onPress={() => setActiveSort(activeSort === 'price_asc' ? null : 'price_asc')}
+              >
+                <Text style={[styles.filterPillText, activeSort === 'price_asc' && styles.filterPillTextActive]}>Price low to high</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.filterPill, activeSort === 'price_desc' && styles.filterPillActive]}
+                onPress={() => setActiveSort(activeSort === 'price_desc' ? null : 'price_desc')}
+              >
+                <Text style={[styles.filterPillText, activeSort === 'price_desc' && styles.filterPillTextActive]}>Price high to low</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.filterPill, activeSort === 'rating_desc' && styles.filterPillActive]}
+                onPress={() => setActiveSort(activeSort === 'rating_desc' ? null : 'rating_desc')}
+              >
+                <Text style={[styles.filterPillText, activeSort === 'rating_desc' && styles.filterPillTextActive]}>Rating high to low</Text>
+              </TouchableOpacity>
+
               {categories.find(c => c.id === activeTab)?.subcategories?.map(sub => (
                 <TouchableOpacity key={sub.id} style={styles.filterPill}>
                   <Text style={styles.filterPillText}>{sub.name}</Text>
                 </TouchableOpacity>
               ))}
-              {(!categories.find(c => c.id === activeTab)?.subcategories || categories.find(c => c.id === activeTab)?.subcategories?.length === 0) && (
-                 <TouchableOpacity style={styles.filterPill}>
-                    <Text style={styles.filterPillText}>All {categories.find(c => c.id === activeTab)?.name || 'Items'}</Text>
-                 </TouchableOpacity>
-              )}
             </ScrollView>
 
             <View style={styles.listContainer}>
@@ -433,6 +513,124 @@ const MenuScreen = () => {
             </ScrollView>
           </TouchableOpacity>
         </TouchableOpacity>
+      </Modal>
+
+      {/* Filters Bottom Sheet  */}
+      <Modal
+        visible={isFilterModalVisible}
+        transparent={true}
+        animationType="slide"
+      >
+        <View style={styles.modalOverlayBottomSheet}>
+          <TouchableOpacity 
+            style={styles.modalOverlayTouchable} 
+            activeOpacity={1} 
+            onPress={() => setIsFilterModalVisible(false)} 
+          />
+          <View style={styles.bottomSheetContent}>
+            <View style={styles.bottomSheetHeader}>
+              <Text style={styles.bottomSheetTitle}>Filters and Sorting</Text>
+              <TouchableOpacity
+                onPress={() => setIsFilterModalVisible(false)}
+                style={styles.bottomSheetCloseBtn}
+              >
+                <X size={18} color="#fff" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView contentContainerStyle={styles.bottomSheetScrollContent} showsVerticalScrollIndicator={false}>
+              {/* Sort By Section */}
+              <View style={styles.filterSectionCard}>
+                <Text style={styles.filterSectionTitle}>Sort by</Text>
+                <View style={styles.filterPillWrap}>
+                  <TouchableOpacity 
+                    style={[styles.modalFilterPill, activeSort === 'price_asc' && styles.modalFilterPillActive]}
+                    onPress={() => setActiveSort(activeSort === 'price_asc' ? null : 'price_asc')}
+                  >
+                    <ArrowUpNarrowWide size={14} color={activeSort === 'price_asc' ? "#3c7d48" : "#374151"} />
+                    <Text style={[styles.modalFilterPillText, activeSort === 'price_asc' && styles.modalFilterPillTextActive]}>Price - Low to High</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.modalFilterPill, activeSort === 'price_desc' && styles.modalFilterPillActive]}
+                    onPress={() => setActiveSort(activeSort === 'price_desc' ? null : 'price_desc')}
+                  >
+                    <ArrowDownWideNarrow size={14} color={activeSort === 'price_desc' ? "#3c7d48" : "#374151"} />
+                    <Text style={[styles.modalFilterPillText, activeSort === 'price_desc' && styles.modalFilterPillTextActive]}>Price - High to Low</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.modalFilterPill, activeSort === 'rating_desc' && styles.modalFilterPillActive]}
+                    onPress={() => setActiveSort(activeSort === 'rating_desc' ? null : 'rating_desc')}
+                  >
+                    <Star size={14} color={activeSort === 'rating_desc' ? "#3c7d48" : "#000"} fill={activeSort === 'rating_desc' ? "#3c7d48" : "#000"} />
+                    <Text style={[styles.modalFilterPillText, activeSort === 'rating_desc' && styles.modalFilterPillTextActive]}>Rating - High to Low</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Top Picks Section */}
+              <View style={styles.filterSectionCard}>
+                <Text style={styles.filterSectionTitle}>Top Picks</Text>
+                <View style={styles.filterPillWrap}>
+                  {[
+                    { id: 'In Stock', text: 'In Stock', icon: <Box size={14} color="#374151" /> },
+                    { id: 'What\'s New!', text: 'What\'s New!', icon: null },
+                    { id: 'Bestseller', text: 'Bestseller', icon: null },
+                    { id: 'Highly Ordered', text: 'Highly Ordered', icon: <TrendingUp size={14} color="#374151" /> },
+                    { id: 'Rated 4+', text: 'Rated 4+', icon: null },
+                    { id: 'On Offer', text: 'On Offer', icon: <BadgePercent size={14} color="#3c7d48" /> }, // Keeping color specific if needed, or dynamically
+                  ].map(option => {
+                    const isActive = activeFilters.includes(option.id);
+                    // Dynamically set icon color based on active state if it exists
+                    const renderIcon = () => {
+                      if (!option.icon) return null;
+                      // React clone element to override color
+                      return React.cloneElement(option.icon as React.ReactElement<any>, { 
+                        color: isActive ? "#3c7d48" : (option.text === 'On Offer' && !isActive ? "#3c7d48" : "#374151") 
+                      });
+                    };
+
+                    return (
+                      <TouchableOpacity
+                        key={option.id}
+                        style={[styles.modalFilterPill, isActive && styles.modalFilterPillActive]}
+                        onPress={() => {
+                          if (isActive) {
+                            setActiveFilters(activeFilters.filter(f => f !== option.id));
+                          } else {
+                            setActiveFilters([...activeFilters, option.id]);
+                          }
+                        }}
+                      >
+                        {renderIcon()}
+                        <Text style={[styles.modalFilterPillText, isActive && styles.modalFilterPillTextActive]}>
+                          {option.text}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+            </ScrollView>
+
+            <View style={styles.bottomSheetActionRow}>
+              <TouchableOpacity 
+                style={styles.bottomSheetClearBtn}
+                onPress={() => {
+                  setActiveFilters([]);
+                  setActiveSort(null);
+                }}
+              >
+                <Text style={styles.bottomSheetClearBtnText}>Clear All</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.bottomSheetApplyBtn}
+                onPress={() => setIsFilterModalVisible(false)}
+              >
+                <Text style={styles.bottomSheetApplyBtnText}>Apply ({activeFilters.length + (activeSort ? 1 : 0)})</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
       </Modal>
     </View>
   );
@@ -721,6 +919,136 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6b7280',
     fontWeight: '600',
+  },
+  filterPillActive: {
+    backgroundColor: '#ecfdf5',
+    borderColor: '#3c7d48',
+  },
+  filterPillTextActive: {
+    color: '#3c7d48',
+  },
+  // Bottom Sheet Styles for Filter
+  modalOverlayBottomSheet: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalOverlayTouchable: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  bottomSheetContent: {
+    backgroundColor: '#f3f4f6', // Light grey background like in image
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '85%',
+    paddingBottom: 24,
+  },
+  bottomSheetHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    borderBottomWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  bottomSheetTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1f2937',
+  },
+  bottomSheetCloseBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#d1d5db',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  bottomSheetScrollContent: {
+    padding: 16,
+    paddingBottom: 100, // Make room for fixed bottom row
+  },
+  filterSectionCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+  },
+  filterSectionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#374151',
+    marginBottom: 12,
+  },
+  filterPillWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  modalFilterPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8, // Less rounded in the image than the top level pills
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    backgroundColor: '#fff',
+    gap: 6,
+  },
+  modalFilterPillActive: {
+    borderColor: '#3c7d48',
+    backgroundColor: '#f6fbf7',
+  },
+  modalFilterPillText: {
+    fontSize: 14,
+    color: '#1f2937',
+  },
+  modalFilterPillTextActive: {
+    color: '#3c7d48',
+  },
+  bottomSheetActionRow: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    padding: 16,
+    paddingBottom: 24, // extra for safe area on iOS
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderColor: '#e5e7eb',
+    gap: 12,
+  },
+  bottomSheetClearBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+  },
+  bottomSheetClearBtnText: {
+    color: '#374151',
+    fontWeight: '500',
+    fontSize: 16,
+  },
+  bottomSheetApplyBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: '#105022', // Deeper green based on image
+    alignItems: 'center',
+  },
+  bottomSheetApplyBtnText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 });
 
