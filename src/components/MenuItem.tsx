@@ -12,8 +12,8 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../navigation/AuthNavigator';
 import { useCart } from '../context/CartContext';
-import { useStore } from '../context/StoreContext';
 import { Product } from '../services/categoryService';
+import { Star } from 'lucide-react-native';
 
 interface MenuItemProps {
   item: Product;
@@ -65,16 +65,26 @@ const MenuItem = ({ item, onTap }: MenuItemProps) => {
         )}
         <Text style={styles.itemName}>{item.name}</Text>
         <Text style={styles.itemPrice}>${item.basePrice}</Text>
+        
+        {/* Placeholder 5-Star Rating */}
+        <View style={styles.ratingRow}>
+          {[1,2,3,4,5].map(i => (
+             <Star key={i} size={10} color="#fbbf24" fill="#fbbf24" style={{marginRight: 2}} />
+          ))}
+        </View>
+
         <TouchableOpacity 
           onPress={toggleExpand} 
           activeOpacity={1}
           style={styles.descButton}
         >
-          <Text 
-            style={styles.itemDesc} 
-            numberOfLines={isExpanded ? undefined : 2}
-          >
-            {item.description}
+          <Text style={styles.itemDescWrapper}>
+            <Text style={styles.itemDesc}>
+              {isExpanded ? item.description : (item.description.length > 50 ? item.description.substring(0, 50) + '... ' : item.description)}
+            </Text>
+            {!isExpanded && item.description.length > 50 && (
+              <Text style={styles.readMoreText}>Read More</Text>
+            )}
           </Text>
         </TouchableOpacity>
       </View>
@@ -197,12 +207,27 @@ const styles = StyleSheet.create({
     color: '#374151',
     marginBottom: 4,
   },
+  ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
   descButton: {
     marginTop: 2,
+  },
+  itemDescWrapper: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
   },
   itemDesc: {
     fontSize: 11,
     color: '#6b7280',
+    lineHeight: 14,
+  },
+  readMoreText: {
+    fontSize: 11,
+    color: '#374151',
+    fontWeight: 'bold',
     lineHeight: 14,
   },
   addButton: {

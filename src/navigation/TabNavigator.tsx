@@ -50,6 +50,7 @@ const TabNavigator = () => {
         component={MenuScreen}
         options={{
           tabBarIcon: ({ color }: { color: string }) => <Menu color={color} size={24} />,
+          tabBarStyle: { display: 'none' },
         }}
       />
       <Tab.Screen

@@ -6,15 +6,11 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  StatusBar,
   ScrollView,
   Image,
   Dimensions,
-  Animated,
-  ActivityIndicator,
   Alert,
   RefreshControl,
-  Linking,
   Modal,
   Platform,
 } from 'react-native';
@@ -25,14 +21,17 @@ import { AuthStackParamList } from '../navigation/AuthNavigator';
 import { RouteProp, useRoute } from '@react-navigation/native';
 import {
   Search,
-  ChevronRight,
-  Pizza,
-  IceCream,
-  Martini,
-  Wheat,
-  Utensils,
   X,
-  ChevronDown, // Import X for close button
+  ChevronDown,
+  ChevronLeft,
+  ShoppingCart,
+  Info,
+  Clock,
+  MapPin,
+  Share2,
+  SlidersHorizontal,
+  Box,
+  Sparkles,
 } from 'lucide-react-native';
 import { useCart } from '../context/CartContext';
 import { useStore } from '../context/StoreContext';
@@ -41,7 +40,6 @@ import MenuSkeleton from '../components/MenuSkeleton';
 import {
   categoryService,
   Category,
-  Product,
 } from '../services/categoryService';
 import FloatingCart from '../components/FloatingCart';
 import MenuItem from '../components/MenuItem';
@@ -56,8 +54,8 @@ const MenuScreen = () => {
     useRoute<RouteProp<{ params: { categoryId?: number } }, 'params'>>();
   const { categoryId: targetCategoryId } = route.params || {};
 
-  const { addToCart, totalItems, totalAmount } = useCart();
   const { selectedStore } = useStore();
+  const { totalItems } = useCart();
   const insets = useSafeAreaInsets();
   const tabHeight = getTabHeight(insets.bottom);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -76,8 +74,6 @@ const MenuScreen = () => {
   const sectionPositions = useRef<{ [key: number]: number }>({});
   const tabPositions = useRef<{ [key: number]: number }>({});
   const isTabPress = useRef(false);
-
-
 
   useEffect(() => {
     if (selectedStore?.id) {
@@ -151,7 +147,7 @@ const MenuScreen = () => {
 
     if (scrollViewRef.current && y !== undefined) {
       // Add small offset for sticky header / visuals
-      const offset = Math.max(0, y - 20);
+      const offset = Math.max(0, y - 280); // Adjust offset for large header
       scrollViewRef.current.scrollTo({ y: offset, animated });
     }
     scrollToActiveTab(categoryId);
@@ -166,12 +162,11 @@ const MenuScreen = () => {
     if (isTabPress.current) return;
 
     const scrollY = event.nativeEvent.contentOffset.y;
-    const effectiveY = scrollY + 100; // Offset for better detection
+    const effectiveY = scrollY + 280; // Offset for better detection
 
     // Find the last category whose position is <= effectiveY
     let currentTab = activeTab;
 
-    // We need to iterate over visible categories to find the current section
     for (let i = 0; i < filteredCategories.length; i++) {
       const category = filteredCategories[i];
       const pos = sectionPositions.current[category.id];
@@ -190,108 +185,34 @@ const MenuScreen = () => {
     }
   };
 
-  const getCategoryIcon = (categoryName: string) => {
-    const lowerName = categoryName.toLowerCase();
-    if (lowerName.includes('pizza')) return <Pizza size={18} />;
-    if (lowerName.includes('dessert')) return <IceCream size={18} />;
-    if (lowerName.includes('beverage') || lowerName.includes('drink'))
-      return <Martini size={18} />;
-    if (lowerName.includes('bread')) return <Wheat size={18} />;
-    return <Utensils size={18} />;
-  };
-
   // Filter categories based on search
   const filteredCategories = categories
     .map(category => {
-      // If no search, return category as is
       if (!searchQuery.trim()) return category;
 
-      // Filter products
       const filteredProducts = category.products.filter(
         p =>
           p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
           p.description.toLowerCase().includes(searchQuery.toLowerCase()),
       );
 
-      // Return new category object with filtered products
       return {
         ...category,
         products: filteredProducts,
       };
     })
-    .filter(category => category.products.length > 0); // Remove empty categories
+    .filter(category => category.products.length > 0);
 
   return (
-    <SafeAreaView style={styles.containerStyleOverride} edges={['top']}>
-      <FocusAwareStatusBar barStyle="dark-content" backgroundColor="#fff" />
-      {/* Header */}
-      {/* <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.navigate('StoreLocation')}>
-          <Text style={styles.brandName}>La Pino'z USA</Text>
-          <View style={styles.locationContainer}>
-            <View style={styles.locationDot} />
-            <Text style={styles.locationText}>
-              {selectedStore
-                ? `${selectedStore.address}`
-                : 'Select Location'}
-            </Text>
-            <ChevronRight size={12} color="#3c7d48" />
-          </View>
-        </TouchableOpacity>
-      </View> */}
-
-      <View style={styles.header}>
-          <TouchableOpacity style={styles.headerLeft} onPress={() => navigation.navigate('StoreLocation' as any)}>
-            <Image 
-              source={require('../assets/images/logo.png')} 
-              style={{ width: 40, height: 40, resizeMode: 'contain' }}
-            />
-            <View>
-              <Text style={styles.brandName2}>La Pino'z USA</Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                <Text style={styles.brandName}>{selectedStore ? selectedStore.address + ',' : 'Click to select'}</Text>
-                <Text style={styles.brandName}>{selectedStore ? selectedStore.city : 'Click to select'}</Text>
-                <ChevronDown size={18} color="#000" />
-              </View>
-            </View>
-          </TouchableOpacity>
-         
-        </View>
-
-      {/* Search Bar + Menu Button (top, always visible) */}
-      {selectedStore && !loading && (
-        <View style={styles.topSearchBar}>
-          <View style={styles.topSearchInputContainer}>
-            <Search size={18} color="#9ca3af" />
-            <TextInput
-              ref={searchInputRef}
-              style={styles.topSearchInput}
-              placeholder="Search in menu..."
-              placeholderTextColor="#9ca3af"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              returnKeyType="search"
-            />
-            {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchQuery('')}>
-                <X size={16} color="#6b7280" />
-              </TouchableOpacity>
-            )}
-          </View>
-          <TouchableOpacity
-            style={styles.topMenuButton}
-            onPress={() => setIsMenuModalVisible(true)}
-          >
-            <Utensils size={14} color="#fff" />
-            <Text style={styles.topMenuButtonText}>Menu</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
+    <View style={styles.containerStyleOverride}>
+      <FocusAwareStatusBar barStyle="light-content" backgroundColor="transparent" translucent={true} />
+      
       {loading ? (
-        <MenuSkeleton />
+        <SafeAreaView style={{flex: 1}} edges={['top']}>
+           <MenuSkeleton />
+        </SafeAreaView>
       ) : !selectedStore ? (
-        <View style={[styles.container, styles.centered]}>
+        <SafeAreaView style={[styles.container, styles.centered]} edges={['top']}>
           <Text style={styles.messageText}>
             Please select a store to view the menu
           </Text>
@@ -301,7 +222,7 @@ const MenuScreen = () => {
           >
             <Text style={styles.selectStoreBtnText}>Select Store</Text>
           </TouchableOpacity>
-        </View>
+        </SafeAreaView>
       ) : (
         <>
           <ScrollView
@@ -316,54 +237,153 @@ const MenuScreen = () => {
                 refreshing={refreshing}
                 onRefresh={onRefresh}
                 colors={['#3c7d48']}
+                // Add top padding to account for the translucent status bar and cover image
+                progressViewOffset={Platform.OS === 'android' ? 10 : 0} 
               />
             }
           >
-            {filteredCategories.map(category => (
-              <View
-                key={category.id}
-                style={styles.listSection}
-                onLayout={event => {
-                  sectionPositions.current[category.id] =
-                    event.nativeEvent.layout.y;
-                }}
-              >
-                <View style={styles.sectionHeader}>
-                  <Text style={styles.sectionTitle}>{category.name}</Text>
-                  <Text style={styles.itemCount}>
-                    {category.products ? category.products.length : 0} ITEMS
+            {/* Cover Image & Header Info */}
+            <View style={styles.headerContainer}>
+              <Image 
+                source={selectedStore?.image ? { uri: selectedStore.image } : require('../assets/images/pizza_placeholder.jpg')}
+                style={styles.coverImage}
+              />
+              <View style={styles.coverImageOverlay} />
+
+              {/* Top Icons */}
+              <View style={[styles.topAbsoluteBar, { top: insets.top + 10 }]}>
+                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.roundIconButton}>
+                  <ChevronLeft size={20} color="#fff" />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => navigation.navigate('Cart' as any)} style={styles.roundIconButton}>
+                  <ShoppingCart size={20} color="#fff" />
+                </TouchableOpacity>
+              </View>
+
+              {/* Overlapping Info Card */}
+              <View style={styles.storeCardWrapper}>
+                <View style={styles.storeCard}>
+                  <View style={styles.storeCardTitleRow}>
+                    <View style={styles.storeCardLeft}>
+                      <Text style={styles.storeNameText}>La Pino'z Pizza</Text>
+                      <Info size={16} color="#6b7280" />
+                      <View style={styles.openBadge}>
+                        <Text style={styles.openBadgeText}>OPEN</Text>
+                      </View>
+                    </View>
+                    <TouchableOpacity style={styles.shareIconBtn}>
+                      <Share2 size={16} color="#374151" />
+                    </TouchableOpacity>
+                  </View>
+                  <View style={styles.storeCardMetaRow}>
+                    <View style={styles.metaBadge}>
+                      <Clock size={12} color="#4b5563" />
+                      <Text style={styles.metaText}>30 Minutes</Text>
+                    </View>
+                    <TouchableOpacity onPress={() => navigation.navigate('StoreLocation')} style={styles.metaBadge}>
+                      <MapPin size={12} color="#4b5563" />
+                      <Text style={styles.metaText} numberOfLines={1}>{selectedStore ? `${selectedStore.city}, ${selectedStore.state}` : 'Select Location'}</Text>
+                      <ChevronDown size={12} color="#4b5563" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            </View>
+
+            {/* Filter Pills */}
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false} 
+              style={styles.filtersScroll} 
+              contentContainerStyle={styles.filtersContainer}
+            >
+              {categories.find(c => c.id === activeTab)?.subcategories?.map(sub => (
+                <TouchableOpacity key={sub.id} style={styles.filterPill}>
+                  <Text style={styles.filterPillText}>{sub.name}</Text>
+                </TouchableOpacity>
+              ))}
+              {(!categories.find(c => c.id === activeTab)?.subcategories || categories.find(c => c.id === activeTab)?.subcategories?.length === 0) && (
+                 <TouchableOpacity style={styles.filterPill}>
+                    <Text style={styles.filterPillText}>All {categories.find(c => c.id === activeTab)?.name || 'Items'}</Text>
+                 </TouchableOpacity>
+              )}
+            </ScrollView>
+
+            <View style={styles.listContainer}>
+              {filteredCategories.map(category => (
+                <View
+                  key={category.id}
+                  style={styles.listSection}
+                  onLayout={event => {
+                    sectionPositions.current[category.id] =
+                      event.nativeEvent.layout.y + 250; // offset for the header top
+                  }}
+                >
+                  <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionTitle}>{category.name}</Text>
+                    <Text style={styles.itemCount}>
+                      {category.products ? category.products.length : 0} ITEMS
+                    </Text>
+                  </View>
+                  {category.products &&
+                    category.products.map(item => (
+                      <MenuItem
+                        key={item.id}
+                        item={item}
+                        onTap={() =>
+                          navigation.navigate('ProductDetail', { item })
+                        }
+                      />
+                    ))}
+                </View>
+              ))}
+
+              {filteredCategories.length === 0 && !loading && (
+                <View style={styles.centered}>
+                  <Text style={styles.messageText}>
+                    {searchQuery
+                      ? `No items found matching "${searchQuery}"`
+                      : 'No menu items found for this store.'}
                   </Text>
                 </View>
-                {category.products &&
-                  category.products.map(item => (
-                    <MenuItem
-                      key={item.id}
-                      item={item}
-                      onTap={() =>
-                        navigation.navigate('ProductDetail', { item })
-                      }
-                    />
-                  ))}
-              </View>
-            ))}
-
-            {filteredCategories.length === 0 && !loading && (
-              <View style={styles.centered}>
-                <Text style={styles.messageText}>
-                  {searchQuery
-                    ? `No items found matching "${searchQuery}"`
-                    : 'No menu items found for this store.'}
-                </Text>
-              </View>
-            )}
+              )}
+            </View>
           </ScrollView>
+
+          {/* Bottom Action Area: Search + Menu Bar, THEN Floating Cart Below it */}
+          <View style={[styles.bottomActionContainer, { bottom: 0 }]}>
+            {/* Search & Menu Bar */}
+            <View style={[styles.searchMenuBottomBar, totalItems === 0 && { paddingBottom: Math.max(insets.bottom, 12) }]}>
+              <View style={styles.bottomSearchContainer}>
+                <Search size={18} color="#9ca3af" />
+                <TextInput
+                  ref={searchInputRef}
+                  style={styles.bottomSearchInput}
+                  placeholder="Search your favorite..."
+                  placeholderTextColor="#9ca3af"
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                  returnKeyType="search"
+                />
+                {searchQuery.length > 0 && (
+                  <TouchableOpacity onPress={() => setSearchQuery('')}>
+                    <X size={16} color="#6b7280" />
+                  </TouchableOpacity>
+                )}
+              </View>
+              <TouchableOpacity
+                style={styles.bottomMenuBtn}
+                onPress={() => setIsMenuModalVisible(true)}
+              >
+                <Text style={styles.bottomMenuBtnText}>Menu</Text>
+              </TouchableOpacity>
+            </View>
+            
+            {/* The Floating Cart is placed underneath the Search/Menu bar */}
+            <FloatingCart />
+          </View>
         </>
       )}
-
-      {/* Floating Cart at the bottom, above the Tab Bar */}
-      <View style={[styles.absoluteBottomWrapperWithTab, { bottom: tabHeight - 60 }]}>
-        <FloatingCart />
-      </View>
 
       {/* Categories Modal */}
       <Modal
@@ -386,13 +406,13 @@ const MenuScreen = () => {
                 <X size={20} color="#000" />
               </TouchableOpacity>
             </View>
-            <ScrollView style={styles.modalScroll}>
+            <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
               {categories.map(category => (
                 <TouchableOpacity
                   key={category.id}
                   style={styles.modalCategoryItem}
                   onPress={() => {
-                    navigation.navigate('CategoryProducts', { category });
+                    handleTabPress(category.id, true);
                     setIsMenuModalVisible(false);
                   }}
                 >
@@ -414,36 +434,18 @@ const MenuScreen = () => {
           </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 };
-
-// Helper Components
-
-const TabItem = ({ name, active, onPress }: any) => (
-  <TouchableOpacity
-    style={[styles.tabItemPill, active && styles.tabItemPillActive]}
-    onPress={onPress}
-  >
-    <Text
-      style={[styles.tabTextPill, active && styles.tabTextPillActive]}
-      numberOfLines={1}
-    >
-      {name}
-    </Text>
-  </TouchableOpacity>
-);
-
-// MenuItem component removed and replaced with shared component in ../components/MenuItem
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: '#f3f4f6', // Light grey background
   },
   containerStyleOverride: {
     flex: 1,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: '#f3f4f6', 
   },
   centered: {
     flex: 1,
@@ -467,93 +469,134 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
   },
-  header: {
+  content: {
+    paddingBottom: 200, // Extra padding to scroll past the floating bottom section
+  },
+  headerContainer: {
+    position: 'relative',
+    height: 250,
+  },
+  coverImage: {
+    width: '100%',
+    height: 200,
+    resizeMode: 'cover',
+  },
+  coverImageOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    height: 200,
+    backgroundColor: 'rgba(0,0,0,0.2)', // Darken image slightly for contrast
+  },
+  topAbsoluteBar: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    zIndex: 10,
   },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-    brandName2: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#000',
-  },
-  brandName: {
-    fontSize: 10,
-    fontWeight: '500',
-    color: '#000',
-    letterSpacing: -0.5,
-  },
-  locationContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 2,
-  },
-  locationDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#3c7d48',
-    marginRight: 4,
-  },
-  locationText: {
-    fontSize: 10,
-    color: '#3c7d48',
-    fontWeight: '600',
-  },
-  headerRight: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  iconBtn: {
-    padding: 10,
-    display: 'flex',
+  roundIconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  storeCardWrapper: {
+    position: 'absolute',
+    bottom: 0,
+    left: 16,
+    right: 16,
+  },
+  storeCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  storeCardTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+  },
+  storeCardLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flexWrap: 'wrap',
+  },
+  storeNameText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#111827',
+  },
+  openBadge: {
+    backgroundColor: '#ecfdf5',
+    borderWidth: 1,
+    borderColor: '#10b981',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  openBadgeText: {
+    color: '#10b981',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  shareIconBtn: {
+    padding: 6,
     backgroundColor: '#f3f4f6',
     borderRadius: 20,
   },
-  tabContainer: {
-    backgroundColor: '#fff',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
-  },
-  tabScroll: {
-    paddingHorizontal: 16,
+  storeCardMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 12,
   },
-  tabItemPill: {
+  metaBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  metaText: {
+    fontSize: 13,
+    color: '#4b5563',
+    fontWeight: '500',
+  },
+  filtersScroll: {
+    marginTop: 12,
+    marginBottom: 4,
+  },
+  filtersContainer: {
     paddingHorizontal: 16,
+    gap: 10,
+    alignItems: 'center',
+  },
+  filterPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#fff',
+    paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: '#e5e7eb',
-    backgroundColor: '#fff',
+    height: 40,
   },
-  tabItemPillActive: {
-    borderColor: '#3c7d48',
-    backgroundColor: 'rgba(60, 125, 72, 0.08)',
-  },
-  tabTextPill: {
+  filterPillText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#6b7280',
+    color: '#374151',
   },
-  tabTextPillActive: {
-    color: '#3c7d48',
-  },
-  content: {
-    padding: 16,
-    paddingBottom: 120, // Ensure content clears absolute-positioned bottom bar
+  listContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
   },
   listSection: {
     marginBottom: 24,
@@ -574,88 +617,52 @@ const styles = StyleSheet.create({
     color: '#9ca3af',
     fontWeight: '600',
   },
-  // MenuItem styles removed as they are now in the shared MenuItem component
-  searchHeaderContainer: {
-    flex: 1,
+  bottomActionContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    zIndex: 20,
+  },
+  searchMenuBottomBar: {
+    backgroundColor: '#fff', 
     flexDirection: 'row',
     alignItems: 'center',
+    paddingTop: 12,
+    paddingHorizontal: 12,
+    paddingBottom: 12,
+    borderTopWidth: 1,
+    borderColor: '#e5e7eb',
     gap: 12,
   },
-  searchBox: {
+  bottomSearchContainer: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#f3f4f6',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
     borderRadius: 12,
     paddingHorizontal: 12,
-    height: 40,
+    height: 44,
   },
-  searchInput: {
+  bottomSearchInput: {
     flex: 1,
-    fontSize: 14,
-    color: '#000',
-    paddingVertical: 0,
-  },
-  cancelBtn: {
-    padding: 4,
-  },
-  cancelText: {
-    color: '#3c7d48',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  topSearchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  topSearchInputContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f3f4f6',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    height: 40,
-  },
-  topSearchInput: {
-    flex: 1,
-    fontSize: 14,
-    color: '#000',
     marginLeft: 8,
-    paddingVertical: 0,
+    fontSize: 14,
+    color: '#000',
   },
-  topMenuButton: {
-    flexDirection: 'row',
+  bottomMenuBtn: {
+    backgroundColor: '#374151', // Dark gray almost black
+    borderRadius: 12,
+    paddingHorizontal: 20,
+    height: 44,
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: 5,
-    backgroundColor: '#3c7d48',
-    height: 40,
-    paddingHorizontal: 14,
-    borderRadius: 10,
   },
-  topMenuButtonText: {
+  bottomMenuBtnText: {
     color: '#fff',
-    fontSize: 13,
     fontWeight: 'bold',
-  },
-  absoluteBottomWrapper: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 10,
-  },
-  absoluteBottomWrapperWithTab: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    zIndex: 10,
+    fontSize: 14,
   },
   modalOverlay: {
     flex: 1,

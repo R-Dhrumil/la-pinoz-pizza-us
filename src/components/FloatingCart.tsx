@@ -5,10 +5,12 @@ import { ShoppingBag, ChevronRight, Trash2 } from 'lucide-react-native';
 import { useCart } from '../context/CartContext';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../navigation/AuthNavigator';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const FloatingCart = () => {
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
   const { totalItems, totalAmount, clearCart } = useCart();
+  const insets = useSafeAreaInsets();
 
   if (totalItems === 0) return null;
 
@@ -24,58 +26,44 @@ const FloatingCart = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.cartBar}>
-        <View style={styles.leftSection}>
-            <View style={styles.iconContainer}>
-              <ShoppingBag size={22} color="#fff" />
-            </View>
-            <View style={styles.textContainer}>
-                <Text style={styles.itemCount}>{totalItems} ITEMS</Text>
-                <Text style={styles.totalAmount}>${totalAmount.toFixed(2)}</Text>
-            </View>
-        </View>
+    <View style={[styles.cartBar, { paddingBottom: Math.max(insets.bottom, 12) }]}>
+      <View style={styles.leftSection}>
+          <View style={styles.iconContainer}>
+            <ShoppingBag size={22} color="#fff" />
+          </View>
+          <View style={styles.textContainer}>
+              <Text style={styles.itemCount}>{totalItems} ITEMS</Text>
+              <Text style={styles.totalAmount}>${totalAmount.toFixed(2)}</Text>
+          </View>
+      </View>
 
-        <View style={styles.actions}>
-            <TouchableOpacity style={styles.clearBtn} onPress={handleClearCart}>
-                <Trash2 size={20} color="#fff" style={{ opacity: 0.8 }} />
-            </TouchableOpacity>
-            
-            <View style={styles.divider} />
+      <View style={styles.actions}>
+          <TouchableOpacity style={styles.clearBtn} onPress={handleClearCart}>
+              <Trash2 size={20} color="#fff" style={{ opacity: 0.8 }} />
+          </TouchableOpacity>
+          
+          <View style={styles.divider} />
 
-            <TouchableOpacity 
-                style={styles.viewCartBtn} 
-                onPress={() => navigation.navigate('Cart')}
-            >
-                <Text style={styles.viewCartText}>VIEW CART</Text>
-                <ChevronRight size={18} color="#fff" />
-            </TouchableOpacity>
-        </View>
+          <TouchableOpacity 
+              style={styles.viewCartBtn} 
+              onPress={() => navigation.navigate('Cart')}
+          >
+              <Text style={styles.viewCartText}>VIEW CART</Text>
+              <ChevronRight size={18} color="#fff" />
+          </TouchableOpacity>
       </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: 12,
-    paddingTop: 8,
-    paddingBottom: 0,
-    backgroundColor: 'transparent',
-  },
   cartBar: {
     backgroundColor: '#3c7d48',
-    borderRadius: 14,
-    padding: 5,
+    paddingTop: 12,
     paddingHorizontal: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 4,
   },
   leftSection: {
       flexDirection: 'row',
