@@ -3,6 +3,7 @@
 .DS_Store
 bugs
 test_output
+.agents
 # Xcode
 #
 build/

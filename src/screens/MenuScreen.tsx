@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useMemo, useCallback } from 'react';
 import FocusAwareStatusBar from '../components/FocusAwareStatusBar';
 import {
   View,
@@ -107,17 +107,13 @@ const MenuScreen = () => {
     }
   }, [targetCategoryId, categories]);
 
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     if (!selectedStore?.id) return;
 
     setLoading(true);
     try {
-      // Artificial delay for skeleton testing
-      await new Promise(resolve => setTimeout(() => resolve(true), 2000));
-
       const data = await categoryService.getCategories(selectedStore.id);
       setCategories(data);
-      // Initial selection logic moved to useEffect above
       if (data.length > 0 && !activeTab) {
         setActiveTab(data[0].id);
       }
@@ -128,14 +124,14 @@ const MenuScreen = () => {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [selectedStore?.id, activeTab]);
 
-  const onRefresh = () => {
+  const onRefresh = useCallback(() => {
     setRefreshing(true);
     // Explicitly set loading to true to trigger skeleton
     setLoading(true);
     fetchCategories();
-  };
+  }, [fetchCategories]);
 
   const scrollToActiveTab = (categoryId: number) => {
     const x = tabPositions.current[categoryId];
@@ -150,7 +146,7 @@ const MenuScreen = () => {
     }
   };
 
-  const handleTabPress = (categoryId: number, animated = true) => {
+  const handleTabPress = useCallback((categoryId: number, animated = true) => {
     setActiveTab(categoryId);
     isTabPress.current = true;
     const y = sectionPositions.current[categoryId];
@@ -166,7 +162,7 @@ const MenuScreen = () => {
     setTimeout(() => {
       isTabPress.current = false;
     }, 1000);
-  };
+  }, [activeTab]);
 
   const handleScroll = (event: any) => {
     if (isTabPress.current) return;
@@ -196,65 +192,67 @@ const MenuScreen = () => {
   };
 
   // Filter and sort categories based on search, active filters, and active sort
-  const filteredCategories = categories
-    .map(category => {
-      let filteredProducts = category.products;
+  const filteredCategories = useMemo(() => {
+    return categories
+      .map(category => {
+        let filteredProducts = category.products;
 
-      // 1. Search Query Filter
-      if (searchQuery.trim()) {
-        filteredProducts = filteredProducts.filter(
-          p =>
-            p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            p.description.toLowerCase().includes(searchQuery.toLowerCase()),
-        );
-      }
+        // 1. Search Query Filter
+        if (searchQuery.trim()) {
+          filteredProducts = filteredProducts.filter(
+            p =>
+              p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              p.description.toLowerCase().includes(searchQuery.toLowerCase()),
+          );
+        }
 
-      // 2. Modal Filters
-      if (activeFilters.length > 0) {
-        filteredProducts = filteredProducts.filter(p => {
-          let passVeg = true;
-          let passBestseller = true;
+        // 2. Modal Filters
+        if (activeFilters.length > 0) {
+          filteredProducts = filteredProducts.filter(p => {
+            let passVeg = true;
+            let passBestseller = true;
 
-          const hasVegFilter = activeFilters.includes('Veg');
-          const hasNonVegFilter = activeFilters.includes('Non-Veg');
+            const hasVegFilter = activeFilters.includes('Veg');
+            const hasNonVegFilter = activeFilters.includes('Non-Veg');
 
-          if (hasVegFilter || hasNonVegFilter) {
-            if (hasVegFilter && hasNonVegFilter) {
-              passVeg = true;
-            } else if (hasVegFilter) {
-              passVeg = p.isVeg === true;
-            } else if (hasNonVegFilter) {
-              passVeg = p.isVeg === false;
+            if (hasVegFilter || hasNonVegFilter) {
+              if (hasVegFilter && hasNonVegFilter) {
+                passVeg = true;
+              } else if (hasVegFilter) {
+                passVeg = p.isVeg === true;
+              } else if (hasNonVegFilter) {
+                passVeg = p.isVeg === false;
+              }
             }
-          }
 
-          if (activeFilters.includes('Bestseller')) {
-            passBestseller = p.isBestseller === true;
-          }
+            if (activeFilters.includes('Bestseller')) {
+              passBestseller = p.isBestseller === true;
+            }
 
-          return passVeg && passBestseller;
-        });
-      }
+            return passVeg && passBestseller;
+          });
+        }
 
-      // 3. Sorting
-      if (activeSort === 'price_asc') {
-        filteredProducts = [...filteredProducts].sort((a, b) => a.basePrice - b.basePrice);
-      } else if (activeSort === 'price_desc') {
-        filteredProducts = [...filteredProducts].sort((a, b) => b.basePrice - a.basePrice);
-      } else if (activeSort === 'rating_desc') {
-        filteredProducts = [...filteredProducts].sort((a, b) => {
-          const ratingA = a.isBestseller ? 5 : 4;
-          const ratingB = b.isBestseller ? 5 : 4;
-          return ratingB - ratingA;
-        });
-      }
+        // 3. Sorting
+        if (activeSort === 'price_asc') {
+          filteredProducts = [...filteredProducts].sort((a, b) => a.basePrice - b.basePrice);
+        } else if (activeSort === 'price_desc') {
+          filteredProducts = [...filteredProducts].sort((a, b) => b.basePrice - a.basePrice);
+        } else if (activeSort === 'rating_desc') {
+          filteredProducts = [...filteredProducts].sort((a, b) => {
+            const ratingA = a.isBestseller ? 5 : 4;
+            const ratingB = b.isBestseller ? 5 : 4;
+            return ratingB - ratingA;
+          });
+        }
 
-      return {
-        ...category,
-        products: filteredProducts,
-      };
-    })
-    .filter(category => category.products?.length > 0);
+        return {
+          ...category,
+          products: filteredProducts,
+        };
+      })
+      .filter(category => category.products?.length > 0);
+  }, [categories, searchQuery, activeFilters, activeSort]);
 
   return (
     <View style={styles.containerStyleOverride}>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,15 +6,12 @@ import {
   TouchableOpacity,
   ScrollView,
   Image,
-  Linking,
-  Alert
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { AuthStackParamList } from '../navigation/AuthNavigator';
 import { ArrowLeft } from 'lucide-react-native';
-import { useCart } from '../context/CartContext';
 import { useStore } from '../context/StoreContext';
-import { Product } from '../services/categoryService';
+import { categoryService, Category } from '../services/categoryService';
 import { ScreenContainer } from '../components/ScreenContainer';
 import MenuItem from '../components/MenuItem';
 
@@ -23,7 +20,22 @@ type CategoryProductsRouteProp = RouteProp<AuthStackParamList, 'CategoryProducts
 const CategoryProductsScreen = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<CategoryProductsRouteProp>();
+  const { selectedStore } = useStore();
   const { category } = route.params;
+  
+  const [allCategories, setAllCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    if (selectedStore?.id) {
+       fetchCategories();
+    }
+  }, [selectedStore]);
+
+  const fetchCategories = async () => {
+    if (!selectedStore?.id) return;
+    const data = await categoryService.getCategories(selectedStore.id);
+    setAllCategories(data);
+  };
 
   return (
     <ScreenContainer useScrollView={false} containerStyle={styles.container}>
@@ -61,13 +73,38 @@ const CategoryProductsScreen = () => {
               </View>
             )}
         </View>
+
+        {/* Explore More Categories Section */}
+        <View style={styles.exploreSection}>
+            <Text style={styles.exploreTitle}>EXPLORE MORE CATEGORIES</Text>
+            {allCategories.length > 0 && (
+                <ScrollView 
+                    horizontal 
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.exploreScrollContent}
+                  >
+                    {allCategories.filter(c => c.id !== category.id).map(cat => (
+                      <TouchableOpacity 
+                        key={cat.id} 
+                        style={styles.exploreCard}
+                        onPress={() => navigation.navigate('CategoryProducts', { category: cat })}
+                      >
+                        <View style={styles.exploreImageContainer}>
+                          <Image 
+                            source={cat.imageUrl ? { uri: cat.imageUrl } : require('../assets/images/pizza_placeholder.jpg')} 
+                            style={styles.exploreImage}
+                          />
+                        </View>
+                        <Text style={styles.exploreCardText} numberOfLines={2}>{cat.name}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+            )}
+        </View>
       </ScrollView>
     </ScreenContainer>
   );
 };
-
-// Reused MenuItem Component
-// MenuItem component removed and replaced with shared component in ../components/MenuItem
 
 const styles = StyleSheet.create({
   container: {
@@ -93,10 +130,10 @@ const styles = StyleSheet.create({
   },
   content: {
       padding: 16,
-      paddingBottom: 20,
+      paddingBottom: 40,
   },
   listSection: {
-      marginBottom: 24,
+      marginBottom: 32,
   },
   sectionHeader: {
       flexDirection: 'row',
@@ -114,6 +151,50 @@ const styles = StyleSheet.create({
       color: '#9ca3af',
       fontWeight: '600',
   },
+  exploreSection: {
+    marginTop: 10,
+    marginBottom: 24,
+  },
+  exploreTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#374151',
+    letterSpacing: 0.5,
+    marginBottom: 16,
+  },
+  exploreScrollContent: {
+    gap: 16,
+  },
+  exploreCard: {
+    width: 120,
+    alignItems: 'center',
+  },
+  exploreImageContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 16,
+    backgroundColor: '#fff',
+    overflow: 'hidden',
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+  },
+  exploreImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  exploreCardText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#374151',
+    textAlign: 'center',
+  },
   centered: {
       padding: 20,
       alignItems: 'center',
@@ -123,7 +204,6 @@ const styles = StyleSheet.create({
       color: '#6b7280',
       textAlign: 'center',
   },
-// MenuItem styles removed as they are now in the shared MenuItem component
 });
 
 export default CategoryProductsScreen;
