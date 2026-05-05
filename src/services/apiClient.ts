@@ -5,12 +5,15 @@ import Toast from 'react-native-toast-message';
 import { logger } from '../utils/logger';
 
 const apiClient = axios.create({
-    baseURL: BASE_URL,
+    // baseURL: BASE_URL,
+    baseURL: 'http://localhost:5066/api',
     headers: {
         'Content-Type': 'application/json',
     },
     timeout: 15000,
 });
+
+console.log("=== CURRENT BASE_URL IS: ===", BASE_URL);
 
 // Request Interceptor
 apiClient.interceptors.request.use(

@@ -26,12 +26,15 @@ interface CartContextType {
   clearCart: () => void;
   totalAmount: number;
   totalItems: number;
+  orderMode: 'delivery' | 'pickup';
+  setOrderMode: (mode: 'delivery' | 'pickup') => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [orderMode, setOrderMode] = useState<'delivery' | 'pickup'>('delivery');
   const { user } = useAuth();
 
   const clearCart = () => {
@@ -107,7 +110,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <CartContext.Provider
-      value={{ cartItems, addToCart, removeFromCart, deleteItem, updateCartItem, clearCart, totalAmount, totalItems }}
+      value={{ cartItems, addToCart, removeFromCart, deleteItem, updateCartItem, clearCart, totalAmount, totalItems, orderMode, setOrderMode }}
     >
       {children}
     </CartContext.Provider>

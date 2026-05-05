@@ -33,7 +33,7 @@ import { PRICING } from '../utils/constants';
 const CheckoutScreen = () => {
     const insets = useSafeAreaInsets();
     const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
-    const { cartItems, totalAmount, clearCart } = useCart();
+    const { cartItems, totalAmount, clearCart, orderMode } = useCart();
     const { selectedStore } = useStore();
     const { isAuthenticated } = useAuth();
     
@@ -47,7 +47,7 @@ const CheckoutScreen = () => {
     const [orderInstructions, setOrderInstructions] = useState('');
 
     const tax = totalAmount * PRICING.TAX_RATE;
-    const deliveryFee = PRICING.DELIVERY_FEE;
+    const deliveryFee = orderMode === 'pickup' ? 0 : PRICING.DELIVERY_FEE;
     const finalTotal = totalAmount + tax + deliveryFee;
 
     useFocusEffect(
@@ -78,14 +78,15 @@ const CheckoutScreen = () => {
             return;
         }
 
-        if (!selectedAddress) {
-            Alert.alert("Address Required", "Please select a delivery address.");
-            return;
-        }
-
-        if (!selectedAddress.isDeliverable) {
-            Alert.alert("Invalid Address", "Selected address is not deliverable. Please choose another address.");
-            return;
+        if (orderMode === 'delivery') {
+            if (!selectedAddress) {
+                Alert.alert("Address Required", "Please select a delivery address.");
+                return;
+            }
+            if (!selectedAddress.isDeliverable) {
+                Alert.alert("Invalid Address", "Selected address is not deliverable. Please choose another address.");
+                return;
+            }
         }
 
         if (!selectedStore) {
@@ -117,9 +118,7 @@ const CheckoutScreen = () => {
             });
 
             if (paymentMethod === 'COD') {
-                // --- Cash on Delivery: create order directly ---
-                const orderData = {
-                    addressId: selectedAddress.id,
+                const orderData: any = {
                     storeId: selectedStore.id,
                     items: items,
                     subtotal: totalAmount,
@@ -128,9 +127,15 @@ const CheckoutScreen = () => {
                     discount: 0,
                     total: finalTotal,
                     paymentMethod: 'COD',
-                    specialInstructions: orderInstructions || ''
+                    specialInstructions: orderInstructions || '',
+                    orderMode: orderMode === 'pickup' ? 'Pickup' : 'Delivery',
                 };
 
+                if (orderMode === 'delivery' && selectedAddress) {
+                    orderData.addressId = selectedAddress.id;
+                }
+
+                console.log("Placing COD Order Payload:", JSON.stringify(orderData, null, 2));
                 await orderService.createOrder(orderData);
                 
                 Alert.alert("Success", "Order placed successfully!", [
@@ -150,13 +155,12 @@ const CheckoutScreen = () => {
                 
                 const sessionResponse = await paymentService.initiateSession(
                     finalTotal,
-                    selectedAddress.phoneNumber || undefined
+                    selectedAddress?.phoneNumber || undefined
                 );
 
 
                 // Prepare order data for after payment
                 const pendingOrderData: PendingOrderData = {
-                    addressId: selectedAddress.id,
                     storeId: selectedStore.id,
                     subtotal: totalAmount,
                     tax: tax,
@@ -164,6 +168,8 @@ const CheckoutScreen = () => {
                     discount: 0,
                     total: finalTotal,
                     specialInstructions: orderInstructions || '',
+                    orderMode: orderMode === 'pickup' ? 'Pickup' : 'Delivery',
+                    ...(orderMode === 'delivery' && selectedAddress ? { addressId: selectedAddress.id } : {}),
                     items: items.map(item => ({
                         productId: item.productId,
                         productName: item.productName,
@@ -189,18 +195,26 @@ const CheckoutScreen = () => {
             console.error("Order/Payment failed", error);
             
             let errorMessage = "Failed to process your order. Please try again.";
-            if (error.response?.data) {
-                if (typeof error.response.data === 'string') {
-                    errorMessage = error.response.data;
-                } else if (error.response.data.title) {
-                    errorMessage = error.response.data.title;
-                    if (error.response.data.errors) {
-                         const details = Object.values(error.response.data.errors).flat().join('\n');
-                         errorMessage += `\n${details}`;
+            
+            if (error.response) {
+                console.error("Error response data:", error.response.data);
+                
+                if (error.response.data) {
+                    if (typeof error.response.data === 'string') {
+                        errorMessage = error.response.data;
+                    } else if (error.response.data.errors) {
+                        const details = Object.entries(error.response.data.errors)
+                            .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
+                            .join('\n');
+                        errorMessage = `Validation Error:\n${details}`;
+                    } else if (error.response.data.message) {
+                        errorMessage = error.response.data.message;
+                    } else if (error.response.data.title) {
+                        errorMessage = error.response.data.title;
                     }
                 }
             } else if (error.message) {
-                 errorMessage = error.message;
+                errorMessage = error.message;
             }
 
             Alert.alert("Error", errorMessage);
@@ -302,39 +316,59 @@ const CheckoutScreen = () => {
             <View style={styles.contentWrapper}>
             <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                 
-                {/* Delivery Address Section */}
+                {/* Address / Pickup Section */}
                 <View style={styles.section}>
-                    <View style={styles.sectionHeader}>
-                        <Text style={styles.sectionTitle}>Delivery Address</Text>
-                        <TouchableOpacity onPress={() => setShowAddressModal(true)}>
-                            <Text style={styles.changeBtn}>Change</Text>
-                        </TouchableOpacity>
-                    </View>
-
-                    {/* Delivery Address Section */}
-                    {selectedAddress ? (
-                        <View style={styles.addressCard}>
-                            <View style={styles.addressIcon}>
-                                <MapPin size={24} color="#3c7d48" />
+                    {orderMode === 'delivery' ? (
+                        <>
+                            <View style={styles.sectionHeader}>
+                                <Text style={styles.sectionTitle}>Delivery Address</Text>
+                                <TouchableOpacity onPress={() => setShowAddressModal(true)}>
+                                    <Text style={styles.changeBtn}>Change</Text>
+                                </TouchableOpacity>
                             </View>
-                            <View style={{ flex: 1 }}>
-                                <Text style={styles.addressType}>{selectedAddress.type || 'Home'}</Text>
-                                <Text style={styles.addressText}>
-                                    {selectedAddress.addressLine1}, {selectedAddress.addressLine2}
-                                </Text>
-                                <Text style={styles.addressText}>
-                                    {selectedAddress.landmark}, {selectedAddress.city} - {selectedAddress.zipCode}
-                                </Text>
-                                <Text style={styles.phoneText}>Phone: {selectedAddress.phoneNumber}</Text>
-                            </View>
-                        </View>
+                            {selectedAddress ? (
+                                <View style={styles.addressCard}>
+                                    <View style={styles.addressIcon}>
+                                        <MapPin size={24} color="#3c7d48" />
+                                    </View>
+                                    <View style={{ flex: 1 }}>
+                                        <Text style={styles.addressType}>{selectedAddress.type || 'Home'}</Text>
+                                        <Text style={styles.addressText}>
+                                            {selectedAddress.addressLine1}, {selectedAddress.addressLine2}
+                                        </Text>
+                                        <Text style={styles.addressText}>
+                                            {selectedAddress.landmark}, {selectedAddress.city} - {selectedAddress.zipCode}
+                                        </Text>
+                                        <Text style={styles.phoneText}>Phone: {selectedAddress.phoneNumber}</Text>
+                                    </View>
+                                </View>
+                            ) : (
+                                <TouchableOpacity
+                                    style={styles.addAddressBtn}
+                                    onPress={() => navigation.navigate('AddNewAddress')}
+                                >
+                                    <Text style={styles.addAddressText}>+ Add New Address</Text>
+                                </TouchableOpacity>
+                            )}
+                        </>
                     ) : (
-                        <TouchableOpacity 
-                            style={styles.addAddressBtn}
-                            onPress={() => navigation.navigate('AddNewAddress')}
-                        >
-                            <Text style={styles.addAddressText}>+ Add New Address</Text>
-                        </TouchableOpacity>
+                        <>
+                            <Text style={styles.sectionTitle}>Pickup Location</Text>
+                            <View style={styles.pickupCard}>
+                                <View style={styles.addressIcon}>
+                                    <MapPin size={24} color="#3c7d48" />
+                                </View>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={styles.addressType}>{selectedStore?.name || 'La Pino\'z Pizza'}</Text>
+                                    <Text style={styles.addressText}>
+                                        {selectedStore ? `${selectedStore.address}, ${selectedStore.city}` : 'Store address'}
+                                    </Text>
+                                    <Text style={[styles.phoneText, { color: '#3c7d48', fontWeight: '600', marginTop: 6 }]}>
+                                        Ready for pickup in ~20 mins
+                                    </Text>
+                                </View>
+                            </View>
+                        </>
                     )}
                 </View>
 
@@ -401,7 +435,9 @@ const CheckoutScreen = () => {
                         </View>
                         <View style={styles.billRow}>
                             <Text style={styles.billLabel}>Delivery Fee</Text>
-                            <Text style={styles.billValue}>${deliveryFee.toFixed(2)}</Text>
+                            <Text style={[styles.billValue, orderMode === 'pickup' && { color: '#3c7d48' }]}>
+                                {orderMode === 'pickup' ? 'FREE (Pickup)' : `$${deliveryFee.toFixed(2)}`}
+                            </Text>
                         </View>
                         <View style={styles.divider} />
                         <View style={styles.billRow}>
@@ -420,14 +456,16 @@ const CheckoutScreen = () => {
                      <Text style={styles.footerTotalValue}>${finalTotal.toFixed(2)}</Text>
                  </View>
                  <TouchableOpacity 
-                    style={[styles.placeOrderBtn, (placingOrder || !selectedAddress) && styles.disabledBtn]}
+                    style={[styles.placeOrderBtn, (placingOrder || (orderMode === 'delivery' && !selectedAddress)) && styles.disabledBtn]}
                     onPress={handlePlaceOrder}
-                    disabled={placingOrder || !selectedAddress}
+                    disabled={placingOrder || (orderMode === 'delivery' && !selectedAddress)}
                  >
                      {placingOrder ? (
                          <ActivityIndicator size="small" color="#fff" />
                      ) : (
-                         <Text style={styles.placeOrderText}>CONFIRM ORDER</Text>
+                         <Text style={styles.placeOrderText}>
+                             {orderMode === 'pickup' ? 'PLACE PICKUP ORDER' : 'CONFIRM ORDER'}
+                         </Text>
                      )}
                  </TouchableOpacity>
             </View>
@@ -725,6 +763,16 @@ const styles = StyleSheet.create({
         paddingVertical: 2,
         borderRadius: 4,
         overflow: 'hidden',
+    },
+    pickupCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#f0fdf4',
+        padding: 16,
+        borderRadius: 12,
+        gap: 16,
+        borderWidth: 1,
+        borderColor: '#bbf7d0',
     },
 });
 

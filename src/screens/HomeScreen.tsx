@@ -24,7 +24,6 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../navigation/AuthNavigator';
 import {
   Pizza,
-  User,
   ShoppingCart,
   MapPin,
   Croissant,
@@ -42,10 +41,12 @@ import {
 
 import { useCart } from '../context/CartContext';
 import { useStore } from '../context/StoreContext';
+import { useAuth } from '../context/AuthContext';
 
 import { storeService } from '../services/storeService';
 import { categoryService, Category } from '../services/categoryService';
 import { productService } from '../services/productService';
+import { bannerService, Banner } from '../services/bannerService';
 import HomeSkeleton from '../components/HomeSkeleton';
 import FloatingCart from '../components/FloatingCart';
 import { getTabHeight } from '../utils/constants';
@@ -58,13 +59,14 @@ const SPACING = 16;
 
 const HomeScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
-  const { totalItems, addToCart } = useCart();
+  const { totalItems, addToCart, orderMode, setOrderMode } = useCart();
   const { selectedStore, setSelectedStore } = useStore();
   const insets = useSafeAreaInsets();
   const tabHeight = getTabHeight(insets.bottom);
-  const [deliveryMode, setDeliveryMode] = useState<'delivery' | 'pickup'>('delivery');
   const [categories, setCategories] = useState<Category[]>([]);
   const [bestSellers, setBestSellers] = useState<any[]>([]);
+  const [banners, setBanners] = useState<Banner[]>([]);
+  const { user } = useAuth();
   
   useEffect(() => {
     // 1. Set Default Store if none selected
@@ -92,6 +94,14 @@ const HomeScreen = () => {
         // Fetch Best Sellers
         const best = await productService.getBestSellers(selectedStore.id);
         setBestSellers(best);
+
+        // Fetch Banners
+        try {
+          const activeBanners = await bannerService.getActiveBanners();
+          setBanners(activeBanners);
+        } catch (bannerError) {
+          console.error("Error fetching banners:", bannerError);
+        }
       } catch (error) {
         console.error("Error fetching home data:", error);
         Toast.show({
@@ -139,7 +149,7 @@ const HomeScreen = () => {
   }, [bestSellers]); // Add dependency on bestSellers
 
   return (
-    <ScreenContainer useScrollView={false} containerStyle={styles.container} edges={['top']}>
+    <ScreenContainer useScrollView={false} containerStyle={styles.container } edges={['top']}>
       <FocusAwareStatusBar
         barStyle="light-content"
         backgroundColor="#3c7d48"
@@ -158,73 +168,88 @@ const HomeScreen = () => {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3c7d48']} />
         }
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.headerLeft} onPress={() => navigation.navigate('StoreLocation' as any)}>
-            <Image 
-              source={require('../assets/images/logo.png')} 
-              style={{ width: 40, height: 40, resizeMode: 'contain' }}
-            />
-            <View>
-              <Text style={styles.brandName2}>La Pino'z USA</Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                <Text style={styles.brandName}>{selectedStore ? selectedStore.address + ',' : 'Click to select'}</Text>
-                <Text style={styles.brandName}>{selectedStore ? selectedStore.city : 'Click to select'}</Text>
-                <ChevronDown size={18} color="#000" />
-              </View>
+        {/* ── GREEN TOP BAR ── */}
+        <View style={styles.topBar}>
+          {/* Logo */}
+          <Image source={require('../assets/images/logo.png')} style={styles.topBarLogo} />
+
+          {/* Brand + Address */}
+          <TouchableOpacity style={styles.topBarRight} onPress={() => navigation.navigate('StoreLocation' as any)}>
+            <Text style={styles.topBarBrand}>La Pino'z Pizza</Text>
+            <View style={styles.topBarAddressRow}>
+              <MapPin size={13} color="rgba(255,255,255,0.85)" />
+              <Text style={styles.topBarAddress} numberOfLines={1}>
+                {selectedStore ? `${selectedStore.address}, ${selectedStore.city}` : 'Select a store'}
+              </Text>
+              <ChevronDown size={13} color="rgba(255,255,255,0.85)" />
             </View>
           </TouchableOpacity>
-         
         </View>
 
-        {/* Hero Section */}
-        <ImageBackground
-          source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAT_fev5pujj6i0YT_eyZYIUHLELxKcfyctsEIE0c6kNS3wvf3BeEcMmJKbF6alICfoXEeGtr0zoxpvAXuKR4oDFKRYApwD7OgJiYEtKFxlR21rwF4B4EkWJ1u1ldPiew5Rc7ShjLIDvev0dbAmvRICE52WyFSZXb7rryWmj5V9k2k9IWKKRzET2IWl7aTWWHT67AfNJbM0UIo3BJ9YKVDYfA8k4wfO1Gryg6UIpB2P441wJoqs4t5jclhbnWbbaCpMXabf1zRpaEVE' }}
-          style={styles.hero}
-          resizeMode="cover"
-        >
-          <View style={styles.heroOverlay}>
-             <View style={styles.heroContent}>
-                <Text style={styles.heroTitle}>Serving Over</Text>
-                <Text style={[styles.heroTitle, { color: '#3c7d48' }]}>600+ Locations.</Text>
-                <TouchableOpacity style={styles.orderButton} onPress={() => navigation.navigate('Menu' as any)}>
-                  <Text style={styles.orderButtonText}>Order Now</Text>
-                </TouchableOpacity>
-             </View>
+        {/* ── GREEN WELCOME + TOGGLE SECTION ── */}
+        <View style={styles.greenSection}>
+          {user && (
+            <Text style={styles.greenWelcome}>Welcome, {user.fullName.split(' ')[0]}!</Text>
+          )}
+          <View style={styles.greenToggleWrapper}>
+            <TouchableOpacity
+              style={[styles.greenToggleBtn, orderMode === 'delivery' && styles.greenToggleActive]}
+              onPress={() => setOrderMode('delivery')}
+              activeOpacity={0.85}
+            >
+              <Text style={[styles.greenToggleText, orderMode === 'delivery' && styles.greenToggleTextActive]}>
+                Delivery
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.greenToggleBtn, orderMode === 'pickup' && styles.greenToggleActive]}
+              onPress={() => setOrderMode('pickup')}
+              activeOpacity={0.85}
+            >
+              <Text style={[styles.greenToggleText, orderMode === 'pickup' && styles.greenToggleTextActive]}>
+                Pickup 
+              </Text>
+            </TouchableOpacity>
           </View>
-        </ImageBackground>
 
-        {/* Search & Toggle Box */}
-        <View style={styles.searchSectionWrapper}>
-            <View style={styles.searchContainer}>
-                <View style={styles.toggleContainer}>
-                    <TouchableOpacity 
-                        style={[styles.toggleButton, deliveryMode === 'delivery' && styles.toggleActive]}
-                        onPress={() => setDeliveryMode('delivery')}
-                    >
-                        <Text style={[styles.toggleText, deliveryMode === 'delivery' && styles.toggleTextActive]}>Delivery</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity 
-                        style={[styles.toggleButton, deliveryMode === 'pickup' && styles.toggleActive]}
-                        onPress={() => setDeliveryMode('pickup')}
-                    >
-                        <Text style={[styles.toggleText, deliveryMode === 'pickup' && styles.toggleTextActive]}>Pickup</Text>
-                    </TouchableOpacity>
-                </View>
-                <TouchableOpacity 
-                    style={styles.inputContainer}
-                    onPress={() => navigation.navigate('StoreLocation' as any)}
+
+        {/* ── HORIZONTAL BANNER CARDS ── */}
+        {banners && banners.length > 0 && (
+          <View style={styles.bannerScrollContainer}>
+            <FlatList
+              data={banners}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              keyExtractor={(item) => item.id.toString()}
+              contentContainerStyle={styles.bannerScrollContent}
+              snapToInterval={width * 0.72 + 12}
+              decelerationRate="fast"
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  activeOpacity={0.9}
+                  style={styles.bannerCard}
+                  onPress={() => navigation.navigate('Menu' as any)}
                 >
-                    <MapPin size={20} color="#3c7d48" style={styles.inputIcon} />
-                    <TextInput 
-                        placeholder="Enter your delivery location" 
-                        style={styles.input}
-                        placeholderTextColor="#9ca3af"
-                        editable={false}
-                    />
+                  <ImageBackground
+                    source={{ uri: item.imageUrl }}
+                    style={styles.bannerCardImage}
+                    imageStyle={{ borderRadius: 14 }}
+                  >
+                    <View style={styles.bannerCardOverlay}>
+                      {item.title && <Text style={styles.bannerCardTitle}>{item.title}</Text>}
+                      {item.subtitle && <Text style={styles.bannerCardSubtitle}>{item.subtitle}</Text>}
+                      <TouchableOpacity style={styles.bannerCardBtn} onPress={() => navigation.navigate('Menu' as any)}>
+                        <Text style={styles.bannerCardBtnText}>ORDER NOW</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </ImageBackground>
                 </TouchableOpacity>
-            </View>
+              )}
+            />
+          </View>
+        )}
         </View>
+
 
 
 
@@ -430,31 +455,165 @@ const PromiseItem = ({icon, title, desc, iconBgColor}: any) => (
 );
 
 const styles = StyleSheet.create({
+  statusBar: {
+    backgroundColor: '#3c7d48',
+  },
   container: {
     flex: 1,
     backgroundColor: '#fbfbfb',
   },
   scrollContent: {
-    paddingBottom: 20, // Reduced from 80
+    paddingBottom: 20,
   },
-  header: {
+  // ── WHITE TOP BAR ──
+  topBar: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#fff',
     alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    paddingHorizontal: 16,
+    backgroundColor: '#3c7d48',
+    gap: 12,
   },
+  topBarLogo: {
+    width: 44,
+    height: 44,
+    resizeMode: 'contain',
+    flexShrink: 0,
+  },
+  topBarRight: {
+    flex: 1,
+    gap: 2,
+  },
+  topBarLeft: {
+    flex: 1,
+    gap: 2,
+  },
+  topBarBrand: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#fff',
+    letterSpacing: -0.2,
+  },
+  topBarAddressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 1,
+  },
+  topBarAddress: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.85)',
+    fontWeight: '500',
+  },
+  topBarChange: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#fff',
+    textDecorationLine: 'underline',
+  },
+
+  // ── GREEN SECTION ──
+  greenSection: {
+    backgroundColor: '#3c7d48',
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 20,
+    gap: 14,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+  },
+  greenWelcome: {
+    fontSize: 26,
+    fontWeight: '900',
+    color: '#fff',
+    letterSpacing: -0.5,
+  },
+  greenToggleWrapper: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    borderRadius: 50,
+    padding: 5,
+  },
+  greenToggleBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderRadius: 45,
+  },
+  greenToggleActive: {
+    backgroundColor: '#285c34ff',
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  greenToggleText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: 'rgba(255,255,255,0.6)',
+  },
+  greenToggleTextActive: {
+    color: '#fff',
+  },
+  // ── DARK PROMO CARD ──
+ 
+  // ── HORIZONTAL BANNER CARDS ──
+  bannerScrollContainer: {
+    paddingVertical: 14,
+    backgroundColor: '#3c7d48',
+  },
+  bannerScrollContent: {
+    paddingHorizontal: 16,
+    gap: 12,
+  },
+  bannerCard: {
+    width: width * 0.72,
+    borderRadius: 16,
+    overflow: 'hidden',
+    elevation: 4,
+  },
+  bannerCardImage: {
+    width: '100%',
+    height: 200,
+    justifyContent: 'flex-end',
+  },
+  bannerCardOverlay: {
+    // backgroundColor: 'rgba(0,0,0,0.3)',
+    // padding: 12,
+    gap: 6,
+  },
+  bannerCardTitle: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: '#fff',
+    lineHeight: 24,
+    textTransform: 'uppercase',
+  },
+  bannerCardSubtitle: {
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.85)',
+    fontWeight: '500',
+  },
+  bannerCardBtn: {
+    backgroundColor: '#2E5B36',
+    borderRadius: 8,
+    paddingVertical: 9,
+    paddingHorizontal: 16,
+    alignSelf: 'flex-start',
+    marginTop: 4,
+  },
+  bannerCardBtnText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  // ── LEGACY kept for safety ──
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  logoContainer: {
-    /* No specialized style needed */
-  },
+  logoContainer: {},
   brandName: {
     fontSize: 10,
     fontWeight: '500',
@@ -465,6 +624,40 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#000',
+  },
+  welcomeText: {
+    fontSize: 12,
+    color: '#6b7280',
+    fontWeight: '500',
+    marginBottom: -2,
+  },
+  bannerContainer: {
+    marginVertical: 12,
+    paddingHorizontal: 16,
+  },
+  bannerImage: {
+    width: width - 32,
+    height: 200,
+    borderRadius: 14,
+    overflow: 'hidden',
+    justifyContent: 'flex-end',
+  },
+  bannerOverlay: {
+    backgroundColor: 'rgba(0,0,0,0.38)',
+    padding: 20,
+    borderRadius: 14,
+    gap: 6,
+  },
+  bannerTitle: {
+    fontSize: 26,
+    fontWeight: '900',
+    color: '#fff',
+    lineHeight: 30,
+  },
+  bannerSubtitle: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.85)',
+    fontWeight: '500',
   },
   headerRight: {
     flexDirection: 'row',

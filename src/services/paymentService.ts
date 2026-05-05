@@ -26,7 +26,7 @@ export interface PendingOrderItem {
 }
 
 export interface PendingOrderData {
-    addressId: number;
+    addressId?: number;
     storeId: number;
     subtotal: number;
     tax: number;
@@ -35,6 +35,7 @@ export interface PendingOrderData {
     total: number;
     specialInstructions?: string | null;
     promoCode?: string | null;
+    orderMode?: 'Delivery' | 'Pickup';
     items: PendingOrderItem[];
 }
 

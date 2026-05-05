@@ -34,6 +34,8 @@ export interface Order {
     address: Address;
     storeId: number;
     storeName?: string | null;
+    storeAddress?: string | null;
+    storePhone?: string | null;
     subtotal: number;
     tax: number;
     deliveryFee: number;
@@ -42,6 +44,7 @@ export interface Order {
     paymentMethod: string | null;
     paymentStatus: string | null; // e.g., "Pending", "Paid", "Failed"
     orderStatus: string | null;   // e.g., "Placed", "Confirmed", "Preparing", "OutForDelivery", "Delivered", "Cancelled"
+    orderMode: string | null;     // 'Delivery' or 'Pickup'
     specialInstructions?: string | null;
     promoCode?: string | null;
     createdAt: string;
@@ -51,7 +54,7 @@ export interface Order {
 }
 
 export interface CreateOrderDto {
-    addressId: number;
+    addressId?: number;             // optional for Pickup orders
     storeId: number;
     subtotal: number;
     tax: number;
@@ -59,6 +62,7 @@ export interface CreateOrderDto {
     discount: number;
     total: number;
     paymentMethod: string;
+    orderMode?: string;             // 'Delivery' or 'Pickup'
     specialInstructions?: string | null;
     promoCode?: string | null;
     items: OrderItem[];

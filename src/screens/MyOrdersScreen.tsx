@@ -106,6 +106,17 @@ const MyOrdersScreen = () => {
                     </Text>
                 </View>
 
+                {/* Order Mode badge */}
+                {item.orderMode && (
+                    <View style={[styles.infoRow, { marginTop: 2 }]}>
+                        <View style={[styles.modeBadge, { backgroundColor: item.orderMode === 'Pickup' ? '#fef3c7' : '#eff6ff' }]}>
+                            <Text style={[styles.modeBadgeText, { color: item.orderMode === 'Pickup' ? '#d97706' : '#2563eb' }]}>
+                                {item.orderMode === 'Pickup' ? 'Pickup' : 'Delivery'}
+                            </Text>
+                        </View>
+                    </View>
+                )}
+
                 {item.items && item.items.length > 0 && (
                      <View style={styles.itemsPreview}>
                         <Text style={styles.itemsText} numberOfLines={2}>
@@ -217,21 +228,38 @@ const MyOrdersScreen = () => {
                                         </Text>
                                     </View>
                                     <View style={styles.modalRow}>
+                                        <Text style={styles.modalLabel}>Order Mode</Text>
+                                        <View style={[styles.modeBadge, { backgroundColor: selectedOrder.orderMode === 'Pickup' ? '#fef3c7' : '#eff6ff' }]}>
+                                            <Text style={[styles.modeBadgeText, { color: selectedOrder.orderMode === 'Pickup' ? '#d97706' : '#2563eb' }]}>
+                                                {selectedOrder.orderMode === 'Pickup' ? 'Pickup' : 'Delivery'}
+                                            </Text>
+                                        </View>
+                                    </View>
+                                    <View style={styles.modalRow}>
                                         <Text style={styles.modalLabel}>Payment</Text>
                                         <Text style={styles.modalValue}>{selectedOrder.paymentMethod || 'N/A'} - {selectedOrder.paymentStatus || 'Pending'}</Text>
                                     </View>
                                 </View>
 
-                                {selectedOrder.address && (
+                                {selectedOrder.orderMode === 'Pickup' ? (
+                                    <View style={styles.modalSection}>
+                                        <Text style={styles.modalSectionTitle}>Pickup Location</Text>
+                                        <Text style={styles.addressText}><Text style={{fontWeight: 'bold'}}>{selectedOrder.storeName}</Text></Text>
+                                        <Text style={styles.addressText}>{selectedOrder.storeAddress}</Text>
+                                        {selectedOrder.storePhone ? <Text style={styles.addressText}>Store Phone: {selectedOrder.storePhone}</Text> : null}
+                                        {selectedOrder.specialInstructions ? <Text style={styles.addressText}>Order Instruction: {selectedOrder.specialInstructions}</Text> : null}
+                                    </View>
+                                ) : selectedOrder.address ? (
                                     <View style={styles.modalSection}>
                                         <Text style={styles.modalSectionTitle}>Delivery Address</Text>
                                         <Text style={styles.addressText}><Text style={{fontWeight: 'bold'}}>{selectedOrder.address.fullName}</Text></Text>
                                         <Text style={styles.addressText}>{selectedOrder.address.addressLine1}</Text>
                                         {selectedOrder.address.addressLine2 ? <Text style={styles.addressText}>{selectedOrder.address.addressLine2}</Text> : null}
                                         <Text style={styles.addressText}>{selectedOrder.address.city}, {selectedOrder.address.state} {selectedOrder.address.zipCode}</Text>
-                                        <Text style={styles.addressText}>Phone: {selectedOrder.address.phoneNumber}</Text><Text style={styles.addressText}>Order Instruction: {selectedOrder.specialInstructions}</Text>
+                                        <Text style={styles.addressText}>Phone: {selectedOrder.address.phoneNumber}</Text>
+                                        {selectedOrder.specialInstructions ? <Text style={styles.addressText}>Order Instruction: {selectedOrder.specialInstructions}</Text> : null}
                                     </View>
-                                )}
+                                ) : null}
 
                                 <View style={styles.modalSection}>
                                     <Text style={styles.modalSectionTitle}>Items</Text>
@@ -617,6 +645,18 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold',
         color: '#3c7d48',
+    },
+    modeBadge: {
+        paddingHorizontal: 10,
+        paddingVertical: 3,
+        borderRadius: 6,
+        alignSelf: 'flex-start',
+    },
+    modeBadgeText: {
+        fontSize: 12,
+        fontWeight: 'bold',
+        textTransform: 'uppercase',
+        letterSpacing: 0.3,
     },
 });
 

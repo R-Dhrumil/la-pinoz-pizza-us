@@ -21,9 +21,8 @@ import { PRICING } from '../utils/constants';
 
 const CartScreen = () => {
   const insets = useSafeAreaInsets();
-  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   const navigation = useNavigation<any>();
-  const { cartItems, totalAmount, addToCart, removeFromCart, deleteItem } = useCart();
+  const { cartItems, totalAmount, addToCart, removeFromCart, deleteItem, orderMode, setOrderMode } = useCart();
   const { isAuthenticated } = useAuth();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
@@ -61,7 +60,7 @@ const CartScreen = () => {
   }
 
   const tax = totalAmount * PRICING.TAX_RATE;
-  const deliveryFee = PRICING.DELIVERY_FEE;
+  const deliveryFee = orderMode === 'delivery' ? PRICING.DELIVERY_FEE : 0;
   const finalTotal = totalAmount + tax + deliveryFee;
 
   return (
@@ -78,6 +77,22 @@ const CartScreen = () => {
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           
+          {/* Order Mode Toggle */}
+          <View style={styles.modeToggleContainer}>
+              <TouchableOpacity 
+                  style={[styles.modeToggleButton, orderMode === 'delivery' && styles.modeToggleActive]}
+                  onPress={() => setOrderMode('delivery')}
+              >
+                  <Text style={[styles.modeToggleText, orderMode === 'delivery' && styles.modeToggleTextActive]}>Delivery</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                  style={[styles.modeToggleButton, orderMode === 'pickup' && styles.modeToggleActive]}
+                  onPress={() => setOrderMode('pickup')}
+              >
+                  <Text style={[styles.modeToggleText, orderMode === 'pickup' && styles.modeToggleTextActive]}>Pickup</Text>
+              </TouchableOpacity>
+          </View>
+
           {/* Cart Items */}
           <View style={styles.itemsSection}>
               {cartItems.map((item) => (
@@ -507,6 +522,36 @@ const styles = StyleSheet.create({
       fontSize: 12,
       color: '#3c7d48',
       fontWeight: '600',
+  },
+  modeToggleContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#e5e7eb',
+    borderRadius: 12,
+    padding: 4,
+    marginBottom: 20,
+    marginHorizontal: 16,
+  },
+  modeToggleButton: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderRadius: 10,
+  },
+  modeToggleActive: {
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  modeToggleText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#6b7280',
+  },
+  modeToggleTextActive: {
+    color: '#1f2937',
   },
 });
 

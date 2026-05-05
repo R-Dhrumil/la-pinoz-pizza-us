@@ -4,6 +4,7 @@
 bugs
 test_output
 .agents
+.env
 # Xcode
 #
 build/
