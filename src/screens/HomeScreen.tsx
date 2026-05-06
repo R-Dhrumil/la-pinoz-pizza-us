@@ -129,16 +129,18 @@ const HomeScreen = () => {
   }, [selectedStore]);
   
   const flatListRef = useRef<FlatList<any>>(null);
+  const bannerFlatListRef = useRef<FlatList<any>>(null);
   const scrollIndexRes = useRef(0);
+  const bannerScrollIndex = useRef(10);
 
   useEffect(() => {
     const interval = setInterval(() => {
       // Don't auto-scroll if there are no items or list is not ready
       if (!flatListRef.current || bestSellers.length === 0) return;
 
-      let nextIndex = scrollIndexRes.current + 1;
+      let nextIndex = scrollIndexRes.current + 2.5;
       if (nextIndex >= bestSellers.length) {
-         nextIndex = 0;
+         nextIndex = 20;
       }
       
       flatListRef.current.scrollToIndex({ index: nextIndex, animated: true });
@@ -147,6 +149,74 @@ const HomeScreen = () => {
 
     return () => clearInterval(interval);
   }, [bestSellers]); // Add dependency on bestSellers
+
+  // Auto-scroll logic for BANNERS (Infinite Loop Teleport Trick)
+  useEffect(() => {
+    if (banners.length <= 1) return;
+
+    const interval = setInterval(() => {
+      if (!bannerFlatListRef.current) return;
+
+      // We are working with 3x data: [Set 1, Set 2, Set 3]
+      // Set 1: 0 to len-1
+      // Set 2: len to 2len-1 (This is our active set)
+      // Set 3: 2len to 3len-1
+
+
+      
+      // If we reach the end of Set 2, we scroll into Set 3, 
+      // then immediately jump back to the same spot in Set 2 without animation.
+      
+      const cardWidth = width * 0.8 + 17;
+      // const gap = 12;
+      const totalItemWidth = cardWidth ;
+      // To center perfectly, we need (Screen/2) - (Card/2)
+      const centeringOffset = (width - cardWidth) / 2;
+
+      let nextIndex = bannerScrollIndex.current + 1;
+      const offset = (nextIndex * totalItemWidth) - centeringOffset;
+      
+      bannerFlatListRef.current.scrollToOffset({
+        offset: offset,
+        animated: true,
+      });
+      bannerScrollIndex.current = nextIndex;
+
+      // Teleport check
+      if (nextIndex >= banners.length * 2 - 1.2) {
+        setTimeout(() => {
+          const resetIndex = banners.length - 1;
+          const resetOffset = (resetIndex * totalItemWidth) - centeringOffset;
+          bannerFlatListRef.current?.scrollToOffset({
+            offset: resetOffset,
+            animated: false,
+          });
+          bannerScrollIndex.current = resetIndex;
+        }, 600); 
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [banners]);
+
+  // Initial jump to the middle set
+  useEffect(() => {
+    if (banners.length > 1 && bannerFlatListRef.current) {
+        const cardWidth = width * 0.8;
+        const gap = 12;
+        const totalItemWidth = cardWidth + gap;
+        const centeringOffset = (width - cardWidth) / 2;
+        const initialOffset = (banners.length * totalItemWidth) - centeringOffset;
+
+        setTimeout(() => {
+            bannerFlatListRef.current?.scrollToOffset({
+                offset: initialOffset,
+                animated: false,
+            });
+            bannerScrollIndex.current = banners.length;
+        }, 500);
+    }
+  }, [banners]);
 
   return (
     <ScreenContainer useScrollView={false} containerStyle={styles.container } edges={['top']}>
@@ -217,13 +287,26 @@ const HomeScreen = () => {
         {banners && banners.length > 0 && (
           <View style={styles.bannerScrollContainer}>
             <FlatList
-              data={banners}
+              ref={bannerFlatListRef}
+              data={[...banners, ...banners, ...banners]} // Triple the data for infinite loop
               horizontal
               showsHorizontalScrollIndicator={false}
-              keyExtractor={(item) => item.id.toString()}
+              keyExtractor={(item, index) => `${item.id}-${index}`}
               contentContainerStyle={styles.bannerScrollContent}
-              snapToInterval={width * 0.72 + 12}
+              snapToInterval={width * 0.8 }
+              snapToAlignment="center"
               decelerationRate="fast"
+              getItemLayout={(data, index) => ({
+                length: width * 0.8 + 12,
+                offset: (width * 0.8 + 12) * index,
+                index,
+              })}
+              onScrollToIndexFailed={(info) => {
+                bannerFlatListRef.current?.scrollToOffset({ 
+                  offset: info.averageItemLength * info.index, 
+                  animated: false 
+                });
+              }}
               renderItem={({ item }) => (
                 <TouchableOpacity
                   activeOpacity={0.9}
@@ -231,17 +314,11 @@ const HomeScreen = () => {
                   onPress={() => navigation.navigate('Menu' as any)}
                 >
                   <ImageBackground
-                    source={{ uri: item.imageUrl }}
+                    source={{ uri: 'https://api.lapinozusa.com/uploads/27603e73-0604-4a1c-ac2e-cc64f7670476.jpeg' }}
                     style={styles.bannerCardImage}
                     imageStyle={{ borderRadius: 14 }}
                   >
-                    <View style={styles.bannerCardOverlay}>
-                      {item.title && <Text style={styles.bannerCardTitle}>{item.title}</Text>}
-                      {item.subtitle && <Text style={styles.bannerCardSubtitle}>{item.subtitle}</Text>}
-                      <TouchableOpacity style={styles.bannerCardBtn} onPress={() => navigation.navigate('Menu' as any)}>
-                        <Text style={styles.bannerCardBtnText}>ORDER NOW</Text>
-                      </TouchableOpacity>
-                    </View>
+                    
                   </ImageBackground>
                 </TouchableOpacity>
               )}
@@ -562,11 +639,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#3c7d48',
   },
   bannerScrollContent: {
-    paddingHorizontal: 16,
     gap: 12,
   },
   bannerCard: {
-    width: width * 0.72,
+    width: width * 0.8 ,
     borderRadius: 16,
     overflow: 'hidden',
     elevation: 4,
@@ -574,39 +650,9 @@ const styles = StyleSheet.create({
   bannerCardImage: {
     width: '100%',
     height: 200,
-    justifyContent: 'flex-end',
+    justifyContent: 'flex-start',
   },
-  bannerCardOverlay: {
-    // backgroundColor: 'rgba(0,0,0,0.3)',
-    // padding: 12,
-    gap: 6,
-  },
-  bannerCardTitle: {
-    fontSize: 20,
-    fontWeight: '900',
-    color: '#fff',
-    lineHeight: 24,
-    textTransform: 'uppercase',
-  },
-  bannerCardSubtitle: {
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.85)',
-    fontWeight: '500',
-  },
-  bannerCardBtn: {
-    backgroundColor: '#2E5B36',
-    borderRadius: 8,
-    paddingVertical: 9,
-    paddingHorizontal: 16,
-    alignSelf: 'flex-start',
-    marginTop: 4,
-  },
-  bannerCardBtnText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
+
   // ── LEGACY kept for safety ──
   headerLeft: {
     flexDirection: 'row',
