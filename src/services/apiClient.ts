@@ -1,6 +1,6 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { BASE_URL } from '@env';
+// import { BASE_URL } from '@env';
 import Toast from 'react-native-toast-message';
 import { logger } from '../utils/logger';
 
@@ -13,7 +13,8 @@ const apiClient = axios.create({
     timeout: 15000,
 });
 
-console.log("=== CURRENT BASE_URL IS: ===", BASE_URL);
+
+// console.log("=== CURRENT BASE_URL IS: ===", BASE_URL);
 
 // Request Interceptor
 apiClient.interceptors.request.use(
