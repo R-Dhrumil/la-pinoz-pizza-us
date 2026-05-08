@@ -17,9 +17,9 @@ import {
 } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { ScreenContainer } from '../components/ScreenContainer';
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../navigation/AuthNavigator';
 import {
@@ -68,31 +68,46 @@ const HomeScreen = () => {
   const [banners, setBanners] = useState<Banner[]>([]);
   const { user } = useAuth();
   
-  useEffect(() => {
-    // 1. Set Default Store if none selected
-    const initStore = async () => {
-      if (!selectedStore) {
-        const stores = await storeService.getAllStores();
-        if (stores.length > 0) {
-          setSelectedStore(stores[0]);
-        }
-      }
-    };
-    initStore();
-  }, [selectedStore]);
+  // Store initialization is handled robustly within fetchData
 
   const [refreshing, setRefreshing] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(categories.length === 0);
+  const lastFetchedStoreId = useRef<number | null>(null);
 
-  const fetchData = async () => {
-    if (selectedStore) {
+  const fetchData = async (force = false) => {
+    // Skip loading if we already have data for this store and it's not a manual refresh
+    if (!force && selectedStore?.id === lastFetchedStoreId.current && categories.length > 0) {
+        return;
+    }
+
+    setIsLoading(true);
+    let currentStore = selectedStore;
+
+    // Auto-select first store if none is active
+    if (!currentStore) {
+      try {
+        const stores = await storeService.getAllStores();
+        if (stores && stores.length > 0) {
+          const richmondStore = stores.find(s => 
+            (s.name && s.name.toLowerCase().includes('richmond')) || 
+            (s.city && s.city.toLowerCase().includes('richmond'))
+          );
+          currentStore = richmondStore || stores[0];
+          setSelectedStore(currentStore);
+        }
+      } catch (err) {
+        console.error("Failed to load default store:", err);
+      }
+    }
+
+    if (currentStore) {
       try {
         // Fetch Categories
-        const cats = await categoryService.getCategories(selectedStore.id);
+        const cats = await categoryService.getCategories(currentStore.id);
         setCategories(cats);
 
         // Fetch Best Sellers
-        const best = await productService.getBestSellers(selectedStore.id);
+        const best = await productService.getBestSellers(currentStore.id);
         setBestSellers(best);
 
         // Fetch Banners
@@ -109,22 +124,22 @@ const HomeScreen = () => {
             text1: 'Network Error',
             text2: 'Failed to load menu data'
         });
-      } finally {
-        setIsLoading(false);
       }
-    } else {
-        setIsLoading(false);
     }
+    
+    lastFetchedStoreId.current = currentStore?.id || null;
+    setIsLoading(false);
   };
 
-  useEffect(() => {
-    setIsLoading(true);
-    fetchData();
-  }, [selectedStore]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchData();
+    }, [selectedStore])
+  );
 
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
-    await fetchData();
+    await fetchData(true);
     setRefreshing(false);
   }, [selectedStore]);
   

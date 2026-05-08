@@ -15,7 +15,7 @@ import {
   Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../navigation/AuthNavigator';
 import { RouteProp, useRoute } from '@react-navigation/native';
@@ -47,6 +47,7 @@ import {
   categoryService,
   Category,
 } from '../services/categoryService';
+import { storeService } from '../services/storeService';
 import FloatingCart from '../components/FloatingCart';
 import MenuItem from '../components/MenuItem';
 import { getTabHeight } from '../utils/constants';
@@ -60,10 +61,11 @@ const MenuScreen = () => {
     useRoute<RouteProp<{ params: { categoryId?: number } }, 'params'>>();
   const { categoryId: targetCategoryId } = route.params || {};
 
-  const { selectedStore } = useStore();
+  const { selectedStore, setSelectedStore } = useStore();
   const { totalItems } = useCart();
   const insets = useSafeAreaInsets();
   const tabHeight = getTabHeight(insets.bottom);
+  const lastFetchedStoreId = useRef<number | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -85,13 +87,59 @@ const MenuScreen = () => {
   const tabPositions = useRef<{ [key: number]: number }>({});
   const isTabPress = useRef(false);
 
-  useEffect(() => {
-    if (selectedStore?.id) {
-      fetchCategories();
-    } else {
-      setCategories([]);
+  const fetchCategories = useCallback(async (force = false) => {
+    // Skip if we already have categories for this store
+    if (!force && selectedStore?.id === lastFetchedStoreId.current && categories.length > 0) {
+        setLoading(false);
+        return;
     }
-  }, [selectedStore]);
+
+    setLoading(true);
+    let currentStore = selectedStore;
+
+    if (!currentStore) {
+      try {
+        const stores = await storeService.getAllStores();
+        if (stores && stores.length > 0) {
+          const richmondStore = stores.find(s => 
+            (s.name && s.name.toLowerCase().includes('richmond')) || 
+            (s.city && s.city.toLowerCase().includes('richmond'))
+          );
+          currentStore = richmondStore || stores[0];
+          setSelectedStore(currentStore);
+        }
+      } catch (err) {
+        console.error("Failed to load default store:", err);
+      }
+    }
+
+    if (!currentStore?.id) {
+      setLoading(false);
+      setRefreshing(false);
+      return;
+    }
+
+    try {
+      const data = await categoryService.getCategories(currentStore.id);
+      setCategories(data);
+      if (data.length > 0 && !activeTab) {
+        setActiveTab(data[0].id);
+      }
+    } catch (error) {
+      console.error('Failed to fetch categories', error);
+      Alert.alert('Error', 'Failed to load menu. Please try again.');
+    } finally {
+      lastFetchedStoreId.current = currentStore?.id || null;
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [selectedStore, activeTab, setSelectedStore, categories.length]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchCategories();
+    }, [fetchCategories])
+  );
 
   // Handle route params when screen focuses or params change
   useEffect(() => {
@@ -107,30 +155,11 @@ const MenuScreen = () => {
     }
   }, [targetCategoryId, categories]);
 
-  const fetchCategories = useCallback(async () => {
-    if (!selectedStore?.id) return;
-
-    setLoading(true);
-    try {
-      const data = await categoryService.getCategories(selectedStore.id);
-      setCategories(data);
-      if (data.length > 0 && !activeTab) {
-        setActiveTab(data[0].id);
-      }
-    } catch (error) {
-      console.error('Failed to fetch categories', error);
-      Alert.alert('Error', 'Failed to load menu. Please try again.');
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [selectedStore?.id, activeTab]);
-
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     // Explicitly set loading to true to trigger skeleton
     setLoading(true);
-    fetchCategories();
+    fetchCategories(true);
   }, [fetchCategories]);
 
   const scrollToActiveTab = (categoryId: number) => {

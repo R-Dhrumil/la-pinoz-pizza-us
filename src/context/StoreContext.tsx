@@ -34,14 +34,24 @@ export const StoreProvider = ({ children }: { children: ReactNode }) => {
 
         // 3. Get Current Location
         const location = await getCurrentLocation();
-        if (!location) return;
+        if (!location) {
+             const richmondStore = stores.find(s => 
+               (s.name && s.name.toLowerCase().includes('richmond')) || 
+               (s.city && s.city.toLowerCase().includes('richmond'))
+             );
+             if (richmondStore) {
+                 console.log('Location failed, defaulting to Richmond store:', richmondStore.name);
+                 setSelectedStore(richmondStore);
+             }
+             return;
+        }
 
         // 4. Find Nearest Store
         let nearestStore: Store | null = null;
         let minDistance = Infinity;
 
         for (const store of stores) {
-          if (store.latitude && store.longitude) {
+          if (store.latitude && store.longitude && (store.latitude !== 0 || store.longitude !== 0)) {
             const distance = calculateDistance(
               location.latitude,
               location.longitude,
@@ -56,9 +66,24 @@ export const StoreProvider = ({ children }: { children: ReactNode }) => {
         }
 
         // 5. Set Selected Store
-        if (nearestStore) {
+        const MAX_VALID_DISTANCE_KM = 500;
+        
+        if (nearestStore && minDistance <= MAX_VALID_DISTANCE_KM) {
             console.log('Auto-selected nearest store:', nearestStore.name);
             setSelectedStore(nearestStore);
+        } else {
+            // Find Richmond store as fallback
+            const richmondStore = stores.find(s => 
+              (s.name && s.name.toLowerCase().includes('richmond')) || 
+              (s.city && s.city.toLowerCase().includes('richmond'))
+            );
+            if (richmondStore) {
+                console.log('Distance too large, defaulting to Richmond store:', richmondStore.name);
+                setSelectedStore(richmondStore);
+            } else if (nearestStore) {
+                console.log('No Richmond store found, falling back to nearest even if far:', nearestStore.name);
+                setSelectedStore(nearestStore);
+            }
         }
 
       } catch (error) {
