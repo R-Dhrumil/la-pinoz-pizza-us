@@ -373,12 +373,7 @@ const CartScreen = () => {
               </View>
               {appliedPromos.length > 0 && appliedPromos.map((promo) => (
                 <View key={promo.code} style={styles.billRow}>
-                    <View style={styles.promoLabelRow}>
-                        <Text style={[styles.billLabel, { color: '#3c7d48', fontWeight: 'bold' }]}>Discount ({promo.code})</Text>
-                        <TouchableOpacity onPress={() => removeOfferCode(promo.code)} style={styles.promoRemoveBtn}>
-                            <X size={12} color="#ef4444" />
-                        </TouchableOpacity>
-                    </View>
+                    <Text style={[styles.billLabel, { color: '#3c7d48', fontWeight: 'bold' }]}>Discount ({promo.code})</Text>
                     <Text style={[styles.billValue, { color: '#3c7d48', fontWeight: 'bold' }]}>-${promo.discount.toFixed(2)}</Text>
                 </View>
               ))}

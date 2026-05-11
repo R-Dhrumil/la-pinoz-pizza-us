@@ -33,7 +33,7 @@ import { PRICING } from '../utils/constants';
 const CheckoutScreen = () => {
     const insets = useSafeAreaInsets();
     const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
-    const { cartItems, totalAmount, clearCart, orderMode } = useCart();
+    const { cartItems, totalAmount, clearCart, orderMode, discountAmount, appliedPromos, removeOfferCode } = useCart();
     const { selectedStore } = useStore();
     const { isAuthenticated } = useAuth();
     
@@ -46,9 +46,9 @@ const CheckoutScreen = () => {
     const [showAddressModal, setShowAddressModal] = useState(false);
     const [orderInstructions, setOrderInstructions] = useState('');
 
-    const tax = totalAmount * PRICING.TAX_RATE;
+    const tax = (totalAmount - discountAmount) * PRICING.TAX_RATE;
     const deliveryFee = orderMode === 'pickup' ? 0 : PRICING.DELIVERY_FEE;
-    const finalTotal = totalAmount + tax + deliveryFee;
+    const finalTotal = totalAmount - discountAmount + tax + deliveryFee;
 
     useFocusEffect(
         useCallback(() => {
@@ -124,7 +124,7 @@ const CheckoutScreen = () => {
                     subtotal: totalAmount,
                     tax: tax,
                     deliveryFee: deliveryFee,
-                    discount: 0,
+                    discount: discountAmount,
                     total: finalTotal,
                     paymentMethod: 'COD',
                     specialInstructions: orderInstructions || '',
@@ -165,7 +165,7 @@ const CheckoutScreen = () => {
                     subtotal: totalAmount,
                     tax: tax,
                     deliveryFee: deliveryFee,
-                    discount: 0,
+                    discount: discountAmount,
                     total: finalTotal,
                     specialInstructions: orderInstructions || '',
                     orderMode: orderMode === 'pickup' ? 'Pickup' : 'Delivery',
@@ -429,6 +429,14 @@ const CheckoutScreen = () => {
                             <Text style={styles.billLabel}>Item Total</Text>
                             <Text style={styles.billValue}>${totalAmount.toFixed(2)}</Text>
                         </View>
+
+                        {appliedPromos.map((promo) => (
+                            <View key={promo.code} style={styles.billRow}>
+                                <Text style={[styles.billLabel, { color: '#3c7d48', fontWeight: 'bold' }]}>Discount ({promo.code})</Text>
+                                <Text style={[styles.billValue, { color: '#3c7d48', fontWeight: 'bold' }]}>-${promo.discount.toFixed(2)}</Text>
+                            </View>
+                        ))}
+
                         <View style={styles.billRow}>
                             <Text style={styles.billLabel}>Taxes (5%)</Text>
                             <Text style={styles.billValue}>${tax.toFixed(2)}</Text>
@@ -625,6 +633,16 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold',
         color: '#3c7d48',
+    },
+    promoLabelRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+    },
+    promoRemoveBtn: {
+        padding: 2,
+        backgroundColor: '#fef2f2',
+        borderRadius: 10,
     },
     footer: {
         backgroundColor: '#fff',
