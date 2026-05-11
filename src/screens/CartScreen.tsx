@@ -9,7 +9,8 @@ import {
   Image,
   Platform,
   StatusBar,
-  TextInput
+  TextInput,
+  ActivityIndicator
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useState } from 'react';
@@ -26,7 +27,7 @@ const CartScreen = () => {
   const { 
     cartItems, totalAmount, addToCart, removeFromCart, deleteItem, orderMode, setOrderMode,
     availableOffers, appliedOfferCodes, discountAmount, appliedPromos, validationError,
-    applyOfferCode, removeOfferCode
+    applyOfferCode, removeOfferCode, isValidatingOffers
   } = useCart();
   const { isAuthenticated } = useAuth();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
@@ -231,9 +232,13 @@ const CartScreen = () => {
                             applyOfferCode(promoCode);
                         }
                     }}
-                    disabled={!promoCode}
+                    disabled={!promoCode || isValidatingOffers}
                   >
-                      <Text style={styles.applyBtnText}>APPLY</Text>
+                      {isValidatingOffers ? (
+                          <ActivityIndicator size="small" color="#fff" />
+                      ) : (
+                          <Text style={styles.applyBtnText}>APPLY</Text>
+                      )}
                   </TouchableOpacity>
               </View>
 
@@ -315,8 +320,13 @@ const CartScreen = () => {
                                               setPromoCode(offer.offerCode);
                                               applyOfferCode(offer.offerCode);
                                           }}
+                                          disabled={isValidatingOffers}
                                       >
-                                          <Text style={styles.savingsApplyBtnText}>APPLY</Text>
+                                          {isValidatingOffers && promoCode === offer.offerCode ? (
+                                              <ActivityIndicator size="small" color="#3c7d48" />
+                                          ) : (
+                                              <Text style={styles.savingsApplyBtnText}>APPLY</Text>
+                                          )}
                                       </TouchableOpacity>
                                   )}
 

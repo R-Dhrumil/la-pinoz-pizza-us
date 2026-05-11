@@ -37,7 +37,8 @@ interface CartContextType {
   appliedOfferCodes: string[];
   discountAmount: number;
   appliedPromos: AppliedPromo[];
-  validationError: string | null; // Added
+  validationError: string | null;
+  isValidatingOffers: boolean;
   applyOfferCode: (code: string) => void;
   removeOfferCode: (code: string) => void;
 }
@@ -55,7 +56,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [appliedOfferCodes, setAppliedOfferCodes] = useState<string[]>([]);
   const [discountAmount, setDiscountAmount] = useState<number>(0);
   const [appliedPromos, setAppliedPromos] = useState<AppliedPromo[]>([]);
-  const [validationError, setValidationError] = useState<string | null>(null); // Added
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const [isValidatingOffers, setIsValidatingOffers] = useState<boolean>(false);
 
   const clearCart = () => {
     setCartItems([]);
@@ -93,6 +95,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
+      setIsValidatingOffers(true);
       const payload = {
         storeId: selectedStore?.id || 0,
         offerCodes: appliedOfferCodes,
@@ -120,6 +123,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         setDiscountAmount(0);
         setAppliedPromos([]);
         setValidationError('Failed to validate promo code.');
+      } finally {
+        setIsValidatingOffers(false);
       }
     };
 
@@ -211,7 +216,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         cartItems, addToCart, removeFromCart, deleteItem, updateCartItem, clearCart, 
         totalAmount, totalItems, orderMode, setOrderMode,
         availableOffers, appliedOfferCodes, discountAmount, appliedPromos, validationError,
-        applyOfferCode, removeOfferCode
+        isValidatingOffers, applyOfferCode, removeOfferCode
       }}
     >
       {children}
