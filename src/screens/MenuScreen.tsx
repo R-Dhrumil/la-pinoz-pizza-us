@@ -437,6 +437,7 @@ const MenuScreen = () => {
                       <MenuItem
                         key={item.id}
                         item={item}
+                        categoryId={category.id}
                         onTap={() =>
                           navigation.navigate('ProductDetail', { item })
                         }

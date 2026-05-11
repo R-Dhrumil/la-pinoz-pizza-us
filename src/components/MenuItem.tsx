@@ -13,17 +13,35 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../navigation/AuthNavigator';
 import { useCart } from '../context/CartContext';
 import { Product } from '../services/categoryService';
-import { Star } from 'lucide-react-native';
+import { offerService } from '../services/offerService';
+import { Star, BadgePercent, Plus } from 'lucide-react-native';
 
 interface MenuItemProps {
   item: Product;
   onTap: () => void;
+  categoryId?: number;
 }
 
-const MenuItem = ({ item, onTap }: MenuItemProps) => {
+const MenuItem = ({ item, onTap, categoryId }: MenuItemProps) => {
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
-  const { cartItems, removeFromCart } = useCart();
+  const { cartItems, removeFromCart, availableOffers } = useCart();
   const [isExpanded, setIsExpanded] = useState(false);
+
+  // Calculate discounted price
+  const { discountedPrice, appliedOffer } = offerService.getDiscountedPrice(
+    item.basePrice, 
+    availableOffers, 
+    categoryId, 
+    item.subcategoryId
+  );
+  
+  const hasDiscount = discountedPrice < item.basePrice;
+
+  // Check if any active offer applies to this item (for badge if needed, but we prefer price)
+  const hasOffer = availableOffers.some(offer => 
+    (categoryId && offer.categoryIds.includes(categoryId)) ||
+    (item.subcategoryId && offer.subcategoryIds.includes(item.subcategoryId))
+  );
   
   // Check if this specific item ID is in the cart
   const cartItem = cartItems.find(i => i.id === item.id.toString());
@@ -39,7 +57,7 @@ const MenuItem = ({ item, onTap }: MenuItemProps) => {
       return;
     }
     // Instead of adding directly, navigate to details for customization
-    navigation.navigate('ProductDetail', { item });
+    navigation.navigate('ProductDetail', { item, categoryId });
   };
 
   const handleRemove = () => {
@@ -61,10 +79,27 @@ const MenuItem = ({ item, onTap }: MenuItemProps) => {
             <Text style={[styles.vegText, { color: item.isVeg ? '#3c7d48' : '#b91c1c' }]}>
               {item.isVeg ? 'VEG' : 'NON-VEG'}
             </Text>
+            {hasOffer && (
+              <View style={styles.offerBadge}>
+                <Text style={styles.offerBadgeText}>OFFER AVAILABLE</Text>
+              </View>
+            )}
           </View>
         )}
         <Text style={styles.itemName}>{item.name}</Text>
-        <Text style={styles.itemPrice}>${item.basePrice}</Text>
+        <View style={styles.priceContainer}>
+          {hasDiscount ? (
+            <>
+              <Text style={styles.itemPrice}>${discountedPrice}</Text>
+              <Text style={styles.originalPrice}>${item.basePrice}</Text>
+              <View style={styles.saveBadge}>
+                <Text style={styles.saveBadgeText}>Save ${(item.basePrice - discountedPrice).toFixed(2)}</Text>
+              </View>
+            </>
+          ) : (
+            <Text style={styles.itemPrice}>${item.basePrice}</Text>
+          )}
+        </View>
         
         {/* Placeholder 5-Star Rating */}
         <View style={styles.ratingRow}>
@@ -112,7 +147,7 @@ const MenuItem = ({ item, onTap }: MenuItemProps) => {
                 onPress={handleAdd}
               >
                 <Text style={[styles.addButtonText, isExternal && { color: '#fff' }]}>{isExternal ? 'ORDER' : 'ADD'}</Text>
-                {!isExternal && <Text style={styles.addButtonPlus}> +</Text>}
+                <Plus size={14} color={isExternal ? "#fff" : "#3c7d48"} strokeWidth={3} />
               </TouchableOpacity>
             )}
           </View>
@@ -203,14 +238,55 @@ const styles = StyleSheet.create({
   },
   itemPrice: {
     fontSize: 13,
-    fontWeight: '600',
-    color: '#374151',
+    fontWeight: '700',
+    color: '#3c7d48',
+  },
+  priceContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     marginBottom: 4,
+  },
+  originalPrice: {
+    fontSize: 11,
+    color: '#9ca3af',
+    textDecorationLine: 'line-through',
+    fontWeight: '500',
+  },
+  saveBadge: {
+    backgroundColor: '#3c7d48',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    marginLeft: 4,
+  },
+  saveBadgeText: {
+    color: '#fff',
+    fontSize: 9,
+    fontWeight: 'bold',
+  },
+  offerBadge: {
+    backgroundColor: '#f0fdf4', // Light green background
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 4,
+    borderWidth: 0.5,
+    borderColor: '#3c7d48',
+    marginLeft: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  offerBadgeText: {
+    color: '#3c7d48', // Brand green
+    fontSize: 8,
+    fontWeight: 'bold',
+    letterSpacing: 0.2,
   },
   ratingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 6,
+    gap: 4,
+    marginTop: 4,
   },
   descButton: {
     marginTop: 2,

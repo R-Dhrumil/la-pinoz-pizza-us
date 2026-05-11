@@ -23,6 +23,7 @@ import { X, Star, Minus, Plus, Check } from 'lucide-react-native';
 import { useCart } from '../context/CartContext';
 import { useStore } from '../context/StoreContext';
 import { Product, ProductVariant, ModifierGroup, ModifierOption } from '../services/categoryService';
+import { offerService } from '../services/offerService';
 import { ScreenContainer } from '../components/ScreenContainer';
 
 const { width } = Dimensions.get('window');
@@ -33,8 +34,8 @@ const ProductDetailScreen = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
   const route = useRoute<RouteProp<AuthStackParamList, 'ProductDetail'>>();
-  const { item, editMode, existingCartId, prefill } = route.params || {}; 
-  const { addToCart, deleteItem, updateCartItem } = useCart();
+  const { item, categoryId, editMode, existingCartId, prefill } = route.params || {}; 
+  const { addToCart, deleteItem, updateCartItem, availableOffers } = useCart();
   const { selectedStore } = useStore();
 
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
@@ -131,11 +132,21 @@ const ProductDetailScreen = () => {
     return option.price;
   };
 
-  const calculateTotal = () => {
+  const calculateTotal = (useDiscount = false) => {
     let total = item.basePrice;
 
     if (selectedVariant) {
         total = selectedVariant.price;
+    }
+
+    if (useDiscount) {
+        const { discountedPrice } = offerService.getDiscountedPrice(
+            total,
+            availableOffers,
+            categoryId,
+            item.subcategoryId
+        );
+        total = discountedPrice;
     }
 
     // Add selected modifiers
@@ -183,7 +194,9 @@ const ProductDetailScreen = () => {
         ...item, // Fallback properties
         id: uniqueIdParts.join('-'),
         name: selectedVariant ? `${item.name} (${selectedVariant.size})` : item.name,
-        price: Number(calculateTotal())/quantity, // Unit price
+        price: Number(calculateTotal(false))/quantity, // Unit price (original)
+        originalPrice: Number(calculateTotal(false))/quantity,
+        categoryId: categoryId, // Store categoryId
         image: item.imageUrl || '',
         isVeg: item.isVeg,
         description: item.description,
@@ -391,7 +404,19 @@ const ProductDetailScreen = () => {
             <View style={styles.priceRow}>
               <View>
                 <Text style={styles.totalLabel}>Total Price</Text>
-                <Text style={styles.totalBig}>${calculateTotal()}</Text>
+                <View style={styles.priceContainer}>
+                  <Text style={styles.totalBig}>${calculateTotal(true)}</Text>
+                  {calculateTotal(true) !== calculateTotal(false) && (
+                    <>
+                      <Text style={styles.originalPrice}>${calculateTotal(false)}</Text>
+                      <View style={styles.saveBadge}>
+                        <Text style={styles.saveBadgeText}>
+                          Save ${(Number(calculateTotal(false)) - Number(calculateTotal(true))).toFixed(2)}
+                        </Text>
+                      </View>
+                    </>
+                  )}
+                </View>
               </View>
               <View style={styles.quantityControl}>
                 <TouchableOpacity
@@ -671,6 +696,31 @@ const styles = StyleSheet.create({
       fontSize: 24,
       fontWeight: 'bold',
       color: '#3c7d48',
+  },
+  priceContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  originalPrice: {
+    fontSize: 14,
+    color: '#9ca3af',
+    textDecorationLine: 'line-through',
+    fontWeight: '500',
+    marginTop: 4,
+  },
+  saveBadge: {
+    backgroundColor: '#3c7d48',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    marginLeft: 8,
+    marginTop: 4,
+  },
+  saveBadgeText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: 'bold',
   },
   quantityControl: {
     flexDirection: 'row',

@@ -29,6 +29,7 @@ export type AuthStackParamList = {
   CategoryProducts: { category: Category };
   ProductDetail: { 
     item: Product;
+    categoryId?: number;
     editMode?: boolean;
     existingCartId?: string;
     prefill?: {

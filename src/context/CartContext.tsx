@@ -1,11 +1,15 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import { Product } from '../services/categoryService';
 import { useAuth } from './AuthContext';
+import { offerService, Offer, AppliedPromo } from '../services/offerService';
+import { useStore } from './StoreContext';
 
 export interface CartItem {
   id: string;
   name: string;
   price: number;
+  originalPrice?: number; // Price before any cart-level discounts
+  categoryId?: number; // Added
   quantity: number;
   image: string;
   isVeg: boolean | null;
@@ -28,6 +32,14 @@ interface CartContextType {
   totalItems: number;
   orderMode: 'delivery' | 'pickup';
   setOrderMode: (mode: 'delivery' | 'pickup') => void;
+  // Discount Module
+  availableOffers: Offer[];
+  appliedOfferCodes: string[];
+  discountAmount: number;
+  appliedPromos: AppliedPromo[];
+  validationError: string | null; // Added
+  applyOfferCode: (code: string) => void;
+  removeOfferCode: (code: string) => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -36,15 +48,100 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [orderMode, setOrderMode] = useState<'delivery' | 'pickup'>('delivery');
   const { user } = useAuth();
+  const { selectedStore } = useStore();
+
+  // Discount Module State
+  const [availableOffers, setAvailableOffers] = useState<Offer[]>([]);
+  const [appliedOfferCodes, setAppliedOfferCodes] = useState<string[]>([]);
+  const [discountAmount, setDiscountAmount] = useState<number>(0);
+  const [appliedPromos, setAppliedPromos] = useState<AppliedPromo[]>([]);
+  const [validationError, setValidationError] = useState<string | null>(null); // Added
 
   const clearCart = () => {
     setCartItems([]);
+    setAppliedOfferCodes([]);
+    setDiscountAmount(0);
+    setAppliedPromos([]);
+    setValidationError(null);
   };
+
+  // Fetch available offers when store changes
+  useEffect(() => {
+    const fetchOffers = async () => {
+      if (selectedStore) {
+        const allOffers = await offerService.getOffers();
+        // Filter by isActive and storeId
+        const filtered = allOffers.filter(o => o.isActive && (!o.storeId || o.storeId === selectedStore.id));
+        setAvailableOffers(filtered);
+      }
+    };
+    fetchOffers();
+    // Clear applied offers when switching store
+    setAppliedOfferCodes([]);
+    setDiscountAmount(0);
+    setAppliedPromos([]);
+    setValidationError(null);
+  }, [selectedStore]);
+
+  // Validate offers whenever cart or codes change
+  useEffect(() => {
+    const validate = async () => {
+      if (cartItems.length === 0 || appliedOfferCodes.length === 0) {
+        setDiscountAmount(0);
+        setAppliedPromos([]);
+        setValidationError(null);
+        return;
+      }
+
+      const payload = {
+        storeId: selectedStore?.id || 0,
+        offerCodes: appliedOfferCodes,
+        cartItems: cartItems.map(item => ({
+          productId: item.originalProduct?.id || parseInt(item.id.split('-')[0]),
+          categoryId: item.categoryId,
+          quantity: item.quantity,
+          price: item.originalPrice || item.price,
+          size: item.size || item.variant?.size
+        }))
+      };
+
+      try {
+        const res = await offerService.validateOffer(payload);
+        if (res.isValid) {
+          setDiscountAmount(res.discountAmount);
+          setAppliedPromos(res.appliedPromos);
+          setValidationError(null);
+        } else {
+          setDiscountAmount(0);
+          setAppliedPromos([]);
+          setValidationError(res.errorMessage || 'One or more promo codes are invalid.');
+        }
+      } catch (err) {
+        setDiscountAmount(0);
+        setAppliedPromos([]);
+        setValidationError('Failed to validate promo code.');
+      }
+    };
+
+    validate();
+  }, [cartItems, appliedOfferCodes, selectedStore]);
 
   // Clear cart when user logs out or switches account
   useEffect(() => {
     clearCart();
   }, [user]);
+
+  const applyOfferCode = (code: string) => {
+    setAppliedOfferCodes(prev => {
+      if (prev.includes(code)) return prev;
+      if (prev.length >= 2) return prev; // Limit of 2 promos
+      return [...prev, code];
+    });
+  };
+
+  const removeOfferCode = (code: string) => {
+    setAppliedOfferCodes(prev => prev.filter(c => c !== code));
+  };
 
   const addToCart = (item: Omit<CartItem, 'quantity'>) => {
     setCartItems((prevItems) => {
@@ -102,7 +199,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const totalAmount = cartItems.reduce(
-    (total, item) => total + item.price * item.quantity,
+    (total, item) => total + (item.originalPrice || item.price) * item.quantity,
     0
   );
 
@@ -110,7 +207,12 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <CartContext.Provider
-      value={{ cartItems, addToCart, removeFromCart, deleteItem, updateCartItem, clearCart, totalAmount, totalItems, orderMode, setOrderMode }}
+      value={{ 
+        cartItems, addToCart, removeFromCart, deleteItem, updateCartItem, clearCart, 
+        totalAmount, totalItems, orderMode, setOrderMode,
+        availableOffers, appliedOfferCodes, discountAmount, appliedPromos, validationError,
+        applyOfferCode, removeOfferCode
+      }}
     >
       {children}
     </CartContext.Provider>
