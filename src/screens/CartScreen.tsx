@@ -248,11 +248,16 @@ const CartScreen = () => {
               {availableOffers.length > 0 ? (
                   (showAllOffers ? availableOffers : availableOffers.slice(0, 2)).map((offer, index) => {
                       const isApplied = appliedPromos.some(p => p.code === offer.offerCode);
-                      const isPending = appliedOfferCodes.includes(offer.offerCode) && !isApplied;
+                      const isSelected = appliedOfferCodes.includes(offer.offerCode) && !isApplied;
                       const isExpanded = expandedOffers.includes(offer.id);
                       
+                      // Smart Feedback Logic
+                      const minOrderMet = !offer.minimumOrderValue || totalAmount >= offer.minimumOrderValue;
+                      const categoryMet = offer.categoryIds.length === 0 || 
+                                         cartItems.some(item => offer.categoryIds.includes(item.categoryId || 0));
+
                       return (
-                          <View key={offer.id} style={styles.savingsOfferRow}>
+                          <View key={offer.id} style={[styles.savingsOfferRow, isSelected && styles.selectedOfferRow]}>
                               <View style={styles.savingsOfferIconContainer}>
                                   <BadgePercent size={20} color="#374151" />
                               </View>
@@ -273,6 +278,16 @@ const CartScreen = () => {
                                   </TouchableOpacity>
                                   <Text style={styles.savingsOfferSubtitle}>Promo Code {offer.offerCode}</Text>
                                   
+                                  {isSelected && (
+                                      <Text style={styles.selectedStatusText}>
+                                          {!minOrderMet 
+                                              ? `• Add $${(offer.minimumOrderValue! - totalAmount).toFixed(2)} more to apply`
+                                              : !categoryMet
+                                                ? "• Add required items to apply"
+                                                : "• Conflicts with another offer"}
+                                      </Text>
+                                  )}
+
                                   {isExpanded && offer.description && (
                                       <Text style={styles.savingsOfferDescription}>
                                           {offer.description}
@@ -280,24 +295,45 @@ const CartScreen = () => {
                                   )}
                               </View>
                               
-                              <TouchableOpacity 
-                                  style={[styles.savingsApplyBtn, isApplied && styles.savingsAppliedBtn]}
-                                  onPress={() => {
-                                      if (isApplied) {
-                                          removeOfferCode(offer.offerCode);
-                                          if (promoCode === offer.offerCode) {
-                                              setPromoCode('');
-                                          }
-                                      } else {
-                                          setPromoCode(offer.offerCode);
-                                          applyOfferCode(offer.offerCode);
-                                      }
-                                  }}
-                              >
-                                  <Text style={[styles.savingsApplyBtnText, isApplied && styles.savingsAppliedBtnText]}>
-                                      {isApplied ? 'Applied' : 'Apply'}
-                                  </Text>
-                              </TouchableOpacity>
+                              <View style={styles.savingsOfferAction}>
+                                  {isApplied || isSelected ? (
+                                      <TouchableOpacity 
+                                          style={styles.removeOfferBtn}
+                                          onPress={() => {
+                                              removeOfferCode(offer.offerCode);
+                                              if (promoCode === offer.offerCode) {
+                                                  setPromoCode('');
+                                              }
+                                          }}
+                                      >
+                                          <Text style={styles.removeOfferBtnText}>REMOVE</Text>
+                                      </TouchableOpacity>
+                                  ) : (
+                                      <TouchableOpacity 
+                                          style={styles.savingsApplyBtn}
+                                          onPress={() => {
+                                              setPromoCode(offer.offerCode);
+                                              applyOfferCode(offer.offerCode);
+                                          }}
+                                      >
+                                          <Text style={styles.savingsApplyBtnText}>APPLY</Text>
+                                      </TouchableOpacity>
+                                  )}
+
+                                  {(isApplied || isSelected) && (
+                                      <View style={[
+                                          styles.statusIndicator, 
+                                          isApplied ? styles.appliedIndicator : styles.selectedIndicator
+                                      ]}>
+                                          <Text style={[
+                                              styles.statusIndicatorText,
+                                              isApplied ? styles.appliedIndicatorText : styles.selectedIndicatorText
+                                          ]}>
+                                              {isApplied ? 'Applied' : 'Selected'}
+                                          </Text>
+                                      </View>
+                                  )}
+                              </View>
                           </View>
                       );
                   })
@@ -335,7 +371,19 @@ const CartScreen = () => {
                   <Text style={styles.billLabel}>Item Total</Text>
                   <Text style={styles.billValue}>${totalAmount.toFixed(2)}</Text>
               </View>
-              {discountAmount > 0 && (
+              {appliedPromos.length > 0 && appliedPromos.map((promo) => (
+                <View key={promo.code} style={styles.billRow}>
+                    <View style={styles.promoLabelRow}>
+                        <Text style={[styles.billLabel, { color: '#3c7d48', fontWeight: 'bold' }]}>Discount ({promo.code})</Text>
+                        <TouchableOpacity onPress={() => removeOfferCode(promo.code)} style={styles.promoRemoveBtn}>
+                            <X size={12} color="#ef4444" />
+                        </TouchableOpacity>
+                    </View>
+                    <Text style={[styles.billValue, { color: '#3c7d48', fontWeight: 'bold' }]}>-${promo.discount.toFixed(2)}</Text>
+                </View>
+              ))}
+              {/* Fallback for total discount if promos aren't listed individually but amount is present */}
+              {appliedPromos.length === 0 && discountAmount > 0 && (
                 <View style={styles.billRow}>
                     <Text style={[styles.billLabel, { color: '#3c7d48', fontWeight: 'bold' }]}>Promo Discount</Text>
                     <Text style={[styles.billValue, { color: '#3c7d48', fontWeight: 'bold' }]}>-${discountAmount.toFixed(2)}</Text>
@@ -831,6 +879,72 @@ const styles = StyleSheet.create({
   },
   savingsAppliedBtnText: {
     color: '#3c7d48',
+  },
+  selectedOfferRow: {
+    backgroundColor: '#f8fafc',
+  },
+  selectedStatusText: {
+    fontSize: 10,
+    color: '#64748b',
+    marginTop: 4,
+    fontWeight: '600',
+    fontStyle: 'italic',
+  },
+  savingsSelectedBtn: {
+    backgroundColor: '#f1f5f9',
+    borderColor: '#64748b',
+  },
+  savingsSelectedBtnText: {
+    color: '#64748b',
+  },
+  savingsOfferAction: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  removeOfferBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ef4444',
+    backgroundColor: '#fef2f2',
+  },
+  removeOfferBtnText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#ef4444',
+  },
+  statusIndicator: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  statusIndicatorText: {
+    fontSize: 9,
+    fontWeight: 'bold',
+  },
+  appliedIndicator: {
+    backgroundColor: '#f0fdf4',
+  },
+  appliedIndicatorText: {
+    color: '#3c7d48',
+  },
+  selectedIndicator: {
+    backgroundColor: '#f1f5f9',
+  },
+  selectedIndicatorText: {
+    color: '#64748b',
+  },
+  promoLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  promoRemoveBtn: {
+    padding: 2,
+    backgroundColor: '#fef2f2',
+    borderRadius: 10,
   },
   viewAllOffersBtn: {
     flexDirection: 'row',
