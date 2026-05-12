@@ -230,7 +230,7 @@ const ProductDetailScreen = () => {
       containerStyle={styles.container}
       edges={[]}
     >
-      <FocusAwareStatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <FocusAwareStatusBar barStyle="light-content" backgroundColor="#3c7d48" />
           {/* Scrollable Content */}
           <ScrollView
             bounces={false}

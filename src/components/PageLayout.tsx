@@ -13,7 +13,7 @@ interface PageLayoutProps {
 const PageLayout = ({ children, style, showCart = true }: PageLayoutProps) => {
   return (
     <View style={[styles.container, style]}>
-        <FocusAwareStatusBar barStyle="dark-content" backgroundColor="#fff" />
+        <FocusAwareStatusBar barStyle="light-content" backgroundColor="#3c7d48" />
         <View style={styles.content}>
             {children}
         </View>

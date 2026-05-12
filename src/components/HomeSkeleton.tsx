@@ -50,12 +50,10 @@ const HomeSkeleton = () => {
         </View>
       </View>
 
-      {/* Hero Skeleton */}
-      <Animated.View style={[styles.hero, { opacity }]} />
-
-      {/* Search/Toggle Skeleton */}
-      <View style={styles.searchSectionWrapper}>
-          <Animated.View style={[styles.searchContainer, { opacity }]} />
+      {/* Welcome Section Skeleton */}
+      <View style={styles.greenSection}>
+          <Animated.View style={[styles.welcomeText, { opacity }]} />
+          <Animated.View style={[styles.toggleContainer, { opacity }]} />
       </View>
 
       {/* Categories Skeleton */}
@@ -146,21 +144,27 @@ const styles = StyleSheet.create({
       borderRadius: 12,
       backgroundColor: '#e5e7eb',
   },
-  hero: {
+  greenSection: {
+      backgroundColor: '#a3a3a3ff',
+      padding: 20,
+      gap: 16,
+      borderBottomLeftRadius: 30,
+      borderBottomRightRadius: 30,
+      marginBottom: 16,
+  },
+  welcomeText: {
+      width: 200,
+      height: 24,
+      backgroundColor: 'rgba(255,255,255,0.2)',
+      borderRadius: 4,
+  },
+  toggleContainer: {
       width: '100%',
-      height: 320,
-      backgroundColor: '#e5e7eb',
+      height: 44,
+      backgroundColor: 'rgba(255,255,255,0.1)',
+      borderRadius: 22,
   },
-  searchSectionWrapper: {
-      marginTop: -32,
-      paddingHorizontal: 16,
-      marginBottom: 32,
-  },
-  searchContainer: {
-    height: 100,
-    backgroundColor: '#fff', // Or slightly darker since it's skeleton
-    borderRadius: 16,
-  },
+
   section: {
     paddingHorizontal: 16,
     marginBottom: 24,

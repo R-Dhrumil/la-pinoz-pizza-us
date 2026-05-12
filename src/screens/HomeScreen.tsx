@@ -46,9 +46,10 @@ import { useAuth } from '../context/AuthContext';
 import { storeService } from '../services/storeService';
 import { categoryService, Category } from '../services/categoryService';
 import { productService } from '../services/productService';
-import { bannerService, Banner } from '../services/bannerService';
+
 import HomeSkeleton from '../components/HomeSkeleton';
 import FloatingCart from '../components/FloatingCart';
+import PizzaSnapCarousel from '../components/PizzaSnapCarousel';
 import { getTabHeight } from '../utils/constants';
 
 const { width } = Dimensions.get('window');
@@ -65,7 +66,7 @@ const HomeScreen = () => {
   const tabHeight = getTabHeight(insets.bottom);
   const [categories, setCategories] = useState<Category[]>([]);
   const [bestSellers, setBestSellers] = useState<any[]>([]);
-  const [banners, setBanners] = useState<Banner[]>([]);
+
   const { user } = useAuth();
   
   // Store initialization is handled robustly within fetchData
@@ -110,13 +111,7 @@ const HomeScreen = () => {
         const best = await productService.getBestSellers(currentStore.id);
         setBestSellers(best);
 
-        // Fetch Banners
-        try {
-          const activeBanners = await bannerService.getActiveBanners();
-          setBanners(activeBanners);
-        } catch (bannerError) {
-          console.error("Error fetching banners:", bannerError);
-        }
+
       } catch (error) {
         console.error("Error fetching home data:", error);
         Toast.show({
@@ -144,9 +139,9 @@ const HomeScreen = () => {
   }, [selectedStore]);
   
   const flatListRef = useRef<FlatList<any>>(null);
-  const bannerFlatListRef = useRef<FlatList<any>>(null);
+
   const scrollIndexRes = useRef(0);
-  const bannerScrollIndex = useRef(10);
+
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -165,73 +160,9 @@ const HomeScreen = () => {
     return () => clearInterval(interval);
   }, [bestSellers]); // Add dependency on bestSellers
 
-  // Auto-scroll logic for BANNERS (Infinite Loop Teleport Trick)
-  useEffect(() => {
-    if (banners.length <= 1) return;
-
-    const interval = setInterval(() => {
-      if (!bannerFlatListRef.current) return;
-
-      // We are working with 3x data: [Set 1, Set 2, Set 3]
-      // Set 1: 0 to len-1
-      // Set 2: len to 2len-1 (This is our active set)
-      // Set 3: 2len to 3len-1
 
 
-      
-      // If we reach the end of Set 2, we scroll into Set 3, 
-      // then immediately jump back to the same spot in Set 2 without animation.
-      
-      const cardWidth = width * 0.8 + 17;
-      // const gap = 12;
-      const totalItemWidth = cardWidth ;
-      // To center perfectly, we need (Screen/2) - (Card/2)
-      const centeringOffset = (width - cardWidth) / 2;
 
-      let nextIndex = bannerScrollIndex.current + 1;
-      const offset = (nextIndex * totalItemWidth) - centeringOffset;
-      
-      bannerFlatListRef.current.scrollToOffset({
-        offset: offset,
-        animated: true,
-      });
-      bannerScrollIndex.current = nextIndex;
-
-      // Teleport check
-      if (nextIndex >= banners.length * 2 - 1.2) {
-        setTimeout(() => {
-          const resetIndex = banners.length - 1;
-          const resetOffset = (resetIndex * totalItemWidth) - centeringOffset;
-          bannerFlatListRef.current?.scrollToOffset({
-            offset: resetOffset,
-            animated: false,
-          });
-          bannerScrollIndex.current = resetIndex;
-        }, 600); 
-      }
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, [banners]);
-
-  // Initial jump to the middle set
-  useEffect(() => {
-    if (banners.length > 1 && bannerFlatListRef.current) {
-        const cardWidth = width * 0.8;
-        const gap = 12;
-        const totalItemWidth = cardWidth + gap;
-        const centeringOffset = (width - cardWidth) / 2;
-        const initialOffset = (banners.length * totalItemWidth) - centeringOffset;
-
-        setTimeout(() => {
-            bannerFlatListRef.current?.scrollToOffset({
-                offset: initialOffset,
-                animated: false,
-            });
-            bannerScrollIndex.current = banners.length;
-        }, 500);
-    }
-  }, [banners]);
 
   return (
     <ScreenContainer useScrollView={false} containerStyle={styles.container } edges={['top']}>
@@ -298,49 +229,11 @@ const HomeScreen = () => {
           </View>
 
 
-        {/* ── HORIZONTAL BANNER CARDS ── */}
-        {banners && banners.length > 0 && (
-          <View style={styles.bannerScrollContainer}>
-            <FlatList
-              ref={bannerFlatListRef}
-              data={[...banners, ...banners, ...banners]} // Triple the data for infinite loop
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              keyExtractor={(item, index) => `${item.id}-${index}`}
-              contentContainerStyle={styles.bannerScrollContent}
-              snapToInterval={width * 0.8 }
-              snapToAlignment="center"
-              decelerationRate="fast"
-              getItemLayout={(data, index) => ({
-                length: width * 0.8 + 12,
-                offset: (width * 0.8 + 12) * index,
-                index,
-              })}
-              onScrollToIndexFailed={(info) => {
-                bannerFlatListRef.current?.scrollToOffset({ 
-                  offset: info.averageItemLength * info.index, 
-                  animated: false 
-                });
-              }}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  activeOpacity={0.9}
-                  style={styles.bannerCard}
-                  onPress={() => navigation.navigate('Menu' as any)}
-                >
-                  <ImageBackground
-                    source={{ uri: 'https://api.lapinozusa.com/uploads/27603e73-0604-4a1c-ac2e-cc64f7670476.jpeg' }}
-                    style={styles.bannerCardImage}
-                    imageStyle={{ borderRadius: 14 }}
-                  >
-                    
-                  </ImageBackground>
-                </TouchableOpacity>
-              )}
-            />
-          </View>
-        )}
+
         </View>
+
+        {/* ── SNAP CAROUSEL ── */}
+        <PizzaSnapCarousel />
 
 
 
@@ -648,25 +541,7 @@ const styles = StyleSheet.create({
   },
   // ── DARK PROMO CARD ──
  
-  // ── HORIZONTAL BANNER CARDS ──
-  bannerScrollContainer: {
-    paddingVertical: 14,
-    backgroundColor: '#3c7d48',
-  },
-  bannerScrollContent: {
-    gap: 12,
-  },
-  bannerCard: {
-    width: width * 0.8 ,
-    borderRadius: 16,
-    overflow: 'hidden',
-    elevation: 4,
-  },
-  bannerCardImage: {
-    width: '100%',
-    height: 200,
-    justifyContent: 'flex-start',
-  },
+
 
   // ── LEGACY kept for safety ──
   headerLeft: {
@@ -692,34 +567,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginBottom: -2,
   },
-  bannerContainer: {
-    marginVertical: 12,
-    paddingHorizontal: 16,
-  },
-  bannerImage: {
-    width: width - 32,
-    height: 200,
-    borderRadius: 14,
-    overflow: 'hidden',
-    justifyContent: 'flex-end',
-  },
-  bannerOverlay: {
-    backgroundColor: 'rgba(0,0,0,0.38)',
-    padding: 20,
-    borderRadius: 14,
-    gap: 6,
-  },
-  bannerTitle: {
-    fontSize: 26,
-    fontWeight: '900',
-    color: '#fff',
-    lineHeight: 30,
-  },
-  bannerSubtitle: {
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.85)',
-    fontWeight: '500',
-  },
+
   headerRight: {
     flexDirection: 'row',
     gap: 16,
@@ -1138,53 +986,7 @@ const styles = StyleSheet.create({
       fontSize: 11,
       color: '#6b7280',
   },
-  appBanner: {
-      backgroundColor: '#0b1219',
-      borderRadius: 24,
-      padding: 24,
-      overflow: 'hidden',
-      position: 'relative',
-      minHeight: 200,
-  },
-  appContent: {
-      position: 'relative',
-      zIndex: 10,
-      width: '60%',
-  },
-  appTitle: {
-      fontSize: 24,
-      fontWeight: 'bold',
-      color: '#fff',
-      marginBottom: 8,
-  },
-  appDesc: {
-      fontSize: 12,
-      color: '#9ca3af',
-      marginBottom: 24,
-  },
-  appButtons: {
-      flexDirection: 'row',
-      gap: 12,
-  },
-  appBtn: {
-      backgroundColor: '#fff',
-      paddingVertical: 6,
-      paddingHorizontal: 12,
-      borderRadius: 8,
-  },
-  appBtnText: {
-      fontSize: 10,
-      fontWeight: 'bold',
-      color: '#4b5563',
-  },
-  appImage: {
-      position: 'absolute',
-      bottom: -40,
-      right: -20,
-      width: 140,
-      height: 180,
-      transform: [{rotate: '-5deg'}],
-  },
+
 });
 
 export default HomeScreen;

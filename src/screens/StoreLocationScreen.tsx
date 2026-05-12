@@ -207,7 +207,7 @@ const StoreLocationScreen = () => {
 
   return (
     <ScreenContainer useScrollView={false} containerStyle={styles.container}>
-      <FocusAwareStatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <FocusAwareStatusBar barStyle="light-content" backgroundColor="#3c7d48" />
       
       {/* Header */}
       <View style={styles.header}>
