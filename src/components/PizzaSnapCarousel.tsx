@@ -7,9 +7,10 @@ import {
   Dimensions,
   TouchableOpacity,
   ActivityIndicator,
-  ImageBackground,
+  Image,
 } from 'react-native';
 import { ShoppingCart, Star } from 'lucide-react-native';
+
 
 const { width } = Dimensions.get('window');
 
@@ -23,7 +24,7 @@ const PADDING_H        = SIDE_CARD_VISIBLE - SPACING;
 // ─── Infinite Loop Config ─────────────────────────────────────────────────────
 // We repeat the real data this many times to create a "virtually infinite" list.
 // 100 copies means 600 items total — the user will never scroll to either end.
-const LOOP_COUNT = 100;
+const LOOP_COUNT = 20;
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -32,51 +33,62 @@ interface PizzaDeal {
   imageUrl: string;
 }
 
+let globalCachedDeals: PizzaDeal[] | null = null;
+let globalDealsPromise: Promise<PizzaDeal[]> | null = null;
+
+const prefetchDeals = () => {
+  if (globalDealsPromise) return globalDealsPromise;
+  globalDealsPromise = fetch('https://api.lapinozusa.com/api/Banners/active')
+    .then(r => r.json())
+    .then(data => {
+      const formatted = data.map((item: any) => ({
+        id: item.id,
+        imageUrl: item.imageUrl,
+      }));
+      globalCachedDeals = formatted;
+      return formatted;
+    })
+    .catch(err => {
+      console.error('Error fetching pizza deals:', err);
+      return [];
+    });
+  return globalDealsPromise;
+};
+
+// Start prefetching immediately when the file is parsed!
+prefetchDeals();
+
 const PizzaSnapCarousel = () => {
-  const [deals, setDeals]   = useState<PizzaDeal[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [deals, setDeals] = useState<PizzaDeal[]>(globalCachedDeals || []);
+  const [loading, setLoading] = useState(!globalCachedDeals);
   const flatListRef           = useRef<FlatList>(null);
-  const scrollIndex           = useRef(0);   // tracks current position in infiniteData
+  const scrollIndex           = useRef(0);
   const intervalRef           = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // ── Build infinite dataset ──────────────────────────────────────────────────
-  // infiniteData is the real cards repeated LOOP_COUNT times.
-  // We start the FlatList in the dead-centre of this array so there is
-  // effectively unlimited runway in BOTH directions.
   const infiniteData = useMemo<PizzaDeal[]>(() => {
     if (deals.length === 0) return [];
     return Array.from({ length: LOOP_COUNT }, () => deals).flat();
   }, [deals]);
 
-  // The index we mount the FlatList at (centre of infiniteData)
   const initialIndex = useMemo(
     () => (deals.length > 0 ? Math.floor(LOOP_COUNT / 2) * deals.length : 0),
     [deals.length],
   );
 
-  // ── Fetch mock pizza data ───────────────────────────────────────────────────
-  useEffect(() => { fetchPizzaDeals(); }, []);
-
-  const fetchPizzaDeals = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(
-        'https://api.lapinozusa.com/api/Banners/active',
-      );
-      const data = await response.json();
-
-      const formatted: PizzaDeal[] = data.map((item: any, i: number) => ({
-        id:       item.id,
-        imageUrl: item.imageUrl,
-      }));
-
-      setDeals(formatted);
-    } catch (err) {
-      console.error('Error fetching pizza deals:', err);
-    } finally {
+  // ── Fetch only if cache was empty ───────────────────────────────────────────
+  useEffect(() => {
+    if (globalCachedDeals) {
+      setDeals(globalCachedDeals);
       setLoading(false);
+      return;
     }
-  };
+    
+    prefetchDeals().then(data => {
+      setDeals(data);
+      setLoading(false);
+    });
+  }, []);
 
   // ── Jump to initial centre position once data is ready ─────────────────────
   useEffect(() => {
@@ -96,33 +108,54 @@ const PizzaSnapCarousel = () => {
     return () => clearTimeout(t);
   }, [infiniteData.length, initialIndex]);
 
-  // ── Auto-scroll (true infinite — just keep incrementing forever) ────────────
+  // ── Auto-scroll (true infinite — jump back if approaching bounds) ────────────
   useEffect(() => {
     if (infiniteData.length === 0) return;
 
     intervalRef.current = setInterval(() => {
-      if (!flatListRef.current) return;
+      if (!flatListRef.current || deals.length === 0) return;
 
-      const nextIndex = scrollIndex.current + 1;
-      flatListRef.current.scrollToIndex({ index: nextIndex, animated: true });
-      scrollIndex.current = nextIndex;
+      let currentIndex = scrollIndex.current;
+
+      // If we approach the end of the list, reset silently to the middle
+      if (currentIndex >= infiniteData.length - 2) {
+        currentIndex = initialIndex + (currentIndex % deals.length);
+        flatListRef.current.scrollToIndex({ index: currentIndex, animated: false });
+        scrollIndex.current = currentIndex;
+        
+        // Allow the silent jump to apply before animating to the next index
+        setTimeout(() => {
+          if (!flatListRef.current) return;
+          const nextIndex = currentIndex + 1;
+          // Double check to prevent out of range
+          if (nextIndex < infiniteData.length) {
+            flatListRef.current.scrollToIndex({ index: nextIndex, animated: true });
+            scrollIndex.current = nextIndex;
+          }
+        }, 100);
+        return;
+      }
+
+      const nextIndex = currentIndex + 1;
+      // Safety check just in case
+      if (nextIndex < infiniteData.length) {
+        flatListRef.current.scrollToIndex({ index: nextIndex, animated: true });
+        scrollIndex.current = nextIndex;
+      }
     }, 3000);
 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [infiniteData.length]);
+  }, [infiniteData.length, deals.length, initialIndex]);
 
-  // ── Render each card ────────────────────────────────────────────────────────
   const renderItem = ({ item }: { item: PizzaDeal }) => (
     <View style={styles.cardContainer}>
-      <ImageBackground
+      <Image
         source={{ uri: item.imageUrl }}
-        style={styles.card}
-        imageStyle={styles.cardImage}
-      >
-       
-      </ImageBackground>
+        style={styles.cardImage}
+        resizeMode="cover"
+      />
     </View>
   );
 
@@ -147,7 +180,16 @@ const PizzaSnapCarousel = () => {
   // ── Keep scrollIndex.current in sync when user swipes manually ──────────────
   const onMomentumScrollEnd = (event: any) => {
     const rawOffset = event.nativeEvent.contentOffset.x;
-    const index     = Math.round(rawOffset / SNAP_INTERVAL);
+    let index       = Math.round(rawOffset / SNAP_INTERVAL);
+    
+    // If user scrolled near the edges, safely jump back to the middle
+    if (index <= 2 || index >= infiniteData.length - 2) {
+      if (deals.length > 0) {
+        index = initialIndex + (index % deals.length);
+        flatListRef.current?.scrollToIndex({ index, animated: false });
+      }
+    }
+
     scrollIndex.current = index;
   };
 
@@ -223,13 +265,9 @@ const styles = StyleSheet.create({
     borderRadius:   24,
     backgroundColor: '#FFF',
   },
-  card: {
-    flex:     1,
-    overflow: 'hidden',
-    borderRadius: 24,
-
-  },
   cardImage: {
+    width: '100%',
+    height: '100%',
     borderRadius: 24,
   },
   overlay: {

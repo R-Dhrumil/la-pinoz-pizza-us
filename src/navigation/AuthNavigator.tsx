@@ -1,10 +1,11 @@
 import React from 'react';
-import { View, ActivityIndicator, StyleSheet, Image } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import TabNavigator from './TabNavigator';
 import LoginScreen from '../screens/auth/LoginScreen';
 import SignupScreen from '../screens/auth/SignupScreen';
 import CartScreen from '../screens/CartScreen';
+import SplashScreen1 from '../screens/SplashScreen1';
+import SplashScreen2 from '../screens/SplashScreen2';
 import MyOrdersScreen from '../screens/MyOrdersScreen';
 
 import ProductDetailScreen from '../screens/ProductDetailScreen';
@@ -22,7 +23,10 @@ import { Category } from '../services/categoryService';
 import { Address } from '../services/addressService';
 import { useAuth } from '../context/AuthContext';
 
+
 export type AuthStackParamList = {
+  Splash1: undefined;
+  Splash2: undefined;
   Login: undefined;
   Signup: undefined;
   MainTabs: undefined; // Replaces 'Home'
@@ -52,56 +56,25 @@ export type AuthStackParamList = {
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 
-// Splash screen shown while AsyncStorage session is being restored
-const SplashScreen = () => (
-  <View style={splashStyles.container}>
-    <Image
-      source={require('../assets/images/logo.png')}
-      style={splashStyles.logo}
-      resizeMode="contain"
-    />
-    <ActivityIndicator size="large" color="#3c7d48" style={splashStyles.spinner} />
-  </View>
-);
-
-const splashStyles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  logo: {
-    width: 200,
-    height: 200,
-    marginBottom: 24,
-  },
-  spinner: {
-    marginTop: 8,
-  },
-});
-
 const AuthNavigator = () => {
-  const { isAuthenticated, loading } = useAuth();
-
-  // While AsyncStorage session is being restored, show a splash screen.
-  // This prevents the Login screen from flashing before the session is known.
-  if (loading) {
-    return <SplashScreen />;
-  }
+  // Auth loading is handled inside Splash2 which reads isAuthenticated after
+  // the splash animation completes — no flash of wrong screen.
 
   return (
+
     <Stack.Navigator
-      // Dynamically choose initial route based on restored session
-      initialRouteName={isAuthenticated ? 'MainTabs' : 'Login'}
+      // Always start at Splash1; the splash sequence decides where to go next
+      initialRouteName="Splash1"
       screenOptions={{
         headerShown: false,
-        animation: 'slide_from_right'
+        animation: 'fade',
       }}
     >
-      <Stack.Screen name="Login" component={LoginScreen} />
-      <Stack.Screen name="Signup" component={SignupScreen} />
-      <Stack.Screen name="MainTabs" component={TabNavigator} />
+      <Stack.Screen name="Splash1" component={SplashScreen1} options={{ animation: 'none' }} />
+      <Stack.Screen name="Splash2" component={SplashScreen2} options={{ animation: 'fade' }} />
+      <Stack.Screen name="Login"   component={LoginScreen}  options={{ animation: 'fade' }} />
+      <Stack.Screen name="Signup"  component={SignupScreen} />
+      <Stack.Screen name="MainTabs" component={TabNavigator} options={{ animation: 'fade' }} />
       <Stack.Screen 
         name="CategoryProducts" 
         component={require('../screens/CategoryProductsScreen').default} 
@@ -159,6 +132,7 @@ const AuthNavigator = () => {
         options={{ animation: 'slide_from_bottom' }} 
       />
     </Stack.Navigator>
+
   );
 };
 

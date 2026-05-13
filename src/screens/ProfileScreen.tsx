@@ -16,6 +16,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../navigation/AuthNavigator';
 import { useAuth } from '../context/AuthContext';
 import { orderService } from '../services/orderService';
+
 import {
   User,
   Receipt,
@@ -35,20 +36,23 @@ import {
 const ProfileScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
   const { user, logout } = useAuth();
-  const [activeCount, setActiveCount] = useState(0);
+  const [activeCount, setActiveCount] = useState<number>(0);
 
   useFocusEffect(
     useCallback(() => {
+
       const fetchActiveOrders = async () => {
         try {
           const orders = await orderService.getMyOrders();
-          
-          const active = orders.filter(o => 
-            ['placed', 'confirmed', 'preparing', 'outfordelivery', 'pending'].includes(o.orderStatus?.toLowerCase() ?? '')
+          const active = orders.filter(o =>
+            ['placed', 'confirmed', 'preparing', 'outfordelivery', 'pending'].includes(
+              o.orderStatus?.toLowerCase() ?? ''
+            )
           );
-          setActiveCount(active.length);
+          const count = active.length;
+          setActiveCount(count);
         } catch (error) {
-          console.error("Error fetching active orders count:", error);
+          console.error('Error fetching active orders count:', error);
         }
       };
 

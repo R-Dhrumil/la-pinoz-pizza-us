@@ -7,12 +7,14 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  SectionList,
   Image,
   Dimensions,
   Alert,
   RefreshControl,
   Modal,
   Platform,
+  InteractionManager,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -52,6 +54,7 @@ import FloatingCart from '../components/FloatingCart';
 import MenuItem from '../components/MenuItem';
 import { getTabHeight } from '../utils/constants';
 
+
 const { width } = Dimensions.get('window');
 
 const MenuScreen = () => {
@@ -67,7 +70,8 @@ const MenuScreen = () => {
   const tabHeight = getTabHeight(insets.bottom);
   const lastFetchedStoreId = useRef<number | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<number | null>(null);
 
@@ -80,36 +84,32 @@ const MenuScreen = () => {
   const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
 
-  // Simple scroll ref to jump to sections (visual only for MVP)
-  const scrollViewRef = useRef<ScrollView>(null);
+  // SectionList ref for virtualized menu
+  const sectionListRef = useRef<SectionList>(null);
   const tabsScrollViewRef = useRef<ScrollView>(null);
-  const sectionPositions = useRef<{ [key: number]: number }>({});
   const tabPositions = useRef<{ [key: number]: number }>({});
   const isTabPress = useRef(false);
 
   const fetchCategories = useCallback(async (force = false) => {
-    // Skip if we already have categories for this store
-    if (!force && selectedStore?.id === lastFetchedStoreId.current && categories.length > 0) {
-        setLoading(false);
-        return;
-    }
+    // If we already have categories shown (stale update), don't re-show skeleton
+    const hasSomething = categories.length > 0;
+    if (!hasSomething) setLoading(true);
 
-    setLoading(true);
     let currentStore = selectedStore;
 
     if (!currentStore) {
       try {
         const stores = await storeService.getAllStores();
         if (stores && stores.length > 0) {
-          const richmondStore = stores.find(s => 
-            (s.name && s.name.toLowerCase().includes('richmond')) || 
+          const richmondStore = stores.find(s =>
+            (s.name && s.name.toLowerCase().includes('richmond')) ||
             (s.city && s.city.toLowerCase().includes('richmond'))
           );
           currentStore = richmondStore || stores[0];
           setSelectedStore(currentStore);
         }
       } catch (err) {
-        console.error("Failed to load default store:", err);
+        console.error('Failed to load default store:', err);
       }
     }
 
@@ -121,14 +121,18 @@ const MenuScreen = () => {
 
     try {
       const data = await categoryService.getCategories(currentStore.id);
-      setCategories(data);
-      if (data.length > 0 && !activeTab) {
-        setActiveTab(data[0].id);
-      }
+      InteractionManager.runAfterInteractions(() => {
+        setCategories(data);
+        if (data.length > 0 && !activeTab) {
+          setActiveTab(data[0].id);
+        }
+        lastFetchedStoreId.current = currentStore?.id || null;
+        setLoading(false);
+        setRefreshing(false);
+      });
     } catch (error) {
       console.error('Failed to fetch categories', error);
       Alert.alert('Error', 'Failed to load menu. Please try again.');
-    } finally {
       lastFetchedStoreId.current = currentStore?.id || null;
       setLoading(false);
       setRefreshing(false);
@@ -172,51 +176,6 @@ const MenuScreen = () => {
         x: Math.max(0, scrollX),
         animated: true,
       });
-    }
-  };
-
-  const handleTabPress = useCallback((categoryId: number, animated = true) => {
-    setActiveTab(categoryId);
-    isTabPress.current = true;
-    const y = sectionPositions.current[categoryId];
-
-    if (scrollViewRef.current && y !== undefined) {
-      // Add small offset for sticky header / visuals
-      const offset = Math.max(0, y - 280); // Adjust offset for large header
-      scrollViewRef.current.scrollTo({ y: offset, animated });
-    }
-    scrollToActiveTab(categoryId);
-
-    // Reset flag after animation
-    setTimeout(() => {
-      isTabPress.current = false;
-    }, 1000);
-  }, [activeTab]);
-
-  const handleScroll = (event: any) => {
-    if (isTabPress.current) return;
-
-    const scrollY = event.nativeEvent.contentOffset.y;
-    const effectiveY = scrollY + 280; // Offset for better detection
-
-    // Find the last category whose position is <= effectiveY
-    let currentTab = activeTab;
-
-    for (let i = 0; i < filteredCategories.length; i++) {
-      const category = filteredCategories[i];
-      const pos = sectionPositions.current[category.id];
-
-      if (pos !== undefined && pos <= effectiveY) {
-        currentTab = category.id;
-      } else if (pos !== undefined && pos > effectiveY) {
-        // Since positions are ordered, we can stop checking once we go past
-        break;
-      }
-    }
-
-    if (currentTab !== activeTab && currentTab !== null) {
-      setActiveTab(currentTab);
-      scrollToActiveTab(currentTab);
     }
   };
 
@@ -283,6 +242,35 @@ const MenuScreen = () => {
       .filter(category => category.products?.length > 0);
   }, [categories, searchQuery, activeFilters, activeSort]);
 
+  const handleTabPress = useCallback((categoryId: number, animated = true) => {
+    setActiveTab(categoryId);
+    scrollToActiveTab(categoryId);
+    isTabPress.current = true;
+
+    const sectionIndex = filteredCategories.findIndex(c => c.id === categoryId);
+    if (sectionListRef.current && sectionIndex !== -1) {
+      sectionListRef.current.scrollToLocation({
+        sectionIndex,
+        itemIndex: 0,
+        animated,
+        viewOffset: 0,
+      });
+    }
+
+    setTimeout(() => {
+      isTabPress.current = false;
+    }, 800);
+  }, [filteredCategories]);
+
+  const onViewableItemsChanged = useCallback(({ viewableItems }: any) => {
+    if (isTabPress.current || viewableItems.length === 0) return;
+    const firstSection = viewableItems.find((v: any) => v.section);
+    if (firstSection && firstSection.section.id !== activeTab) {
+      setActiveTab(firstSection.section.id);
+      scrollToActiveTab(firstSection.section.id);
+    }
+  }, [activeTab]);
+
   return (
     <View style={styles.containerStyleOverride}>
       <FocusAwareStatusBar barStyle="light-content" backgroundColor="transparent" translucent={true} />
@@ -305,158 +293,141 @@ const MenuScreen = () => {
         </SafeAreaView>
       ) : (
         <>
-          <ScrollView
+          <SectionList
+            ref={sectionListRef}
             style={{ flex: 1 }}
-            ref={scrollViewRef}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.content}
-            onScroll={handleScroll}
-            scrollEventThrottle={16}
+            stickySectionHeadersEnabled={false}
+            onViewableItemsChanged={onViewableItemsChanged}
+            viewabilityConfig={{ itemVisiblePercentThreshold: 20 }}
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}
                 onRefresh={onRefresh}
                 colors={['#3c7d48']}
-                // Add top padding to account for the translucent status bar and cover image
-                progressViewOffset={Platform.OS === 'android' ? 10 : 0} 
+                progressViewOffset={Platform.OS === 'android' ? 10 : 0}
               />
             }
-          >
-            {/* Cover Image & Header Info */}
-            <View style={styles.headerContainer}>
-              <Image 
-                source={selectedStore?.image ? { uri: selectedStore.image } : require('../assets/images/pizza_placeholder.jpg')}
-                style={styles.coverImage}
-              />
-              <View style={styles.coverImageOverlay} />
-
-              {/* Top Icons */}
-              <View style={[styles.topAbsoluteBar, { top: insets.top + 10 }]}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.roundIconButton}>
-                  <ChevronLeft size={20} color="#fff" />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => navigation.navigate('Cart' as any)} style={styles.roundIconButton}>
-                  <ShoppingCart size={20} color="#fff" />
-                </TouchableOpacity>
-              </View>
-
-              {/* Overlapping Info Card */}
-              <View style={styles.storeCardWrapper}>
-                <View style={styles.storeCard}>
-                  <View style={styles.storeCardTitleRow}>
-                    <View style={styles.storeCardLeft}>
-                      <Text style={styles.storeNameText}>La Pino'z Pizza</Text>
-                      <Info size={16} color="#6b7280" />
-                      <View style={styles.openBadge}>
-                        <Text style={styles.openBadgeText}>OPEN</Text>
+            ListHeaderComponent={
+              <>
+                {/* Cover Image & Header Info */}
+                <View style={styles.headerContainer}>
+                  <Image
+                    source={(!imageError && selectedStore?.image) ? { uri: selectedStore.image } : require('../assets/images/pizza_placeholder.jpg')}
+                    style={styles.coverImage}
+                    resizeMode="cover"
+                    onError={() => setImageError(true)}
+                  />
+                  <View style={styles.coverImageOverlay} />
+                  <View style={[styles.topAbsoluteBar, { top: insets.top + 10 }]}>
+                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.roundIconButton}>
+                      <ChevronLeft size={20} color="#fff" />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => navigation.navigate('Cart' as any)} style={styles.roundIconButton}>
+                      <ShoppingCart size={20} color="#fff" />
+                    </TouchableOpacity>
+                  </View>
+                  <View style={styles.storeCardWrapper}>
+                    <View style={styles.storeCard}>
+                      <View style={styles.storeCardTitleRow}>
+                        <View style={styles.storeCardLeft}>
+                          <Text style={styles.storeNameText}>La Pino'z Pizza</Text>
+                          <Info size={16} color="#6b7280" />
+                          <View style={styles.openBadge}>
+                            <Text style={styles.openBadgeText}>OPEN</Text>
+                          </View>
+                        </View>
+                        <TouchableOpacity style={styles.shareIconBtn}>
+                          <Share2 size={16} color="#374151" />
+                        </TouchableOpacity>
+                      </View>
+                      <View style={styles.storeCardMetaRow}>
+                        <View style={styles.metaBadge}>
+                          <Clock size={12} color="#4b5563" />
+                          <Text style={styles.metaText}>30 Minutes</Text>
+                        </View>
+                        <TouchableOpacity onPress={() => navigation.navigate('StoreLocation')} style={styles.metaBadge}>
+                          <MapPin size={12} color="#4b5563" />
+                          <Text style={styles.metaText} numberOfLines={1}>{selectedStore ? `${selectedStore.city}, ${selectedStore.state}` : 'Select Location'}</Text>
+                          <ChevronDown size={12} color="#4b5563" />
+                        </TouchableOpacity>
                       </View>
                     </View>
-                    <TouchableOpacity style={styles.shareIconBtn}>
-                      <Share2 size={16} color="#374151" />
-                    </TouchableOpacity>
-                  </View>
-                  <View style={styles.storeCardMetaRow}>
-                    <View style={styles.metaBadge}>
-                      <Clock size={12} color="#4b5563" />
-                      <Text style={styles.metaText}>30 Minutes</Text>
-                    </View>
-                    <TouchableOpacity onPress={() => navigation.navigate('StoreLocation')} style={styles.metaBadge}>
-                      <MapPin size={12} color="#4b5563" />
-                      <Text style={styles.metaText} numberOfLines={1}>{selectedStore ? `${selectedStore.city}, ${selectedStore.state}` : 'Select Location'}</Text>
-                      <ChevronDown size={12} color="#4b5563" />
-                    </TouchableOpacity>
                   </View>
                 </View>
-              </View>
-            </View>
 
-            {/* Filter Pills */}
-            <ScrollView 
-              horizontal 
-              showsHorizontalScrollIndicator={false} 
-              style={styles.filtersScroll} 
-              contentContainerStyle={styles.filtersContainer}
-            >
-              <TouchableOpacity
-                style={[styles.filterPill, activeFilters.length > 0 && styles.filterPillActive]}
-                onPress={() => setIsFilterModalVisible(true)}
-              >
-                <SlidersHorizontal size={14} color={activeFilters.length > 0 ? "#3c7d48" : "#374151"} />
-                <Text style={[styles.filterPillText, activeFilters.length > 0 && styles.filterPillTextActive]}>
-                  Filter {activeFilters.length > 0 ? `(${activeFilters.length})` : ''}
-                </Text>
-                <ChevronDown size={14} color={activeFilters.length > 0 ? "#3c7d48" : "#374151"} />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.filterPill, activeSort === 'price_asc' && styles.filterPillActive]}
-                onPress={() => setActiveSort(activeSort === 'price_asc' ? null : 'price_asc')}
-              >
-                <Text style={[styles.filterPillText, activeSort === 'price_asc' && styles.filterPillTextActive]}>Price low to high</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.filterPill, activeSort === 'price_desc' && styles.filterPillActive]}
-                onPress={() => setActiveSort(activeSort === 'price_desc' ? null : 'price_desc')}
-              >
-                <Text style={[styles.filterPillText, activeSort === 'price_desc' && styles.filterPillTextActive]}>Price high to low</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.filterPill, activeSort === 'rating_desc' && styles.filterPillActive]}
-                onPress={() => setActiveSort(activeSort === 'rating_desc' ? null : 'rating_desc')}
-              >
-                <Text style={[styles.filterPillText, activeSort === 'rating_desc' && styles.filterPillTextActive]}>Rating high to low</Text>
-              </TouchableOpacity>
-
-              {categories.find(c => c.id === activeTab)?.subcategories?.map(sub => (
-                <TouchableOpacity key={sub.id} style={styles.filterPill}>
-                  <Text style={styles.filterPillText}>{sub.name}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-
-            <View style={styles.listContainer}>
-              {filteredCategories.map(category => (
-                <View
-                  key={category.id}
-                  style={styles.listSection}
-                  onLayout={event => {
-                    sectionPositions.current[category.id] =
-                      event.nativeEvent.layout.y + 250; // offset for the header top
-                  }}
+                {/* Filter Pills */}
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.filtersScroll}
+                  contentContainerStyle={styles.filtersContainer}
                 >
-                  <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionTitle}>{category.name}</Text>
-                    <Text style={styles.itemCount}>
-                      {category.products ? category.products.length : 0} ITEMS
+                  <TouchableOpacity
+                    style={[styles.filterPill, activeFilters.length > 0 && styles.filterPillActive]}
+                    onPress={() => setIsFilterModalVisible(true)}
+                  >
+                    <SlidersHorizontal size={14} color={activeFilters.length > 0 ? '#3c7d48' : '#374151'} />
+                    <Text style={[styles.filterPillText, activeFilters.length > 0 && styles.filterPillTextActive]}>
+                      Filter {activeFilters.length > 0 ? `(${activeFilters.length})` : ''}
                     </Text>
-                  </View>
-                  {category.products &&
-                    category.products.map(item => (
-                      <MenuItem
-                        key={item.id}
-                        item={item}
-                        categoryId={category.id}
-                        onTap={() =>
-                          navigation.navigate('ProductDetail', { item })
-                        }
-                      />
-                    ))}
-                </View>
-              ))}
-
-              {filteredCategories.length === 0 && !loading && (
+                    <ChevronDown size={14} color={activeFilters.length > 0 ? '#3c7d48' : '#374151'} />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.filterPill, activeSort === 'price_asc' && styles.filterPillActive]}
+                    onPress={() => setActiveSort(activeSort === 'price_asc' ? null : 'price_asc')}
+                  >
+                    <Text style={[styles.filterPillText, activeSort === 'price_asc' && styles.filterPillTextActive]}>Price low to high</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.filterPill, activeSort === 'price_desc' && styles.filterPillActive]}
+                    onPress={() => setActiveSort(activeSort === 'price_desc' ? null : 'price_desc')}
+                  >
+                    <Text style={[styles.filterPillText, activeSort === 'price_desc' && styles.filterPillTextActive]}>Price high to low</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.filterPill, activeSort === 'rating_desc' && styles.filterPillActive]}
+                    onPress={() => setActiveSort(activeSort === 'rating_desc' ? null : 'rating_desc')}
+                  >
+                    <Text style={[styles.filterPillText, activeSort === 'rating_desc' && styles.filterPillTextActive]}>Rating high to low</Text>
+                  </TouchableOpacity>
+                  {categories.find(c => c.id === activeTab)?.subcategories?.map(sub => (
+                    <TouchableOpacity key={sub.id} style={styles.filterPill}>
+                      <Text style={styles.filterPillText}>{sub.name}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </>
+            }
+            sections={filteredCategories.map(cat => ({ ...cat, data: cat.products ?? [] }))}
+            keyExtractor={(item: any) => item.id.toString()}
+            renderSectionHeader={({ section }: any) => (
+              <View style={[styles.sectionHeader, { paddingHorizontal: 16, paddingTop: 16 }]}>
+                <Text style={styles.sectionTitle}>{section.name}</Text>
+                <Text style={styles.itemCount}>{section.data.length} ITEMS</Text>
+              </View>
+            )}
+            renderItem={({ item, section }: any) => (
+              <View style={{ paddingHorizontal: 16 }}>
+                <MenuItem
+                  item={item}
+                  categoryId={section.id}
+                  onTap={() => navigation.navigate('ProductDetail', { item })}
+                />
+              </View>
+            )}
+            ListEmptyComponent={
+              !loading ? (
                 <View style={styles.centered}>
                   <Text style={styles.messageText}>
-                    {searchQuery
-                      ? `No items found matching "${searchQuery}"`
-                      : 'No menu items found for this store.'}
+                    {searchQuery ? `No items found matching "${searchQuery}"` : 'No menu items found for this store.'}
                   </Text>
                 </View>
-              )}
-            </View>
-          </ScrollView>
+              ) : null
+            }
+            onScrollToIndexFailed={() => {}}
+          />
 
           {/* Bottom Action Area: Search + Menu Bar, THEN Floating Cart Below it */}
           <View style={[styles.bottomActionContainer, { bottom: 0 }]}>

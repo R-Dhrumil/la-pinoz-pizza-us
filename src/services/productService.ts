@@ -12,6 +12,9 @@ export interface Product {
     externalLink?: string;
 }
 
+let cachedBestSellers: Record<string, any[]> = {};
+let bestSellersPromises: Record<string, Promise<any[]> | undefined> = {};
+
 export const productService = {
     getAllProducts: async (filters?: any) => {
         const response = await apiClient.get('/products', { params: filters });
@@ -34,12 +37,31 @@ export const productService = {
     },
     
     getBestSellers: async (storeId?: number) => {
-        const response = await apiClient.get('/Products', { 
+        const key = storeId ? storeId.toString() : 'default';
+        if (cachedBestSellers[key]) return cachedBestSellers[key];
+        if (bestSellersPromises[key]) return bestSellersPromises[key];
+
+        bestSellersPromises[key] = apiClient.get('/Products', { 
             params: { 
                 isBestSeller: true,
                 storeId: storeId 
             } 
+        })
+        .then(response => {
+            cachedBestSellers[key] = response.data;
+            return response.data;
+        })
+        .catch(error => {
+            console.error('Error fetching best sellers:', error);
+            delete bestSellersPromises[key];
+            return [];
         });
-        return response.data;
+
+        return bestSellersPromises[key];
+    },
+    
+    clearCache: () => {
+        cachedBestSellers = {};
+        bestSellersPromises = {};
     }
 };

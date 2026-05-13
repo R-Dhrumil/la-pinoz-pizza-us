@@ -14,6 +14,7 @@ import {
   RefreshControl,
   Linking,
   ScrollView,
+  InteractionManager,
 } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { ScreenContainer } from '../components/ScreenContainer';
@@ -52,6 +53,7 @@ import FloatingCart from '../components/FloatingCart';
 import PizzaSnapCarousel from '../components/PizzaSnapCarousel';
 import { getTabHeight } from '../utils/constants';
 
+
 const { width } = Dimensions.get('window');
 
 
@@ -68,20 +70,17 @@ const HomeScreen = () => {
   const [bestSellers, setBestSellers] = useState<any[]>([]);
 
   const { user } = useAuth();
-  
-  // Store initialization is handled robustly within fetchData
 
   const [refreshing, setRefreshing] = useState(false);
-  const [isLoading, setIsLoading] = useState(categories.length === 0);
-  const lastFetchedStoreId = useRef<number | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
+  // ── fetchData ─────────────────────────────────────────────────────────────
   const fetchData = async (force = false) => {
-    // Skip loading if we already have data for this store and it's not a manual refresh
-    if (!force && selectedStore?.id === lastFetchedStoreId.current && categories.length > 0) {
-        return;
-    }
+    const storeId = selectedStore?.id ?? null;
 
-    setIsLoading(true);
+    const hasSomething = categories.length > 0 || bestSellers.length > 0;
+    if (!hasSomething) setIsLoading(true);
+
     let currentStore = selectedStore;
 
     // Auto-select first store if none is active
@@ -89,41 +88,42 @@ const HomeScreen = () => {
       try {
         const stores = await storeService.getAllStores();
         if (stores && stores.length > 0) {
-          const richmondStore = stores.find(s => 
-            (s.name && s.name.toLowerCase().includes('richmond')) || 
+          const richmondStore = stores.find(s =>
+            (s.name && s.name.toLowerCase().includes('richmond')) ||
             (s.city && s.city.toLowerCase().includes('richmond'))
           );
           currentStore = richmondStore || stores[0];
           setSelectedStore(currentStore);
         }
       } catch (err) {
-        console.error("Failed to load default store:", err);
+        console.error('Failed to load default store:', err);
       }
     }
 
     if (currentStore) {
       try {
-        // Fetch Categories
-        const cats = await categoryService.getCategories(currentStore.id);
-        setCategories(cats);
-
-        // Fetch Best Sellers
-        const best = await productService.getBestSellers(currentStore.id);
-        setBestSellers(best);
-
-
+        const [cats, best] = await Promise.all([
+          categoryService.getCategories(currentStore.id),
+          productService.getBestSellers(currentStore.id),
+        ]);
+        InteractionManager.runAfterInteractions(() => {
+          setCategories(cats);
+          setBestSellers(best);
+          setIsLoading(false);
+        });
       } catch (error) {
-        console.error("Error fetching home data:", error);
+        console.error('Error fetching home data:', error);
         Toast.show({
-            type: 'error',
-            text1: 'Network Error',
-            text2: 'Failed to load menu data'
+          type: 'error',
+          text1: 'Network Error',
+          text2: 'Failed to load menu data',
         });
       }
     }
-    
-    lastFetchedStoreId.current = currentStore?.id || null;
-    setIsLoading(false);
+
+    if (!currentStore) {
+      setIsLoading(false);
+    }
   };
 
   useFocusEffect(
@@ -143,23 +143,46 @@ const HomeScreen = () => {
   const scrollIndexRes = useRef(0);
 
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      // Don't auto-scroll if there are no items or list is not ready
-      if (!flatListRef.current || bestSellers.length === 0) return;
+  // useEffect(() => {
+  //   const interval = setInterval(() => {
+  //     // Don't auto-scroll if there are no items or list is not ready
+  //     if (!flatListRef.current || bestSellers.length === 0) return;
 
-      let nextIndex = scrollIndexRes.current + 2.5;
-      if (nextIndex >= bestSellers.length) {
-         nextIndex = 20;
-      }
+  //     let nextIndex = scrollIndexRes.current + 2.5;
+  //     if (nextIndex >= bestSellers.length) {
+  //        nextIndex = 20;
+  //     }
       
-      flatListRef.current.scrollToIndex({ index: nextIndex, animated: true });
-      scrollIndexRes.current = nextIndex;
-    }, 3000); // Increased to 3 seconds for better experience
+  //     flatListRef.current.scrollToIndex({ index: nextIndex, animated: true });
+  //     scrollIndexRes.current = nextIndex;
+  //   }, 3000); // Increased to 3 seconds for better experience
 
-    return () => clearInterval(interval);
-  }, [bestSellers]); // Add dependency on bestSellers
+  //   return () => clearInterval(interval);
+  // }, [bestSellers]); // Add dependency on bestSellers
 
+  useEffect(() => {
+  const interval = setInterval(() => {
+    if (!flatListRef.current || bestSellers.length === 0) return;
+
+    // 1. Use Math.floor to keep indices as Integers
+    // 2. Increment by 1 (or a whole number) for stability
+    let nextIndex = Math.floor(scrollIndexRes.current + 1);
+
+    // 3. Proper boundary check
+    if (nextIndex >= bestSellers.length) {
+      nextIndex = 0; // Reset to start for a continuous loop
+    }
+
+    flatListRef.current.scrollToIndex({ 
+      index: nextIndex, 
+      animated: true 
+    });
+
+    scrollIndexRes.current = nextIndex;
+  }, 3000);
+
+  return () => clearInterval(interval);
+}, [bestSellers]);
 
 
 

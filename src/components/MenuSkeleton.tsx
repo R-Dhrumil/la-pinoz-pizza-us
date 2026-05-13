@@ -1,12 +1,15 @@
 import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, Animated, Dimensions } from 'react-native';
+import { View, StyleSheet, Animated, Dimensions, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useStore } from '../context/StoreContext';
 
 const { width } = Dimensions.get('window');
 
 const MenuSkeleton = () => {
   const animatedValue = useRef(new Animated.Value(0)).current;
   const insets = useSafeAreaInsets();
+  const { selectedStore } = useStore();
+  const [imageError, setImageError] = React.useState(false);
 
   useEffect(() => {
     const startAnimation = () => {
@@ -38,7 +41,15 @@ const MenuSkeleton = () => {
     <View style={styles.container}>
       {/* Cover Image & Header Info Skeleton */}
       <View style={styles.headerContainer}>
-        <Animated.View style={[styles.coverImage, { opacity }]} />
+        {(!imageError && selectedStore?.image) ? (
+           <View style={{ width: '100%', height: 200, backgroundColor: '#e5e7eb' }}>
+              <Image source={{ uri: selectedStore.image }} style={StyleSheet.absoluteFill} resizeMode="cover" onError={() => setImageError(true)} />
+              {/* Add a slight dark overlay to match MenuScreen's coverImageOverlay, instead of opaque grey */}
+              <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.2)' }]} />
+           </View>
+        ) : (
+           <Animated.View style={[styles.coverImage, { opacity }]} />
+        )}
         
         {/* Top Icons Skeleton */}
         <View style={[styles.topAbsoluteBar, { top: insets.top + 10 }]}>

@@ -63,16 +63,31 @@ export interface Category {
 }
 
 
+let cachedCategories: Record<number, Category[]> = {};
+let categoryPromises: Record<number, Promise<Category[]> | undefined> = {};
+
 export const categoryService = {
   getCategories: async (storeId: number): Promise<Category[]> => {
-    try {
-      const response = await apiClient.get('/Categories', {
-        params: { storeId },
+    if (cachedCategories[storeId]) return cachedCategories[storeId];
+    if (categoryPromises[storeId]) return categoryPromises[storeId];
+
+    categoryPromises[storeId] = apiClient.get('/Categories', {
+      params: { storeId },
+    })
+      .then(response => {
+        cachedCategories[storeId] = response.data;
+        return response.data;
+      })
+      .catch(error => {
+        console.error('Error fetching categories:', error);
+        delete categoryPromises[storeId]; // allow retry on error
+        return [];
       });
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching categories:', error);
-      return [];
-    }
+
+    return categoryPromises[storeId];
   },
+  clearCache: () => {
+    cachedCategories = {};
+    categoryPromises = {};
+  }
 };
