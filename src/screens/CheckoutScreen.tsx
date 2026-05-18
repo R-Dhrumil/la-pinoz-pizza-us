@@ -267,7 +267,7 @@ const CheckoutScreen = () => {
                                 </View>
                                 <View style={{ flex: 1, opacity: isDeliverable ? 1 : 0.6 }}>
                                     <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
-                                        <Text style={styles.addressType}>{item.type || 'Home'}</Text>
+                                        <Text style={styles.addressType}>{item.label || 'Home'}</Text>
                                         {!isDeliverable && (
                                             <Text style={styles.notDeliverableText}>Not Deliverable</Text>
                                         )}
@@ -332,7 +332,7 @@ const CheckoutScreen = () => {
                                         <MapPin size={24} color="#3c7d48" />
                                     </View>
                                     <View style={{ flex: 1 }}>
-                                        <Text style={styles.addressType}>{selectedAddress.type || 'Home'}</Text>
+                                        <Text style={styles.addressType}>{selectedAddress.label || 'Home'}</Text>
                                         <Text style={styles.addressText}>
                                             {selectedAddress.addressLine1}, {selectedAddress.addressLine2}
                                         </Text>

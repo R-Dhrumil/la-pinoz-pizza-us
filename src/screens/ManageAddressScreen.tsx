@@ -108,7 +108,7 @@ const ManageAddressScreen = () => {
                   <MapPin size={24} color="#3c7d48" />
                 </View>
                 <View style={styles.addressDetails}>
-                  <Text style={styles.addressType}>{address.type || 'Home'}</Text>
+                  <Text style={styles.addressType}>{address.label || 'Home'}</Text>
                    <Text style={styles.addressText} numberOfLines={2}>
                         {address.fullName}, {address.phoneNumber}
                         {'\n'}

@@ -29,7 +29,7 @@ export const AddressProvider = ({ children }: { children: ReactNode }) => {
           // Map backend data to UI expectations if needed
           const mappedAddresses = data.map(addr => ({
               ...addr,
-              type: addr.type || 'Home', // Default if missing
+              label: addr.label || 'Home', // Default if missing
               isDeliverable: true, // Default
           }));
           setAddresses(mappedAddresses);

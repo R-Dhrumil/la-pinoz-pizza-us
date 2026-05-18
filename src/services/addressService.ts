@@ -11,8 +11,8 @@ export interface Address {
     zipCode: string;
     landmark?: string | null;
     isDefault: boolean;
+    label?: 'Home' | 'Work' | 'Other';
     // UI-only fields (not sent to backend directly unless we map them)
-    type?: 'Home' | 'Work' | 'Other'; 
     coordinates?: {
         lat: number;
         lng: number;
@@ -42,7 +42,8 @@ export const addressService = {
                 state: address.state,
                 zipCode: address.zipCode,
                 landmark: address.landmark,
-                isDefault: address.isDefault
+                isDefault: address.isDefault,
+                label: address.label
             };
             const response = await apiClient.post('/Addresses', payload);
             return response.data;
@@ -72,7 +73,8 @@ export const addressService = {
                 state: address.state,
                 zipCode: address.zipCode,
                 landmark: address.landmark,
-                isDefault: address.isDefault
+                isDefault: address.isDefault,
+                label: address.label
             };
             const response = await apiClient.post(`/Addresses/Update/${id}`, payload);
             return response.data;

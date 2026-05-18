@@ -30,20 +30,130 @@ const AddNewAddressScreen = () => {
     const editAddress = route.params?.editAddress;
     const isEditMode = !!editAddress;
 
+    // USA States List
+    const US_STATES = [
+        'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
+        'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD',
+        'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ',
+        'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
+        'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'
+    ];
+
+    // Auto-format phone number to US format (XXX) XXX-XXXX
+    const formatPhoneNumber = (text: string) => {
+        const digits = text.replace(/\D/g, '');
+        if (digits.length <= 3) {
+            return digits;
+        } else if (digits.length <= 6) {
+            return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+        } else {
+            return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6, 10)}`;
+        }
+    };
+
     // Form State
     const [fullName, setFullName] = useState(editAddress?.fullName || '');
-    const [phoneNumber, setPhoneNumber] = useState(editAddress?.phoneNumber || '');
-    const [houseNo, setHouseNo] = useState(editAddress?.addressLine1 || '');
-    const [street, setStreet] = useState(editAddress?.addressLine2 || '');
+    const [phoneNumber, setPhoneNumber] = useState(
+        editAddress?.phoneNumber ? formatPhoneNumber(editAddress.phoneNumber) : ''
+    );
+    const [addressLine1, setAddressLine1] = useState(editAddress?.addressLine1 || '');
+    const [addressLine2, setAddressLine2] = useState(editAddress?.addressLine2 || '');
     const [landmark, setLandmark] = useState(editAddress?.landmark || '');
     const [city, setCity] = useState(editAddress?.city || '');
     const [state, setState] = useState(editAddress?.state || '');
-    const [pincode, setPincode] = useState(editAddress?.zipCode || '');
-    const [addressType, setAddressType] = useState<'Home' | 'Work' | 'Other'>(editAddress?.type || 'Home');
+    const [zipcode, setZipcode] = useState(editAddress?.zipCode || '');
+    const [label, setLabel] = useState<'Home' | 'Work' | 'Other'>(editAddress?.label || 'Home');
     
+    // Validation State
+    const [errors, setErrors] = useState<{ [key: string]: string }>({});
+    const [touched, setTouched] = useState<{ [key: string]: boolean }>({});
+
     // Map State
     const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
     const [mapRegion, setMapRegion] = useState({ lat: 39.8283, lng: -98.5795, zoom: 4 }); // Default USA (Geographic Center)
+
+    // Form input format handlers
+    const handlePhoneChange = (text: string) => {
+        setPhoneNumber(formatPhoneNumber(text));
+    };
+
+    const handleStateChange = (text: string) => {
+        const cleaned = text.replace(/[^a-zA-Z]/g, '').toUpperCase().slice(0, 2);
+        setState(cleaned);
+    };
+
+    const handleZipChange = (text: string) => {
+        const cleaned = text.replace(/\D/g, '').slice(0, 5);
+        setZipcode(cleaned);
+    };
+
+    const handleBlur = (field: string) => {
+        setTouched((prev) => ({ ...prev, [field]: true }));
+    };
+
+    // Reactive validation logic
+    const getValidationErrors = () => {
+        const newErrors: { [key: string]: string } = {};
+
+        // Full Name Validation
+        const nameRegex = /^[a-zA-Z\s\-']+$/;
+        if (!fullName.trim()) {
+            newErrors.fullName = 'Full Name is required';
+        } else if (fullName.trim().length < 2) {
+            newErrors.fullName = 'Full Name must be at least 2 characters';
+        } else if (fullName.trim().length > 50) {
+            newErrors.fullName = 'Full Name must be less than 50 characters';
+        } else if (!nameRegex.test(fullName.trim())) {
+            newErrors.fullName = 'Please enter a valid name (letters and spaces only)';
+        }
+
+        // Phone Validation (USA Format - 10 digits)
+        const digits = phoneNumber.replace(/\D/g, '');
+        if (!phoneNumber.trim()) {
+            newErrors.phoneNumber = 'Phone Number is required';
+        } else if (digits.length !== 10) {
+            newErrors.phoneNumber = 'Please enter a valid 10-digit phone number';
+        }
+
+        // Address Line 1
+        if (!addressLine1.trim()) {
+            newErrors.addressLine1 = 'Address Line 1 is required';
+        } else if (addressLine1.trim().length < 3) {
+            newErrors.addressLine1 = 'Address Line 1 must be at least 3 characters';
+        }
+
+        // City
+        const cityRegex = /^[a-zA-Z\s\-'.]+$/;
+        if (!city.trim()) {
+            newErrors.city = 'City is required';
+        } else if (!cityRegex.test(city.trim())) {
+            newErrors.city = 'Please enter a valid city name';
+        }
+
+        // State (US 2-letter abbreviation)
+        const stateUpper = state.trim().toUpperCase();
+        if (!state.trim()) {
+            newErrors.state = 'State is required';
+        } else if (stateUpper.length !== 2) {
+            newErrors.state = 'State must be a 2-letter abbreviation';
+        } else if (!US_STATES.includes(stateUpper)) {
+            newErrors.state = 'Please enter a valid 2-letter US State code (e.g. CA, NY)';
+        }
+
+        // Zip Code (US Zip Code - 5 digits)
+        const zipRegex = /^\d{5}$/;
+        if (!zipcode.trim()) {
+            newErrors.zipcode = 'Zip Code is required';
+        } else if (!zipRegex.test(zipcode.trim())) {
+            newErrors.zipcode = 'Please enter a valid 5-digit Zip Code';
+        }
+
+        return newErrors;
+    };
+
+    useEffect(() => {
+        setErrors(getValidationErrors());
+    }, [fullName, phoneNumber, addressLine1, city, state, zipcode]);
 
     useEffect(() => {
         requestLocationPermission();
@@ -96,25 +206,37 @@ const AddNewAddressScreen = () => {
     };
 
     const handleSaveAddress = async () => {
-        if (!fullName || !phoneNumber || !houseNo || !street || !city || !state || !pincode) {
-            Alert.alert("Error", "Please fill in all required fields.");
+        const formErrors = getValidationErrors();
+        if (Object.keys(formErrors).length > 0) {
+            setErrors(formErrors);
+            setTouched({
+                fullName: true,
+                phoneNumber: true,
+                addressLine1: true,
+                
+                city: true,
+                state: true,
+                zipcode: true
+            });
+            Alert.alert("Validation Error", "Please correct the errors in the form before saving.");
             return;
         }
 
         try {
             const addressData = {
                 fullName,
-                phoneNumber,
-                addressLine1: houseNo,
-                addressLine2: street,
+                phoneNumber: phoneNumber.replace(/\D/g, ''),
+                addressLine1,
+                addressLine2: addressLine2 || null,
                 landmark: landmark || null,
                 city,
-                state,
-                zipCode: pincode,
+                state: state.toUpperCase(),
+                zipCode: zipcode,
                 isDefault: editAddress?.isDefault || false,
-                type: addressType,
+                label: label,
                 coordinates: currentLocation || undefined,
-                isDeliverable: true
+                isDeliverable: true,
+                
             };
 
             if (isEditMode && editAddress?.id) {
@@ -233,115 +355,147 @@ const AddNewAddressScreen = () => {
             <View style={styles.formContainer}>
                 <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
                     <Text style={styles.sectionTitle}>Contact Details</Text>
+                    
+                    {/* Full Name */}
                     <View style={styles.inputGroup}>
                         <Text style={styles.label}>Full Name *</Text>
                         <TextInput
-                            style={styles.input}
+                            style={[styles.input, touched.fullName && errors.fullName && styles.inputError]}
                             placeholder="John Doe"
+                            placeholderTextColor="#808080"
                             value={fullName}
                             onChangeText={setFullName}
+                            onBlur={() => handleBlur('fullName')}
                         />
+                        {touched.fullName && errors.fullName && <Text style={styles.errorText}>{errors.fullName}</Text>}
                     </View>
+                    
+                    {/* Phone Number */}
                     <View style={styles.inputGroup}>
                         <Text style={styles.label}>Phone Number *</Text>
                         <TextInput
-                            style={styles.input}
-                            placeholder="1234567890"
+                            style={[styles.input, touched.phoneNumber && errors.phoneNumber && styles.inputError]}
+                            placeholder="(555) 000-0000"
+                            placeholderTextColor="#808080"
                             keyboardType="phone-pad"
                             value={phoneNumber}
-                            onChangeText={setPhoneNumber}
+                            onChangeText={handlePhoneChange}
+                            onBlur={() => handleBlur('phoneNumber')}
+                            maxLength={14}
                         />
+                        {touched.phoneNumber && errors.phoneNumber && <Text style={styles.errorText}>{errors.phoneNumber}</Text>}
                     </View>
 
                     <Text style={styles.sectionTitle}>Address Details</Text>
                     
+                    {/* Address Line 1 */}
                     <View style={styles.inputGroup}>
-                        <Text style={styles.label}>House / Flat No. *</Text>
+                        <Text style={styles.label}>Address Line 1 *</Text>
+                        <TextInput
+                            style={[styles.input, touched.addressLine1 && errors.addressLine1 && styles.inputError]}
+                            placeholder="e.g. 123 Main St"
+                            placeholderTextColor="#808080"
+                            value={addressLine1}
+                            onChangeText={setAddressLine1}
+                            onBlur={() => handleBlur('addressLine1')}
+                        />
+                        {touched.addressLine1 && errors.addressLine1 && <Text style={styles.errorText}>{errors.addressLine1}</Text>}
+                    </View>
+
+                    {/* Address Line 2 */}
+                    <View style={styles.inputGroup}>
+                        <Text style={styles.label}>Address Line 2 (Optional)</Text>
                         <TextInput
                             style={styles.input}
-                            placeholder="e.g. 101, A-Block"
-                            value={houseNo}
-                            onChangeText={setHouseNo}
+                            placeholder="e.g. Apt 4B, Suite 100"
+                            placeholderTextColor="#808080"
+                            value={addressLine2}
+                            onChangeText={setAddressLine2}
                         />
                     </View>
 
-                    <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Apartment / Road / Area *</Text>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="e.g. Phoenix Towers, MG Road"
-                            value={street}
-                            onChangeText={setStreet}
-                        />
-                    </View>
-
+                    {/* Landmark */}
                     <View style={styles.inputGroup}>
                         <Text style={styles.label}>Landmark</Text>
                         <TextInput
                             style={styles.input}
                             placeholder="e.g. Near City Mall"
+                            placeholderTextColor="#808080"
                             value={landmark}
                             onChangeText={setLandmark}
                         />
                     </View>
 
+                    {/* City & State */}
                     <View style={styles.row}>
                         <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
                             <Text style={styles.label}>City *</Text>
                             <TextInput
-                                style={styles.input}
-                                placeholder="Vadodara"
+                                style={[styles.input, touched.city && errors.city && styles.inputError]}
+                                placeholder="e.g. Los Angeles"
+                                placeholderTextColor="#808080"
                                 value={city}
                                 onChangeText={setCity}
+                                onBlur={() => handleBlur('city')}
                             />
-
+                            {touched.city && errors.city && <Text style={styles.errorText}>{errors.city}</Text>}
                         </View>
                         <View style={[styles.inputGroup, { flex: 1, marginLeft: 8 }]}>
                             <Text style={styles.label}>State *</Text>
                             <TextInput
-                                style={styles.input}
-                                placeholder="Gujarat"
+                                style={[styles.input, touched.state && errors.state && styles.inputError]}
+                                placeholder="e.g. CA"
+                                placeholderTextColor="#808080"
                                 value={state}
-                                onChangeText={setState}
+                                onChangeText={handleStateChange}
+                                onBlur={() => handleBlur('state')}
+                                autoCapitalize="characters"
+                                maxLength={2}
                             />
+                            {touched.state && errors.state && <Text style={styles.errorText}>{errors.state}</Text>}
                         </View>
                     </View>
+
+                    {/* Zip Code */}
                     <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Pincode *</Text>
+                        <Text style={styles.label}>Zip Code *</Text>
                         <TextInput
-                            style={styles.input}
-                            placeholder="390001"
+                            style={[styles.input, touched.zipcode && errors.zipcode && styles.inputError]}
+                            placeholder="e.g. 90210"
+                            placeholderTextColor="#808080"
                             keyboardType="number-pad"
-                            value={pincode}
-                            onChangeText={setPincode}
-                            maxLength={6}
+                            value={zipcode}
+                            onChangeText={handleZipChange}
+                            onBlur={() => handleBlur('zipcode')}
+                            maxLength={5}
                         />
+                        {touched.zipcode && errors.zipcode && <Text style={styles.errorText}>{errors.zipcode}</Text>}
                     </View>
 
                     <Text style={styles.label}>Save As</Text>
                     <View style={styles.typeContainer}>
                         <TouchableOpacity 
-                            style={[styles.typeButton, addressType === 'Home' && styles.activeTypeButton]}
-                            onPress={() => setAddressType('Home')}
+                            style={[styles.typeButton, label === 'Home' && styles.activeTypeButton]}
+                            onPress={() => setLabel('Home')}
                         >
-                            <Home size={18} color={addressType === 'Home' ? '#fff' : '#6b7280'} />
-                            <Text style={[styles.typeText, addressType === 'Home' && styles.activeTypeText]}>Home</Text>
+                            <Home size={18} color={label === 'Home' ? '#fff' : '#6b7280'} />
+                            <Text style={[styles.typeText, label === 'Home' && styles.activeTypeText]}>Home</Text>
                         </TouchableOpacity>
                         
                         <TouchableOpacity 
-                            style={[styles.typeButton, addressType === 'Work' && styles.activeTypeButton]}
-                            onPress={() => setAddressType('Work')}
+                            style={[styles.typeButton, label === 'Work' && styles.activeTypeButton]}
+                            onPress={() => setLabel('Work')}
                         >
-                            <Briefcase size={18} color={addressType === 'Work' ? '#fff' : '#6b7280'} />
-                            <Text style={[styles.typeText, addressType === 'Work' && styles.activeTypeText]}>Work</Text>
+                            <Briefcase size={18} color={label === 'Work' ? '#fff' : '#6b7280'} />
+                            <Text style={[styles.typeText, label === 'Work' && styles.activeTypeText]}>Work</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity 
-                            style={[styles.typeButton, addressType === 'Other' && styles.activeTypeButton]}
-                            onPress={() => setAddressType('Other')}
+                            style={[styles.typeButton, label === 'Other' && styles.activeTypeButton]}
+                            onPress={() => setLabel('Other')}
                         >
-                            <MapPin size={18} color={addressType === 'Other' ? '#fff' : '#6b7280'} />
-                            <Text style={[styles.typeText, addressType === 'Other' && styles.activeTypeText]}>Other</Text>
+                            <MapPin size={18} color={label === 'Other' ? '#fff' : '#6b7280'} />
+                            <Text style={[styles.typeText, label === 'Other' && styles.activeTypeText]}>Other</Text>
                         </TouchableOpacity>
                     </View>
 
@@ -446,6 +600,15 @@ const styles = StyleSheet.create({
         fontSize: 15,
         color: '#111827',
         backgroundColor: '#f9fafb',
+    },
+    inputError: {
+        borderColor: '#ef4444',
+    },
+    errorText: {
+        color: '#ef4444',
+        fontSize: 12,
+        marginTop: 4,
+        fontWeight: '500',
     },
     typeContainer: {
         flexDirection: 'row',
