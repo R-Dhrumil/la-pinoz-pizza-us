@@ -249,13 +249,6 @@ const SplashScreen2 = () => {
       <View style={styles.bgWave1} />
       <View style={styles.bgWave2} />
 
-      {/* Logo top-left watermark */}
-      <Image
-        source={require('../assets/images/logo.png')}
-        style={styles.watermark}
-        resizeMode="contain"
-      />
-
       {/* Pulse rings */}
       <View style={styles.pulseContainer}>
         <PulseRing delay={0}    size={220} />

@@ -210,7 +210,7 @@ const HomeScreen = () => {
         {/* ── GREEN TOP BAR ── */}
         <View style={styles.topBar}>
           {/* Logo */}
-          <Image source={require('../assets/images/logo.png')} style={styles.topBarLogo} />
+          <Image source={require('../assets/images/usa-logo.png')} style={styles.topBarLogo} />
 
           {/* Brand + Address */}
           <TouchableOpacity style={styles.topBarRight} onPress={() => navigation.navigate('StoreLocation' as any)}>

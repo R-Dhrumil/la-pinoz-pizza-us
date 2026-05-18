@@ -96,7 +96,7 @@ const SplashScreen1 = () => {
       >
         <View style={styles.logoRing}>
           <Image
-            source={require('../assets/images/logo.png')}
+            source={require('../assets/images/Lapinozz-logo-USA.png')}
             style={styles.logo}
             resizeMode="contain"
           />
@@ -105,7 +105,7 @@ const SplashScreen1 = () => {
 
       {/* Brand name */}
       <Animated.View style={{ opacity: tagOpacity, alignItems: 'center', marginTop: 24 }}>
-        <Text style={styles.brandName}>La Pino'z</Text>
+        <Text style={styles.brandName}>La Pino'z USA</Text>
         <Text style={styles.brandSub}>PIZZA</Text>
       </Animated.View>
 
