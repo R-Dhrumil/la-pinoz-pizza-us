@@ -70,6 +70,12 @@ const MenuScreen = () => {
   const tabHeight = getTabHeight(insets.bottom);
   const lastFetchedStoreId = useRef<number | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
+  const categoriesRef = useRef<Category[]>([]);
+
+  useEffect(() => {
+    categoriesRef.current = categories;
+  }, [categories]);
+
   const [loading, setLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -91,10 +97,7 @@ const MenuScreen = () => {
   const isTabPress = useRef(false);
 
   const fetchCategories = useCallback(async (force = false) => {
-    // If we already have categories shown (stale update), don't re-show skeleton
-    const hasSomething = categories.length > 0;
-    if (!hasSomething) setLoading(true);
-
+    const hasSomething = categoriesRef.current.length > 0;
     let currentStore = selectedStore;
 
     if (!currentStore) {
@@ -119,12 +122,21 @@ const MenuScreen = () => {
       return;
     }
 
+    // Performance Optimization: If store hasn't changed and categories are already loaded, skip fetching!
+    if (!force && lastFetchedStoreId.current === currentStore.id && hasSomething) {
+      setLoading(false);
+      setRefreshing(false);
+      return;
+    }
+
+    if (!hasSomething) setLoading(true);
+
     try {
       const data = await categoryService.getCategories(currentStore.id);
       InteractionManager.runAfterInteractions(() => {
         setCategories(data);
-        if (data.length > 0 && !activeTab) {
-          setActiveTab(data[0].id);
+        if (data.length > 0) {
+          setActiveTab(prev => prev || data[0].id);
         }
         lastFetchedStoreId.current = currentStore?.id || null;
         setLoading(false);
@@ -137,7 +149,7 @@ const MenuScreen = () => {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [selectedStore, activeTab, setSelectedStore, categories.length]);
+  }, [selectedStore, setSelectedStore]);
 
   useFocusEffect(
     useCallback(() => {
@@ -293,6 +305,24 @@ const MenuScreen = () => {
         </SafeAreaView>
       ) : (
         <>
+          {/* Floating Navigation Header */}
+          <View style={[styles.topAbsoluteBar, { top: insets.top + 10, position: 'absolute', left: 16, right: 16, zIndex: 10 }]}>
+            <TouchableOpacity 
+              onPress={() => navigation.goBack()} 
+              style={styles.roundIconButton}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            >
+              <ChevronLeft size={20} color="#fff" />
+            </TouchableOpacity>
+            <TouchableOpacity 
+              onPress={() => navigation.navigate('Cart' as any)} 
+              style={styles.roundIconButton}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            >
+              <ShoppingCart size={20} color="#fff" />
+            </TouchableOpacity>
+          </View>
+
           <SectionList
             ref={sectionListRef}
             style={{ flex: 1 }}
@@ -301,6 +331,10 @@ const MenuScreen = () => {
             stickySectionHeadersEnabled={false}
             onViewableItemsChanged={onViewableItemsChanged}
             viewabilityConfig={{ itemVisiblePercentThreshold: 20 }}
+            initialNumToRender={8}
+            maxToRenderPerBatch={10}
+            windowSize={5}
+            removeClippedSubviews={Platform.OS === 'android'}
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}
@@ -320,14 +354,6 @@ const MenuScreen = () => {
                     onError={() => setImageError(true)}
                   />
                   <View style={styles.coverImageOverlay} />
-                  <View style={[styles.topAbsoluteBar, { top: insets.top + 10 }]}>
-                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.roundIconButton}>
-                      <ChevronLeft size={20} color="#fff" />
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => navigation.navigate('Cart' as any)} style={styles.roundIconButton}>
-                      <ShoppingCart size={20} color="#fff" />
-                    </TouchableOpacity>
-                  </View>
                   <View style={styles.storeCardWrapper}>
                     <View style={styles.storeCard}>
                       <View style={styles.storeCardTitleRow}>
