@@ -90,4 +90,4 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
 }));
 jest.mock('@env', () => ({
   BASE_URL: 'https://api.lapinozusa.com/api',
-}));
+}), { virtual: true });

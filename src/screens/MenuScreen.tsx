@@ -15,6 +15,7 @@ import {
   Modal,
   Platform,
   InteractionManager,
+  Animated,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -57,6 +58,14 @@ import { getTabHeight } from '../utils/constants';
 
 const { width } = Dimensions.get('window');
 
+// ─── Layout constants for getItemLayout ───────────────────────────────────────
+// These must match the actual rendered heights of each component.
+// getItemLayout lets RN jump to any section without it needing to be rendered.
+const LIST_HEADER_HEIGHT = 304; // headerContainer(250) + filtersScroll(marginTop:12 + pill:38 + marginBottom:4)
+const SECTION_HEADER_HEIGHT = 56; // paddingTop:16 + sectionTitle(~24px) + marginBottom:16
+const ITEM_HEIGHT = 162;          // padding:10 + imageContainer:105 + marginBottom:12 + paddingBottom:25 + marginBottom:10
+// ──────────────────────────────────────────────────────────────────────────────
+
 const MenuScreen = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
@@ -84,17 +93,35 @@ const MenuScreen = () => {
   // Search & Modal state
   const [searchQuery, setSearchQuery] = useState('');
   const [isMenuModalVisible, setIsMenuModalVisible] = useState(false);
+  const [isModalShimmering, setIsModalShimmering] = useState(false);
   const searchInputRef = useRef<TextInput>(null);
+
+  // Shimmer animation for menu modal skeleton
+  const shimmerAnim = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (isModalShimmering) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(shimmerAnim, { toValue: 1, duration: 900, useNativeDriver: true }),
+          Animated.timing(shimmerAnim, { toValue: 0, duration: 0, useNativeDriver: true }),
+        ])
+      ).start();
+    } else {
+      shimmerAnim.stopAnimation();
+      shimmerAnim.setValue(0);
+    }
+  }, [isModalShimmering]);
 
   const [activeSort, setActiveSort] = useState<string | null>(null);
   const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
 
-  // SectionList ref for virtualized menu
-  const sectionListRef = useRef<SectionList>(null);
+  // ScrollView ref for menu
+  const scrollViewRef = useRef<ScrollView>(null);
   const tabsScrollViewRef = useRef<ScrollView>(null);
   const tabPositions = useRef<{ [key: number]: number }>({});
   const isTabPress = useRef(false);
+  const categoryPositions = useRef<{ [key: number]: number }>({});
 
   const fetchCategories = useCallback(async (force = false) => {
     const hasSomething = categoriesRef.current.length > 0;
@@ -259,27 +286,41 @@ const MenuScreen = () => {
     scrollToActiveTab(categoryId);
     isTabPress.current = true;
 
-    const sectionIndex = filteredCategories.findIndex(c => c.id === categoryId);
-    if (sectionListRef.current && sectionIndex !== -1) {
-      sectionListRef.current.scrollToLocation({
-        sectionIndex,
-        itemIndex: 0,
+    const yPosition = categoryPositions.current[categoryId];
+    if (scrollViewRef.current && yPosition !== undefined) {
+      scrollViewRef.current.scrollTo({
+        y: yPosition,
         animated,
-        viewOffset: 0,
       });
     }
 
     setTimeout(() => {
       isTabPress.current = false;
     }, 800);
-  }, [filteredCategories]);
+  }, []);
 
-  const onViewableItemsChanged = useCallback(({ viewableItems }: any) => {
-    if (isTabPress.current || viewableItems.length === 0) return;
-    const firstSection = viewableItems.find((v: any) => v.section);
-    if (firstSection && firstSection.section.id !== activeTab) {
-      setActiveTab(firstSection.section.id);
-      scrollToActiveTab(firstSection.section.id);
+  const handleScroll = useCallback((event: any) => {
+    if (isTabPress.current) return;
+    const yOffset = event.nativeEvent.contentOffset.y;
+
+    const positions = Object.entries(categoryPositions.current)
+      .map(([id, y]) => ({ id: Number(id), y }))
+      .sort((a, b) => a.y - b.y);
+
+    if (positions.length === 0) return;
+
+    let activeId = positions[0].id;
+    for (let i = 0; i < positions.length; i++) {
+      if (yOffset + 100 >= positions[i].y) {
+        activeId = positions[i].id;
+      } else {
+        break;
+      }
+    }
+
+    if (activeId !== activeTab) {
+      setActiveTab(activeId);
+      scrollToActiveTab(activeId);
     }
   }, [activeTab]);
 
@@ -323,18 +364,13 @@ const MenuScreen = () => {
             </TouchableOpacity>
           </View>
 
-          <SectionList
-            ref={sectionListRef}
+          <ScrollView
+            ref={scrollViewRef}
             style={{ flex: 1 }}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.content}
-            stickySectionHeadersEnabled={false}
-            onViewableItemsChanged={onViewableItemsChanged}
-            viewabilityConfig={{ itemVisiblePercentThreshold: 20 }}
-            initialNumToRender={8}
-            maxToRenderPerBatch={10}
-            windowSize={5}
-            removeClippedSubviews={Platform.OS === 'android'}
+            scrollEventThrottle={16}
+            onScroll={handleScroll}
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}
@@ -343,107 +379,89 @@ const MenuScreen = () => {
                 progressViewOffset={Platform.OS === 'android' ? 10 : 0}
               />
             }
-            ListHeaderComponent={
-              <>
-                {/* Cover Image & Header Info */}
-                <View style={styles.headerContainer}>
-                  <Image
-                    source={(!imageError && selectedStore?.image) ? { uri: selectedStore.image } : require('../assets/images/pizza_placeholder.jpg')}
-                    style={styles.coverImage}
-                    resizeMode="cover"
-                    onError={() => setImageError(true)}
-                  />
-                  <View style={styles.coverImageOverlay} />
-                  <View style={styles.storeCardWrapper}>
-                    <View style={styles.storeCard}>
-                      <View style={styles.storeCardTitleRow}>
-                        <View style={styles.storeCardLeft}>
-                          <Text style={styles.storeNameText}>La Pino'z Pizza</Text>
-                          <Info size={16} color="#6b7280" />
-                          <View style={styles.openBadge}>
-                            <Text style={styles.openBadgeText}>OPEN</Text>
-                          </View>
-                        </View>
-                        <TouchableOpacity style={styles.shareIconBtn}>
-                          <Share2 size={16} color="#374151" />
-                        </TouchableOpacity>
-                      </View>
-                      <View style={styles.storeCardMetaRow}>
-                        <View style={styles.metaBadge}>
-                          <Clock size={12} color="#4b5563" />
-                          <Text style={styles.metaText}>30 Minutes</Text>
-                        </View>
-                        <TouchableOpacity onPress={() => navigation.navigate('StoreLocation')} style={styles.metaBadge}>
-                          <MapPin size={12} color="#4b5563" />
-                          <Text style={styles.metaText} numberOfLines={1}>{selectedStore ? `${selectedStore.city}, ${selectedStore.state}` : 'Select Location'}</Text>
-                          <ChevronDown size={12} color="#4b5563" />
-                        </TouchableOpacity>
+          >
+            {/* Cover Image & Header Info */}
+            <View style={styles.headerContainer}>
+              <Image
+                source={(!imageError && selectedStore?.image) ? { uri: selectedStore.image } : require('../assets/images/pizza_placeholder.jpg')}
+                style={styles.coverImage}
+                resizeMode="cover"
+                onError={() => setImageError(true)}
+              />
+              <View style={styles.coverImageOverlay} />
+              <View style={styles.storeCardWrapper}>
+                <View style={styles.storeCard}>
+                  <View style={styles.storeCardTitleRow}>
+                    <View style={styles.storeCardLeft}>
+                      <Text style={styles.storeNameText}>La Pino'z Pizza</Text>
+                      <Info size={16} color="#6b7280" />
+                      <View style={styles.openBadge}>
+                        <Text style={styles.openBadgeText}>OPEN</Text>
                       </View>
                     </View>
+                    <TouchableOpacity style={styles.shareIconBtn}>
+                      <Share2 size={16} color="#374151" />
+                    </TouchableOpacity>
+                  </View>
+                  <View style={styles.storeCardMetaRow}>
+                    <View style={styles.metaBadge}>
+                      <Clock size={12} color="#4b5563" />
+                      <Text style={styles.metaText}>30 Minutes</Text>
+                    </View>
+                    <TouchableOpacity onPress={() => navigation.navigate('StoreLocation')} style={styles.metaBadge}>
+                      <MapPin size={12} color="#4b5563" />
+                      <Text style={styles.metaText} numberOfLines={1}>{selectedStore ? `${selectedStore.city}, ${selectedStore.state}` : 'Select Location'}</Text>
+                      <ChevronDown size={12} color="#4b5563" />
+                    </TouchableOpacity>
                   </View>
                 </View>
+              </View>
+            </View>
 
-                {/* Filter Pills */}
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  style={styles.filtersScroll}
-                  contentContainerStyle={styles.filtersContainer}
-                >
-                  <TouchableOpacity
-                    style={[styles.filterPill, activeFilters.length > 0 && styles.filterPillActive]}
-                    onPress={() => setIsFilterModalVisible(true)}
-                  >
-                    <SlidersHorizontal size={14} color={activeFilters.length > 0 ? '#3c7d48' : '#374151'} />
-                    <Text style={[styles.filterPillText, activeFilters.length > 0 && styles.filterPillTextActive]}>
-                      Filter {activeFilters.length > 0 ? `(${activeFilters.length})` : ''}
-                    </Text>
-                    <ChevronDown size={14} color={activeFilters.length > 0 ? '#3c7d48' : '#374151'} />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.filterPill, activeSort === 'price_asc' && styles.filterPillActive]}
-                    onPress={() => setActiveSort(activeSort === 'price_asc' ? null : 'price_asc')}
-                  >
-                    <Text style={[styles.filterPillText, activeSort === 'price_asc' && styles.filterPillTextActive]}>Price low to high</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.filterPill, activeSort === 'price_desc' && styles.filterPillActive]}
-                    onPress={() => setActiveSort(activeSort === 'price_desc' ? null : 'price_desc')}
-                  >
-                    <Text style={[styles.filterPillText, activeSort === 'price_desc' && styles.filterPillTextActive]}>Price high to low</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.filterPill, activeSort === 'rating_desc' && styles.filterPillActive]}
-                    onPress={() => setActiveSort(activeSort === 'rating_desc' ? null : 'rating_desc')}
-                  >
-                    <Text style={[styles.filterPillText, activeSort === 'rating_desc' && styles.filterPillTextActive]}>Rating high to low</Text>
-                  </TouchableOpacity>
-                  {categories.find(c => c.id === activeTab)?.subcategories?.map(sub => (
-                    <TouchableOpacity key={sub.id} style={styles.filterPill}>
-                      <Text style={styles.filterPillText}>{sub.name}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </>
-            }
-            sections={filteredCategories.map(cat => ({ ...cat, data: cat.products ?? [] }))}
-            keyExtractor={(item: any) => item.id.toString()}
-            renderSectionHeader={({ section }: any) => (
-              <View style={[styles.sectionHeader, { paddingHorizontal: 16, paddingTop: 16 }]}>
-                <Text style={styles.sectionTitle}>{section.name}</Text>
-                <Text style={styles.itemCount}>{section.data.length} ITEMS</Text>
-              </View>
-            )}
-            renderItem={({ item, section }: any) => (
-              <View style={{ paddingHorizontal: 16 }}>
-                <MenuItem
-                  item={item}
-                  categoryId={section.id}
-                  onTap={() => navigation.navigate('ProductDetail', { item })}
-                />
-              </View>
-            )}
-            ListEmptyComponent={
+            {/* Filter Pills */}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.filtersScroll}
+              contentContainerStyle={styles.filtersContainer}
+            >
+              <TouchableOpacity
+                style={[styles.filterPill, activeFilters.length > 0 && styles.filterPillActive]}
+                onPress={() => setIsFilterModalVisible(true)}
+              >
+                <SlidersHorizontal size={14} color={activeFilters.length > 0 ? '#3c7d48' : '#374151'} />
+                <Text style={[styles.filterPillText, activeFilters.length > 0 && styles.filterPillTextActive]}>
+                  Filter {activeFilters.length > 0 ? `(${activeFilters.length})` : ''}
+                </Text>
+                <ChevronDown size={14} color={activeFilters.length > 0 ? '#3c7d48' : '#374151'} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.filterPill, activeSort === 'price_asc' && styles.filterPillActive]}
+                onPress={() => setActiveSort(activeSort === 'price_asc' ? null : 'price_asc')}
+              >
+                <Text style={[styles.filterPillText, activeSort === 'price_asc' && styles.filterPillTextActive]}>Price low to high</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.filterPill, activeSort === 'price_desc' && styles.filterPillActive]}
+                onPress={() => setActiveSort(activeSort === 'price_desc' ? null : 'price_desc')}
+              >
+                <Text style={[styles.filterPillText, activeSort === 'price_desc' && styles.filterPillTextActive]}>Price high to low</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.filterPill, activeSort === 'rating_desc' && styles.filterPillActive]}
+                onPress={() => setActiveSort(activeSort === 'rating_desc' ? null : 'rating_desc')}
+              >
+                <Text style={[styles.filterPillText, activeSort === 'rating_desc' && styles.filterPillTextActive]}>Rating high to low</Text>
+              </TouchableOpacity>
+              {categories.find(c => c.id === activeTab)?.subcategories?.map(sub => (
+                <TouchableOpacity key={sub.id} style={styles.filterPill}>
+                  <Text style={styles.filterPillText}>{sub.name}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            {/* Menu Items by Category */}
+            {filteredCategories.length === 0 ? (
               !loading ? (
                 <View style={styles.centered}>
                   <Text style={styles.messageText}>
@@ -451,9 +469,33 @@ const MenuScreen = () => {
                   </Text>
                 </View>
               ) : null
-            }
-            onScrollToIndexFailed={() => {}}
-          />
+            ) : (
+              filteredCategories.map((section) => (
+                <View
+                  key={section.id}
+                  onLayout={(event) => {
+                    const { y } = event.nativeEvent.layout;
+                    categoryPositions.current[section.id] = y;
+                  }}
+                >
+                  <View style={[styles.sectionHeader, { paddingHorizontal: 16, paddingTop: 16 }]}>
+                    <Text style={styles.sectionTitle}>{section.name}</Text>
+                    <Text style={styles.itemCount}>{(section.products ?? []).length} ITEMS</Text>
+                  </View>
+                  <View style={{ paddingHorizontal: 16 }}>
+                    {(section.products ?? []).map((item) => (
+                      <MenuItem
+                        key={item.id}
+                        item={item}
+                        categoryId={section.id}
+                        onTap={() => navigation.navigate('ProductDetail', { item })}
+                      />
+                    ))}
+                  </View>
+                </View>
+              ))
+            )}
+          </ScrollView>
 
           {/* Bottom Action Area: Search + Menu Bar, THEN Floating Cart Below it */}
           <View style={[styles.bottomActionContainer, { bottom: 0 }]}>
@@ -478,7 +520,11 @@ const MenuScreen = () => {
               </View>
               <TouchableOpacity
                 style={styles.bottomMenuBtn}
-                onPress={() => setIsMenuModalVisible(true)}
+                onPress={() => {
+                  setIsModalShimmering(true);
+                  setIsMenuModalVisible(true);
+                  setTimeout(() => setIsModalShimmering(false), 400);
+                }}
               >
                 <Text style={styles.bottomMenuBtnText}>Menu</Text>
               </TouchableOpacity>
@@ -512,29 +558,60 @@ const MenuScreen = () => {
               </TouchableOpacity>
             </View>
             <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
-              {categories.map(category => (
-                <TouchableOpacity
-                  key={category.id}
-                  style={styles.modalCategoryItem}
-                  onPress={() => {
-                    handleTabPress(category.id, true);
-                    setIsMenuModalVisible(false);
-                  }}
-                >
-                  <Text
-                    style={[
-                      styles.modalCategoryText,
-                      activeTab === category.id &&
-                        styles.modalCategoryTextActive,
-                    ]}
-                  >
-                    {category.name}
-                  </Text>
-                  <Text style={styles.modalCategoryCount}>
-                    ({category.products?.length || 0})
-                  </Text>
-                </TouchableOpacity>
-              ))}
+              {isModalShimmering
+                ? Array.from({ length: 7 }).map((_, i) => {
+                    const translateX = shimmerAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [-250, 250],
+                    });
+                    return (
+                      <View key={i} style={styles.shimmerRow}>
+                        <View style={styles.shimmerBase}>
+                          <Animated.View
+                            style={[
+                              styles.shimmerGlow,
+                              { transform: [{ translateX }] },
+                            ]}
+                          />
+                        </View>
+                        <View style={[styles.shimmerBase, styles.shimmerBadge]}>
+                          <Animated.View
+                            style={[
+                              styles.shimmerGlow,
+                              { transform: [{ translateX }] },
+                            ]}
+                          />
+                        </View>
+                      </View>
+                    );
+                  })
+                : filteredCategories.map(category => (
+                    <TouchableOpacity
+                      key={category.id}
+                      style={styles.modalCategoryItem}
+                      onPress={() => {
+                        // Close modal FIRST, then scroll after dismiss animation completes
+                        setIsMenuModalVisible(false);
+                        setTimeout(() => {
+                          handleTabPress(category.id, true);
+                        }, 350);
+                      }}
+                    >
+                      <Text
+                        style={[
+                          styles.modalCategoryText,
+                          activeTab === category.id &&
+                            styles.modalCategoryTextActive,
+                        ]}
+                      >
+                        {category.name}
+                      </Text>
+                      <Text style={styles.modalCategoryCount}>
+                        ({category.products?.length || 0})
+                      </Text>
+                    </TouchableOpacity>
+                  ))
+              }
             </ScrollView>
           </TouchableOpacity>
         </TouchableOpacity>
@@ -657,6 +734,8 @@ const MenuScreen = () => {
           </View>
         </View>
       </Modal>
+
+
     </View>
   );
 };
@@ -1074,6 +1153,36 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
+  },
+  shimmerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+    overflow: 'hidden',
+  },
+  shimmerBase: {
+    height: 16,
+    flex: 1,
+    borderRadius: 8,
+    backgroundColor: '#e5e7eb',
+    overflow: 'hidden',
+  },
+  shimmerBadge: {
+    flex: 0,
+    width: 36,
+    marginLeft: 12,
+    borderRadius: 8,
+  },
+  shimmerGlow: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    width: 120,
+    backgroundColor: 'rgba(255,255,255,0.65)',
+    borderRadius: 8,
   },
 });
 
