@@ -1,8 +1,12 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Product } from '../services/categoryService';
 import { useAuth } from './AuthContext';
 import { offerService, Offer, AppliedPromo } from '../services/offerService';
 import { useStore } from './StoreContext';
+
+const CART_STORAGE_KEY = '@lapinoz_cart_items';
+const ORDER_MODE_STORAGE_KEY = '@lapinoz_order_mode';
 
 export interface CartItem {
   id: string;
@@ -48,8 +52,48 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [orderMode, setOrderMode] = useState<'delivery' | 'pickup'>('delivery');
+  const [isHydrated, setIsHydrated] = useState(false);
   const { user } = useAuth();
   const { selectedStore } = useStore();
+
+  // ─── Restore cart from AsyncStorage on app launch ───────────────────────
+  useEffect(() => {
+    const loadCart = async () => {
+      try {
+        const [savedCart, savedMode] = await Promise.all([
+          AsyncStorage.getItem(CART_STORAGE_KEY),
+          AsyncStorage.getItem(ORDER_MODE_STORAGE_KEY),
+        ]);
+        if (savedCart) {
+          setCartItems(JSON.parse(savedCart));
+        }
+        if (savedMode === 'pickup' || savedMode === 'delivery') {
+          setOrderMode(savedMode);
+        }
+      } catch (e) {
+        console.warn('Failed to load cart from storage:', e);
+      } finally {
+        setIsHydrated(true);
+      }
+    };
+    loadCart();
+  }, []);
+
+  // ─── Persist cartItems to AsyncStorage whenever they change ─────────────
+  useEffect(() => {
+    if (!isHydrated) return; // Don't overwrite storage before initial load
+    AsyncStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems)).catch(e =>
+      console.warn('Failed to save cart:', e)
+    );
+  }, [cartItems, isHydrated]);
+
+  // ─── Persist orderMode to AsyncStorage whenever it changes ──────────────
+  useEffect(() => {
+    if (!isHydrated) return;
+    AsyncStorage.setItem(ORDER_MODE_STORAGE_KEY, orderMode).catch(e =>
+      console.warn('Failed to save order mode:', e)
+    );
+  }, [orderMode, isHydrated]);
 
   // Discount Module State
   const [availableOffers, setAvailableOffers] = useState<Offer[]>([]);
@@ -65,6 +109,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     setDiscountAmount(0);
     setAppliedPromos([]);
     setValidationError(null);
+    // Also wipe persisted storage
+    AsyncStorage.removeItem(CART_STORAGE_KEY).catch(() => {});
   };
 
   // Fetch available offers when store changes
