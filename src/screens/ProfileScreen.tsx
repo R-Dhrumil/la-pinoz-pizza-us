@@ -88,10 +88,9 @@ const ProfileScreen = () => {
       badgeColor: '#3c7d48' 
     },
     { id: 'address', label: 'Manage Address', icon: MapPin, badge: null },
-    { id: 'refund', label: 'Track My Refund', icon: BadgeDollarSign, badge: null },
+    
     { id: 'concern', label: 'Raise a Concern', icon: MessageCircle, badge: null },
     { id: 'share', label: 'Share this app', icon: Share2, badge: null },
-    { id: 'faqs', label: 'FAQs', icon: HelpCircle, badge: null },
     { id: 'privacy', label: 'Privacy Policy', icon: ShieldCheck, badge: null },
     { id: 'terms', label: 'Terms and Conditions', icon: FileText, badge: null },
   ];
@@ -150,9 +149,15 @@ const ProfileScreen = () => {
                             } else if (item.id === 'orders') {
                                 navigation.navigate('MyOrders');
                             } else if (item.id === 'privacy') {
-                                Linking.openURL('https://www.lapinozusa.com/privacy');
+                                navigation.navigate('AppWebView', {
+                                    url: 'https://www.lapinozusa.com/privacy?app=true',
+                                    title: 'Privacy Policy',
+                                });
                             } else if (item.id === 'terms') {
-                                Linking.openURL('https://www.lapinozusa.com/terms');
+                                navigation.navigate('AppWebView', {
+                                    url: 'https://www.lapinozusa.com/terms?app=true',
+                                    title: 'Terms and Conditions',
+                                });
                             }
                             // Add other navigation cases here if needed
                         }}
