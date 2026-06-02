@@ -18,6 +18,7 @@ import StoreLocationScreen from '../screens/StoreLocationScreen';
 import CheckoutScreen from '../screens/CheckoutScreen';
 import PaymentWebViewScreen from '../screens/PaymentWebViewScreen';
 import AppWebViewScreen from '../screens/AppWebViewScreen';
+import RaiseConcernScreen from '../screens/RaiseConcernScreen';
 import { Product, ProductVariant } from '../services/categoryService';
 import { PendingOrderData } from '../services/paymentService';
 import { Category } from '../services/categoryService';
@@ -54,6 +55,7 @@ export type AuthStackParamList = {
   EditProfile: undefined;
   TrackOrder: { orderId: number };
   AppWebView: { url: string; title: string };
+  RaiseConcern: undefined;
 };
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
@@ -137,6 +139,11 @@ const AuthNavigator = () => {
         name="TrackOrder" 
         component={TrackOrderScreen} 
         options={{ animation: 'slide_from_bottom' }} 
+      />
+      <Stack.Screen 
+        name="RaiseConcern" 
+        component={RaiseConcernScreen} 
+        options={{ animation: 'slide_from_right' }} 
       />
     </Stack.Navigator>
 

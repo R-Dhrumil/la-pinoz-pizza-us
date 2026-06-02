@@ -148,6 +148,8 @@ const ProfileScreen = () => {
                                 navigation.navigate('ManageAddress');
                             } else if (item.id === 'orders') {
                                 navigation.navigate('MyOrders');
+                            } else if (item.id === 'concern') {
+                                navigation.navigate('RaiseConcern');
                             } else if (item.id === 'privacy') {
                                 navigation.navigate('AppWebView', {
                                     url: 'https://www.lapinozusa.com/privacy?app=true',
