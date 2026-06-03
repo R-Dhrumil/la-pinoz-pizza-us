@@ -46,6 +46,21 @@ export const authService = {
         return response.data;
     },
 
+    sendEmailOtp: async (email: string) => {
+        const response = await apiClient.post('/Auth/send-email-otp', { email });
+        return response.data;
+    },
+
+    verifyEmailOtp: async (email: string, otp: string) => {
+        const response = await apiClient.post('/Auth/verify-email-otp', { email, otp });
+        return response.data;
+    },
+
+    forgotPassword: async (email: string) => {
+        const response = await apiClient.post('/Auth/forgot-password', { email });
+        return response.data;
+    },
+
     logout: async () => {
         const response = await apiClient.post('/auth/logout');
         return response.data;

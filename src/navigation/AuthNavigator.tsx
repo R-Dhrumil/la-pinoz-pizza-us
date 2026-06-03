@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import TabNavigator from './TabNavigator';
 import LoginScreen from '../screens/auth/LoginScreen';
 import SignupScreen from '../screens/auth/SignupScreen';
+import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
 import CartScreen from '../screens/CartScreen';
 import SplashScreen1 from '../screens/SplashScreen1';
 import SplashScreen2 from '../screens/SplashScreen2';
@@ -31,6 +32,7 @@ export type AuthStackParamList = {
   Splash2: undefined;
   Login: undefined;
   Signup: undefined;
+  ForgotPassword: undefined;
   MainTabs: undefined; // Replaces 'Home'
   CategoryProducts: { category: Category };
   ProductDetail: { 
@@ -78,6 +80,7 @@ const AuthNavigator = () => {
       <Stack.Screen name="Splash2" component={SplashScreen2} options={{ animation: 'fade' }} />
       <Stack.Screen name="Login"   component={LoginScreen}  options={{ animation: 'fade' }} />
       <Stack.Screen name="Signup"  component={SignupScreen} />
+      <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ animation: 'slide_from_right' }} />
       <Stack.Screen name="MainTabs" component={TabNavigator} options={{ animation: 'fade' }} />
       <Stack.Screen 
         name="CategoryProducts" 
