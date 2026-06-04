@@ -63,7 +63,8 @@ const CategoryProductsScreen = () => {
                 <MenuItem 
                     key={item.id} 
                     item={item} 
-                    onTap={() => navigation.navigate('ProductDetail', { item })} 
+                    categoryId={category.id}
+                    onTap={() => navigation.navigate('ProductDetail', { item, categoryId: category.id })} 
                 />
             ))}
             

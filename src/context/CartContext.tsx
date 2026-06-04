@@ -4,6 +4,7 @@ import { Product } from '../services/categoryService';
 import { useAuth } from './AuthContext';
 import { offerService, Offer, AppliedPromo, ValidateOfferRequest } from '../services/offerService';
 import { useStore } from './StoreContext';
+import { taxService, StoreTax } from '../services/taxService';
 
 const CART_STORAGE_KEY = '@lapinoz_cart_items';
 const ORDER_MODE_STORAGE_KEY = '@lapinoz_order_mode';
@@ -45,6 +46,8 @@ interface CartContextType {
   isValidatingOffers: boolean;
   applyOfferCode: (code: string) => void;
   removeOfferCode: (code: string) => void;
+  taxBreakdown: { name: string; percentage: number; amount: number }[];
+  totalTaxAmount: number;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -102,6 +105,81 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [appliedPromos, setAppliedPromos] = useState<AppliedPromo[]>([]);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isValidatingOffers, setIsValidatingOffers] = useState<boolean>(false);
+
+  // Dynamic Taxes State
+  const [storeTaxes, setStoreTaxes] = useState<StoreTax[]>([]);
+  const [taxBreakdown, setTaxBreakdown] = useState<{ name: string; percentage: number; amount: number }[]>([]);
+  const [totalTaxAmount, setTotalTaxAmount] = useState<number>(0);
+
+  const totalAmount = cartItems.reduce(
+    (total, item) => total + (item.originalPrice || item.price) * item.quantity,
+    0
+  );
+
+  const totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
+
+  // Fetch active taxes when store changes
+  useEffect(() => {
+    const fetchTaxes = async () => {
+      if (selectedStore?.id) {
+        try {
+          const taxes = await taxService.getActiveStoreTaxes(selectedStore.id);
+          setStoreTaxes(taxes);
+        } catch (error) {
+          console.error('Failed to load active store taxes:', error);
+          setStoreTaxes([]);
+        }
+      } else {
+        setStoreTaxes([]);
+      }
+    };
+    fetchTaxes();
+  }, [selectedStore]);
+
+  // Recalculate taxes whenever cart items, discount amount, or store taxes change
+  useEffect(() => {
+    if (!storeTaxes.length || !cartItems.length) {
+      setTaxBreakdown([]);
+      setTotalTaxAmount(0);
+      return;
+    }
+
+    const breakdown: { name: string; percentage: number; amount: number }[] = [];
+    let totalTax = 0;
+    const deliveryFeeVal = 0; // matching website: tax.appliesToDeliveryFee applies to delivery fee (usually 0 in checkout tax block or config)
+    const packagingFeeVal = 0;
+
+    storeTaxes.forEach(tax => {
+      let taxableAmount = 0;
+
+      // Sum item prices that belong to categories this tax applies to
+      cartItems.forEach(item => {
+        const rawCatId = item.categoryId ?? (item.originalProduct as any)?.categoryId;
+        if (rawCatId !== undefined && rawCatId !== null) {
+          const itemCatId = Number(rawCatId);
+          const taxCatIds = tax.categoryIds ? tax.categoryIds.map(Number) : [];
+          if (taxCatIds.includes(itemCatId)) {
+            const itemTotal = item.price * item.quantity;
+            const itemDiscountShare = totalAmount > 0 ? (itemTotal / totalAmount) * (discountAmount || 0) : 0;
+            const discountedItemTotal = Math.max(0, itemTotal - itemDiscountShare);
+            taxableAmount += discountedItemTotal;
+          }
+        }
+      });
+
+      if (tax.appliesToDeliveryFee) taxableAmount += deliveryFeeVal;
+      if (tax.appliesToPackagingFee) taxableAmount += packagingFeeVal;
+
+      if (taxableAmount > 0) {
+        const amount = (taxableAmount * tax.percentage) / 100;
+        breakdown.push({ name: tax.taxName, percentage: tax.percentage, amount });
+        totalTax += amount;
+      }
+    });
+
+    setTaxBreakdown(breakdown);
+    setTotalTaxAmount(totalTax);
+  }, [storeTaxes, cartItems, discountAmount, totalAmount]);
 
   const clearCart = () => {
     setCartItems([]);
@@ -250,20 +328,14 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  const totalAmount = cartItems.reduce(
-    (total, item) => total + (item.originalPrice || item.price) * item.quantity,
-    0
-  );
-
-  const totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
-
   return (
     <CartContext.Provider
       value={{ 
         cartItems, addToCart, removeFromCart, deleteItem, updateCartItem, clearCart, 
         totalAmount, totalItems, orderMode, setOrderMode,
         availableOffers, appliedOfferCodes, discountAmount, appliedPromos, validationError,
-        isValidatingOffers, applyOfferCode, removeOfferCode
+        isValidatingOffers, applyOfferCode, removeOfferCode,
+        taxBreakdown, totalTaxAmount
       }}
     >
       {children}

@@ -27,7 +27,7 @@ const CartScreen = () => {
   const { 
     cartItems, totalAmount, addToCart, removeFromCart, deleteItem, orderMode, setOrderMode,
     availableOffers, appliedOfferCodes, discountAmount, appliedPromos, validationError,
-    applyOfferCode, removeOfferCode, isValidatingOffers
+    applyOfferCode, removeOfferCode, isValidatingOffers, taxBreakdown, totalTaxAmount
   } = useCart();
   const { isAuthenticated } = useAuth();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
@@ -53,7 +53,7 @@ const CartScreen = () => {
 
   if (cartItems.length === 0) {
     return (
-      <ScreenContainer useScrollView={false}>
+      <ScreenContainer useScrollView={false} containerStyle={styles.container}>
         <View style={styles.header}>
             <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
                 <ArrowLeft size={24} color="#000" />
@@ -76,9 +76,8 @@ const CartScreen = () => {
     );
   }
 
-  const tax = (totalAmount - discountAmount) * PRICING.TAX_RATE;
   const deliveryFee = orderMode === 'delivery' ? PRICING.DELIVERY_FEE : 0;
-  const finalTotal = totalAmount - discountAmount + tax + deliveryFee;
+  const finalTotal = totalAmount - discountAmount + totalTaxAmount + deliveryFee;
 
   return (
     <ScreenContainer useScrollView={false} containerStyle={styles.container}>
@@ -150,16 +149,17 @@ const CartScreen = () => {
                                     <TouchableOpacity 
                                         style={styles.editButton}
                                         onPress={() => {
-                                            navigation.navigate('ProductDetail', {
-                                                item: item.originalProduct,
-                                                editMode: true,
-                                                existingCartId: item.id,
-                                                prefill: {
-                                                    variant: item.variant,
-                                                    toppings: item.toppings,
-                                                    quantity: item.quantity
-                                                }
-                                            });
+                                             navigation.navigate('ProductDetail', {
+                                                 item: item.originalProduct,
+                                                 categoryId: item.categoryId,
+                                                 editMode: true,
+                                                 existingCartId: item.id,
+                                                 prefill: {
+                                                     variant: item.variant,
+                                                     toppings: item.toppings,
+                                                     quantity: item.quantity
+                                                 }
+                                             });
                                         }}
                                     >
                                         <Pencil size={14} color="#3c7d48" />
@@ -388,42 +388,104 @@ const CartScreen = () => {
               <Plus size={16} color="#3c7d48" />
           </TouchableOpacity>
 
-          {/* Bill Details */}
+          {/* Order Summary */}
           <View style={styles.billSection}>
-              <Text style={styles.billTitle}>Bill Details</Text>
-              
-              <View style={styles.billRow}>
-                  <Text style={styles.billLabel}>Item Total</Text>
-                  <Text style={styles.billValue}>${totalAmount.toFixed(2)}</Text>
-              </View>
-              {appliedPromos.length > 0 && appliedPromos.map((promo) => (
-                <View key={promo.code} style={styles.billRow}>
-                    <Text style={[styles.billLabel, { color: '#3c7d48', fontWeight: 'bold' }]}>Discount ({promo.code})</Text>
-                    <Text style={[styles.billValue, { color: '#3c7d48', fontWeight: 'bold' }]}>-${promo.discount.toFixed(2)}</Text>
-                </View>
+              <Text style={styles.billTitle}>Order Summary</Text>
+
+              {/* Per-item lines */}
+              {cartItems.map((item) => (
+                  <View key={item.id} style={styles.billRow}>
+                      <Text style={[styles.billLabel, { flex: 1, marginRight: 8, color: '#4b5563' }]} numberOfLines={1}>
+                          {item.quantity}x {item.name}
+                      </Text>
+                      <Text style={[styles.billValue, { fontWeight: '400', color: '#4b5563' }]}>
+                          ${((item.originalPrice || item.price) * item.quantity).toFixed(2)}
+                      </Text>
+                  </View>
               ))}
-              {/* Fallback for total discount if promos aren't listed individually but amount is present */}
-              {appliedPromos.length === 0 && discountAmount > 0 && (
-                <View style={styles.billRow}>
-                    <Text style={[styles.billLabel, { color: '#3c7d48', fontWeight: 'bold' }]}>Promo Discount</Text>
-                    <Text style={[styles.billValue, { color: '#3c7d48', fontWeight: 'bold' }]}>-${discountAmount.toFixed(2)}</Text>
-                </View>
+
+              {/* Only show Subtotal and Promo section if an offer is applied */}
+              {appliedPromos.length > 0 && (
+                  <>
+                      <View style={styles.billDividerDashed} />
+                      <View style={styles.billRow}>
+                          <Text style={[styles.billLabel, { fontWeight: '600', color: '#374151' }]}>Subtotal</Text>
+                          <Text style={[styles.billValue, { fontWeight: '600', color: '#374151' }]}>${totalAmount.toFixed(2)}</Text>
+                      </View>
+                      {appliedPromos.map((promo) => (
+                          <View key={promo.code} style={styles.billRow}>
+                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                                  <BadgePercent size={12} color="#3c7d48" />
+                                  <Text style={[styles.billLabel, { color: '#3c7d48', fontWeight: '600' }]}>
+                                      Offer Applied ({promo.code})
+                                  </Text>
+                              </View>
+                              <Text style={[styles.billValue, { color: '#3c7d48', fontWeight: '700' }]}>
+                                  -{promo.type === 'BXGY' ? 'Buy X Get Y' : `$${promo.discount.toFixed(2)}`}
+                              </Text>
+                          </View>
+                      ))}
+                  </>
               )}
+
+              {/* Tax section */}
+              {taxBreakdown.length > 0 && (
+                  <>
+                      <View style={styles.billDividerDashed} />
+                      {discountAmount > 0 && (
+                          <View style={styles.billRow}>
+                              <Text style={[styles.billLabel, { fontWeight: '600', color: '#374151' }]}>Amount Subject to Tax</Text>
+                              <Text style={[styles.billValue, { fontWeight: '600', color: '#374151' }]}>
+                                  ${Math.max(0, totalAmount - discountAmount).toFixed(2)}
+                              </Text>
+                          </View>
+                      )}
+                      {taxBreakdown.map((t, index) => (
+                          <View key={index} style={styles.billRow}>
+                              <Text style={[styles.billLabel, { color: '#4b5563' }]}>{t.name} ({t.percentage}%)</Text>
+                              <Text style={[styles.billValue, { fontWeight: '400', color: '#4b5563' }]}>${t.amount.toFixed(2)}</Text>
+                          </View>
+                      ))}
+                      <View style={styles.billRow}>
+                          <Text style={[styles.billLabel, { fontWeight: '600', color: '#374151' }]}>Total Tax</Text>
+                          <Text style={[styles.billValue, { fontWeight: '600', color: '#374151' }]}>${totalTaxAmount.toFixed(2)}</Text>
+                      </View>
+                  </>
+              )}
+
+              {/* Delivery Fee Section */}
+              <View style={styles.billDividerDashed} />
               <View style={styles.billRow}>
-                  <Text style={styles.billLabel}>Taxes (5%)</Text>
-                  <Text style={styles.billValue}>${tax.toFixed(2)}</Text>
-              </View>
-               <View style={styles.billRow}>
-                  <Text style={styles.billLabel}>Delivery Fee</Text>
-                  <Text style={styles.billValue}>${deliveryFee.toFixed(2)}</Text>
+                  <Text style={[styles.billLabel, { color: '#4b5563' }]}>Delivery Fee</Text>
+                  {orderMode === 'pickup' ? (
+                      <Text style={[styles.billValue, { color: '#3c7d48', fontWeight: '700' }]}>FREE</Text>
+                  ) : (
+                      <Text style={[styles.billValue, { fontWeight: '400', color: '#4b5563' }]}>${deliveryFee.toFixed(2)}</Text>
+                  )}
               </View>
 
               <View style={styles.divider} />
 
+              {/* Total */}
               <View style={styles.billRow}>
-                  <Text style={styles.totalLabel}>To Pay</Text>
-                  <Text style={styles.totalValue}>${finalTotal.toFixed(2)}</Text>
+                  <Text style={styles.totalLabel}>Total</Text>
+                  <View style={{ alignItems: 'flex-end' }}>
+                      {discountAmount > 0 && (
+                          <Text style={{ fontSize: 11, color: '#9ca3af', textDecorationLine: 'line-through' }}>
+                              ${(totalAmount + totalTaxAmount + deliveryFee).toFixed(2)}
+                          </Text>
+                      )}
+                      <Text style={styles.totalValue}>${finalTotal.toFixed(2)}</Text>
+                  </View>
               </View>
+
+              {discountAmount > 0 && (
+                  <View style={styles.savingsSummaryRow}>
+                      <Text style={styles.savingsSummaryText}>
+                          🎉 You save ${discountAmount.toFixed(2)} on this order!
+                      </Text>
+                  </View>
+              )}
           </View>
       </ScrollView>
 
@@ -643,6 +705,27 @@ const styles = StyleSheet.create({
   totalValue: {
       fontSize: 18,
       fontWeight: 'bold',
+      color: '#3c7d48',
+  },
+  billDividerDashed: {
+      borderBottomWidth: 1,
+      borderBottomColor: '#e5e7eb',
+      borderStyle: 'dashed',
+      marginBottom: 10,
+      marginTop: 2,
+  },
+  savingsSummaryRow: {
+      backgroundColor: '#f0fdf4',
+      borderRadius: 8,
+      padding: 10,
+      marginTop: 4,
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: '#bbf7d0',
+  },
+  savingsSummaryText: {
+      fontSize: 13,
+      fontWeight: '700',
       color: '#3c7d48',
   },
   bottomBar: {

@@ -286,7 +286,7 @@ const HomeScreen = () => {
                             description: item.description || 'Delicious pizza',
                             price: item.basePrice || item.price 
                         }}
-                        onAdd={() => navigation.navigate('ProductDetail' as any, { item })}
+                        onAdd={() => navigation.navigate('ProductDetail' as any, { item, categoryId: item.categoryId })}
                     />
                 )}
                 snapToInterval={CARD_WIDTH + SPACING}

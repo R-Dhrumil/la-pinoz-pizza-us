@@ -43,6 +43,7 @@ export interface Product {
     imageUrl: string;
     isVeg: boolean | null;
     isBestseller: boolean;
+    categoryId?: number;
     subcategoryId?: number;
     variants?: ProductVariant[];
     modifierGroups?: ModifierGroup[];

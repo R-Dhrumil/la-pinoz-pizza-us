@@ -185,7 +185,7 @@ const ProductDetailScreen = () => {
         name: selectedVariant ? `${item.name} (${selectedVariant.size})` : item.name,
         price: Number(calculateTotal())/quantity, // Unit price (original)
         originalPrice: Number(calculateTotal())/quantity,
-        categoryId: categoryId, // Store categoryId
+        categoryId: categoryId || item.categoryId, // Store categoryId
         image: item.imageUrl || '',
         isVeg: item.isVeg,
         description: item.description,
