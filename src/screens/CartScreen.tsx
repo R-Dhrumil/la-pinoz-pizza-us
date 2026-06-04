@@ -68,7 +68,7 @@ const CartScreen = () => {
             />
             <Text style={styles.emptyTitle}>Your cart is empty</Text>
             <Text style={styles.emptyDesc}>Looks like you haven't added any pizza yet.</Text>
-            <TouchableOpacity style={styles.browseBtn} onPress={() => navigation.navigate('Menu' as any)}>
+            <TouchableOpacity style={styles.browseBtn} onPress={() => navigation.navigate('MainTabs', { screen: 'Menu' } as any)}>
                 <Text style={styles.browseBtnText}> BROWSE OUR MENU</Text>
             </TouchableOpacity>
         </View>
