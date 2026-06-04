@@ -256,8 +256,7 @@ const styles = StyleSheet.create({
   formContainer: {
     marginTop: -20, // Negative margin to pull up or just create visual continuity
     backgroundColor: '#fff',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    
     padding: 25,
     flex: 1,
   },

@@ -96,12 +96,7 @@ const ForgotPasswordScreen = () => {
       >
         {/* Header Section */}
         <View style={styles.heroContainer}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={styles.headerBackBtn}
-          >
-            <ArrowLeft size={24} color="#fff" />
-          </TouchableOpacity>
+          
           <View style={styles.heroBrandContainer}>
             <Pizza size={20} color="#fff" />
             <Text style={styles.heroBrandText}>La Pino'z USA</Text>
@@ -153,6 +148,16 @@ const ForgotPasswordScreen = () => {
             onPress={() => navigation.goBack()}
           >
             <Text style={styles.cancelLinkText}>Cancel</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.loginLink}
+            onPress={() => navigation.navigate('Login')}
+          >
+            <Text style={styles.loginLinkText}>
+              Remember your password?{' '}
+              <Text style={styles.loginLinkHighlight}>Login</Text>
+            </Text>
           </TouchableOpacity>
         </View>
       </KeyboardAwareScrollView>
@@ -273,6 +278,20 @@ const styles = StyleSheet.create({
     color: '#6b7280',
     fontSize: 14,
     fontWeight: '600',
+  },
+  loginLink: {
+    alignSelf: 'center',
+    paddingVertical: 12,
+    marginTop: 4,
+  },
+  loginLinkText: {
+    color: '#6b7280',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  loginLinkHighlight: {
+    color: '#3c7d48',
+    fontWeight: '700',
   },
   successContainer: {
     flex: 1,
