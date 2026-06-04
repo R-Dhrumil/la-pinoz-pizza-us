@@ -23,7 +23,6 @@ import { X, Star, Minus, Plus, Check } from 'lucide-react-native';
 import { useCart } from '../context/CartContext';
 import { useStore } from '../context/StoreContext';
 import { Product, ProductVariant, ModifierGroup, ModifierOption } from '../services/categoryService';
-import { offerService } from '../services/offerService';
 import { ScreenContainer } from '../components/ScreenContainer';
 
 const { width } = Dimensions.get('window');
@@ -132,21 +131,11 @@ const ProductDetailScreen = () => {
     return option.price;
   };
 
-  const calculateTotal = (useDiscount = false) => {
+  const calculateTotal = () => {
     let total = item.basePrice;
 
     if (selectedVariant) {
         total = selectedVariant.price;
-    }
-
-    if (useDiscount) {
-        const { discountedPrice } = offerService.getDiscountedPrice(
-            total,
-            availableOffers,
-            categoryId,
-            item.subcategoryId
-        );
-        total = discountedPrice;
     }
 
     // Add selected modifiers
@@ -194,8 +183,8 @@ const ProductDetailScreen = () => {
         ...item, // Fallback properties
         id: uniqueIdParts.join('-'),
         name: selectedVariant ? `${item.name} (${selectedVariant.size})` : item.name,
-        price: Number(calculateTotal(false))/quantity, // Unit price (original)
-        originalPrice: Number(calculateTotal(false))/quantity,
+        price: Number(calculateTotal())/quantity, // Unit price (original)
+        originalPrice: Number(calculateTotal())/quantity,
         categoryId: categoryId, // Store categoryId
         image: item.imageUrl || '',
         isVeg: item.isVeg,
@@ -405,17 +394,7 @@ const ProductDetailScreen = () => {
               <View>
                 <Text style={styles.totalLabel}>Total Price</Text>
                 <View style={styles.priceContainer}>
-                  <Text style={styles.totalBig}>${calculateTotal(true)}</Text>
-                  {calculateTotal(true) !== calculateTotal(false) && (
-                    <>
-                      <Text style={styles.originalPrice}>${calculateTotal(false)}</Text>
-                      <View style={styles.saveBadge}>
-                        <Text style={styles.saveBadgeText}>
-                          Save ${(Number(calculateTotal(false)) - Number(calculateTotal(true))).toFixed(2)}
-                        </Text>
-                      </View>
-                    </>
-                  )}
+                  <Text style={styles.totalBig}>${calculateTotal()}</Text>
                 </View>
               </View>
               <View style={styles.quantityControl}>

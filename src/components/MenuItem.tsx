@@ -13,7 +13,6 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../navigation/AuthNavigator';
 import { useCart } from '../context/CartContext';
 import { Product } from '../services/categoryService';
-import { offerService } from '../services/offerService';
 import { Star, BadgePercent, Plus } from 'lucide-react-native';
 
 interface MenuItemProps {
@@ -27,22 +26,12 @@ const MenuItem = ({ item, onTap, categoryId }: MenuItemProps) => {
   const { cartItems, removeFromCart, availableOffers } = useCart();
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // Calculate discounted price
-  const { discountedPrice, appliedOffer } = offerService.getDiscountedPrice(
-    item.basePrice, 
-    availableOffers, 
-    categoryId, 
-    item.subcategoryId
-  );
-  
-  const hasDiscount = discountedPrice < item.basePrice;
-
-  // Check if any active offer applies to this item (for badge if needed, but we prefer price)
-  const hasOffer = availableOffers.some(offer => 
+  // Check if any active offer applies to this item (show badge, discount applies at checkout)
+  const hasOffer = availableOffers.some(offer =>
     (categoryId && offer.categoryIds.includes(categoryId)) ||
-    (item.subcategoryId && offer.subcategoryIds.includes(item.subcategoryId))
+    (item.subcategoryId && offer.subcategoryIds && offer.subcategoryIds.includes(item.subcategoryId))
   );
-  
+
   // Check if this specific item ID is in the cart
   const cartItem = cartItems.find(i => i.id === item.id.toString());
   const quantity = cartItem ? cartItem.quantity : 0;
@@ -88,17 +77,7 @@ const MenuItem = ({ item, onTap, categoryId }: MenuItemProps) => {
         )}
         <Text style={styles.itemName}>{item.name}</Text>
         <View style={styles.priceContainer}>
-          {hasDiscount ? (
-            <>
-              <Text style={styles.itemPrice}>${discountedPrice}</Text>
-              <Text style={styles.originalPrice}>${item.basePrice}</Text>
-              <View style={styles.saveBadge}>
-                <Text style={styles.saveBadgeText}>Save ${(item.basePrice - discountedPrice).toFixed(2)}</Text>
-              </View>
-            </>
-          ) : (
-            <Text style={styles.itemPrice}>${item.basePrice}</Text>
-          )}
+          <Text style={styles.itemPrice}>${item.basePrice}</Text>
         </View>
         
         {/* Placeholder 5-Star Rating */}

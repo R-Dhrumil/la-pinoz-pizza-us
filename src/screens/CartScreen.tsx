@@ -251,15 +251,23 @@ const CartScreen = () => {
               )}
 
               {availableOffers.length > 0 ? (
-                  (showAllOffers ? availableOffers : availableOffers.slice(0, 2)).map((offer, index) => {
+                  (showAllOffers ? availableOffers : availableOffers.slice(0, 2)).map((offer) => {
                       const isApplied = appliedPromos.some(p => p.code === offer.offerCode);
                       const isSelected = appliedOfferCodes.includes(offer.offerCode) && !isApplied;
                       const isExpanded = expandedOffers.includes(offer.id);
-                      
-                      // Smart Feedback Logic
-                      const minOrderMet = !offer.minimumOrderValue || totalAmount >= offer.minimumOrderValue;
-                      const categoryMet = offer.categoryIds.length === 0 || 
+
+                      // Smart Feedback — works for both FlatOff and PercentageOff min values
+                      const minVal = offer.minimumOrderValue ?? offer.minimumPurchase ?? 0;
+                      const minOrderMet = minVal === 0 || totalAmount >= minVal;
+                      const categoryMet = offer.categoryIds.length === 0 ||
                                          cartItems.some(item => offer.categoryIds.includes(item.categoryId || 0));
+
+                      // Type badge label
+                      const typeBadge = offer.offerType === 'BXGY'
+                          ? `Buy ${offer.buyX} Get ${offer.getY}`
+                          : offer.offerType === 'FlatOff'
+                            ? `$${(offer.flatAmount ?? 0).toFixed(2)} Off`
+                            : `${offer.percentage ?? 0}% Off`;
 
                       return (
                           <View key={offer.id} style={[styles.savingsOfferRow, isSelected && styles.selectedOfferRow]}>
@@ -267,7 +275,7 @@ const CartScreen = () => {
                                   <BadgePercent size={20} color="#374151" />
                               </View>
                               <View style={styles.savingsOfferContent}>
-                                  <TouchableOpacity 
+                                  <TouchableOpacity
                                       style={styles.savingsOfferTitleRow}
                                       onPress={() => toggleOfferExpansion(offer.id)}
                                       activeOpacity={0.7}
@@ -281,15 +289,22 @@ const CartScreen = () => {
                                           <ChevronDown size={16} color="#374151" />
                                       )}
                                   </TouchableOpacity>
-                                  <Text style={styles.savingsOfferSubtitle}>Promo Code {offer.offerCode}</Text>
-                                  
+
+                                  {/* Offer type badge + promo code */}
+                                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                                      <View style={styles.offerTypeBadge}>
+                                          <Text style={styles.offerTypeBadgeText}>{typeBadge}</Text>
+                                      </View>
+                                      <Text style={styles.savingsOfferSubtitle}>Code: {offer.offerCode}</Text>
+                                  </View>
+
                                   {isSelected && (
                                       <Text style={styles.selectedStatusText}>
-                                          {!minOrderMet 
-                                              ? `• Add $${(offer.minimumOrderValue! - totalAmount).toFixed(2)} more to apply`
+                                          {!minOrderMet
+                                              ? `• Add $${(minVal - totalAmount).toFixed(2)} more to apply`
                                               : !categoryMet
-                                                ? "• Add required items to apply"
-                                                : "• Conflicts with another offer"}
+                                                ? '• Add required items to apply'
+                                                : '• Conflicts with another offer'}
                                       </Text>
                                   )}
 
@@ -299,10 +314,10 @@ const CartScreen = () => {
                                       </Text>
                                   )}
                               </View>
-                              
+
                               <View style={styles.savingsOfferAction}>
                                   {isApplied || isSelected ? (
-                                      <TouchableOpacity 
+                                      <TouchableOpacity
                                           style={styles.removeOfferBtn}
                                           onPress={() => {
                                               removeOfferCode(offer.offerCode);
@@ -314,7 +329,7 @@ const CartScreen = () => {
                                           <Text style={styles.removeOfferBtnText}>REMOVE</Text>
                                       </TouchableOpacity>
                                   ) : (
-                                      <TouchableOpacity 
+                                      <TouchableOpacity
                                           style={styles.savingsApplyBtn}
                                           onPress={() => {
                                               setPromoCode(offer.offerCode);
@@ -332,7 +347,7 @@ const CartScreen = () => {
 
                                   {(isApplied || isSelected) && (
                                       <View style={[
-                                          styles.statusIndicator, 
+                                          styles.statusIndicator,
                                           isApplied ? styles.appliedIndicator : styles.selectedIndicator
                                       ]}>
                                           <Text style={[
@@ -837,7 +852,20 @@ const styles = StyleSheet.create({
   savingsOfferSubtitle: {
     fontSize: 12,
     color: '#4b5563',
-    marginTop: 4,
+    marginTop: 0,
+  },
+  offerTypeBadge: {
+    backgroundColor: '#f0fdf4',
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderWidth: 1,
+    borderColor: '#bbf7d0',
+  },
+  offerTypeBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#3c7d48',
   },
   savingsOfferDescription: {
     fontSize: 11,

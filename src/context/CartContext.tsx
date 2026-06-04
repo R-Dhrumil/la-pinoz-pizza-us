@@ -2,7 +2,7 @@ import React, { createContext, useState, useContext, ReactNode, useEffect } from
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Product } from '../services/categoryService';
 import { useAuth } from './AuthContext';
-import { offerService, Offer, AppliedPromo } from '../services/offerService';
+import { offerService, Offer, AppliedPromo, ValidateOfferRequest } from '../services/offerService';
 import { useStore } from './StoreContext';
 
 const CART_STORAGE_KEY = '@lapinoz_cart_items';
@@ -113,14 +113,16 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     AsyncStorage.removeItem(CART_STORAGE_KEY).catch(() => {});
   };
 
-  // Fetch available offers when store changes
+  // Fetch available offers when store changes — uses store-specific /StoreOffers/{storeId}/active
   useEffect(() => {
     const fetchOffers = async () => {
-      if (selectedStore) {
-        const allOffers = await offerService.getOffers();
-        // Filter by isActive and storeId
-        const filtered = allOffers.filter(o => o.isActive && (!o.storeId || o.storeId === selectedStore.id));
-        setAvailableOffers(filtered);
+      if (selectedStore?.id) {
+        const storeOffers = await offerService.getStoreOffers(selectedStore.id);
+        // Backend already filters: isActive, date range, not deleted, not over redemption limit
+        const eligibleOffers = storeOffers.filter(o => !o.hasReachedMaxLimit);
+        setAvailableOffers(eligibleOffers);
+      } else {
+        setAvailableOffers([]);
       }
     };
     fetchOffers();
@@ -142,15 +144,14 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       }
 
       setIsValidatingOffers(true);
-      const payload = {
-        storeId: selectedStore?.id || 0,
+      const payload: ValidateOfferRequest = {
+        storeId: selectedStore?.id ?? 0,
         offerCodes: appliedOfferCodes,
         cartItems: cartItems.map(item => ({
-          productId: item.originalProduct?.id || parseInt(item.id.split('-')[0]),
-          categoryId: item.categoryId,
+          productId: item.originalProduct?.id ?? parseInt(item.id.split('-')[0]) ?? 0,
           quantity: item.quantity,
-          price: item.originalPrice || item.price,
-          size: item.size || item.variant?.size
+          price: item.originalPrice ?? item.price,
+          size: item.variant?.size ?? item.size ?? null,
         }))
       };
 

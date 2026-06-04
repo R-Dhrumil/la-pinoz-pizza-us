@@ -1,29 +1,43 @@
 import apiClient from './apiClient';
 
+// Offer type values match backend exactly: 'BXGY' | 'FlatOff' | 'PercentageOff'
 export interface Offer {
     id: number;
     storeId?: number;
-    offerType: 'BXGY' | 'Flat' | 'Percentage';
+    globalOfferId?: number | null;
+    offerType: 'BXGY' | 'FlatOff' | 'PercentageOff';
     categoryIds: number[];
     subcategoryIds: number[];
     sizes: string[];
     displayName: string;
-    description: string;
+    description?: string | null;
     offerCode: string;
+    startDate: string;
+    endDate: string;
+    maxUsesPerOrder: number;
+    maxUsesPerUser: number;
+    totalRedemptions?: number | null;
+    currentRedemptions: number;
     isActive: boolean;
-    buyX?: number;
-    getY?: number;
-    flatAmount?: number;
-    minimumOrderValue?: number;
-    percentage?: number;
-    maxDiscountCap?: number;
+    // BXGY
+    buyX?: number | null;
+    getY?: number | null;
+    // FlatOff
+    flatAmount?: number | null;
+    minimumOrderValue?: number | null;
+    // PercentageOff
+    percentage?: number | null;
+    minimumPurchase?: number | null;
+    maxDiscountCap?: number | null;
+    // Computed by backend per-user
+    hasReachedMaxLimit?: boolean;
 }
 
 export interface CartValidateItem {
     productId: number;
     quantity: number;
     price: number;
-    size?: string;
+    size?: string | null;
 }
 
 export interface ValidateOfferRequest {
@@ -46,16 +60,24 @@ export interface ValidateOfferResponse {
 }
 
 export const offerService = {
-    getOffers: async (): Promise<Offer[]> => {
+    /**
+     * Fetch active offers for a specific store.
+     * Uses /StoreOffers/{storeId}/active — store-specific, time-filtered, auth-aware.
+     */
+    getStoreOffers: async (storeId: number): Promise<Offer[]> => {
         try {
-            const response = await apiClient.get('/Offers');
-            return response.data;
+            const response = await apiClient.get(`/StoreOffers/${storeId}/active`);
+            return response.data || [];
         } catch (error) {
-            console.error('Error fetching offers:', error);
+            console.error('Error fetching store offers:', error);
             return [];
         }
     },
 
+    /**
+     * Validate one or more promo codes against current cart and store.
+     * Backend handles all business logic: BXGY, FlatOff, PercentageOff, stacking rules.
+     */
     validateOffer: async (payload: ValidateOfferRequest): Promise<ValidateOfferResponse> => {
         try {
             const response = await apiClient.post('/Offers/validate', payload);
@@ -71,38 +93,24 @@ export const offerService = {
         }
     },
 
-    getDiscountedPrice: (price: number, offers: Offer[], categoryId?: number, subcategoryId?: number): { discountedPrice: number, appliedOffer: Offer | null } => {
-        let bestPrice = price;
-        let bestOffer: Offer | null = null;
-
-        offers.forEach(offer => {
-            if (!offer.isActive) return;
-            
-            // Only apply automatic offers (those without a code) on the menu/detail screens
-            if (offer.offerCode && offer.offerCode.trim() !== '') return;
-
-            const isApplicable = 
-                (categoryId && offer.categoryIds.includes(categoryId)) ||
-                (subcategoryId && offer.subcategoryIds.includes(subcategoryId));
-
-            if (isApplicable) {
-                let currentPrice = price;
-                if (offer.offerType === 'Percentage' && offer.percentage) {
-                    currentPrice = price * (1 - offer.percentage / 100);
-                } else if (offer.offerType === 'Flat' && offer.flatAmount) {
-                    currentPrice = Math.max(0, price - offer.flatAmount);
-                }
-
-                if (currentPrice < bestPrice) {
-                    bestPrice = currentPrice;
-                    bestOffer = offer;
-                }
-            }
-        });
-
-        return { 
-            discountedPrice: Number(bestPrice.toFixed(2)), 
-            appliedOffer: bestOffer 
-        };
-    }
+    /**
+     * Returns a human-readable description for an offer type.
+     */
+    getOfferDescription: (offer: Offer): string => {
+        if (offer.offerType === 'BXGY') {
+            return `Buy ${offer.buyX}, Get ${offer.getY} free`;
+        }
+        if (offer.offerType === 'FlatOff') {
+            let desc = `$${(offer.flatAmount ?? 0).toFixed(2)} off`;
+            if (offer.minimumOrderValue) desc += ` (min $${offer.minimumOrderValue.toFixed(2)})`;
+            return desc;
+        }
+        if (offer.offerType === 'PercentageOff') {
+            let desc = `${offer.percentage ?? 0}% off`;
+            if (offer.maxDiscountCap) desc += ` (up to $${offer.maxDiscountCap.toFixed(2)})`;
+            if (offer.minimumPurchase) desc += ` (min $${offer.minimumPurchase.toFixed(2)})`;
+            return desc;
+        }
+        return offer.description ?? '';
+    },
 };
