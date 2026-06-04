@@ -630,6 +630,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    marginRight: 10,
   },
   saveBadge: {
     backgroundColor: '#3c7d48',
