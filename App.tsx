@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
+import { toastConfig } from './src/components/CustomToast';
 
 import { AuthProvider } from './src/context/AuthContext';
 import { StoreProvider } from './src/context/StoreContext';
@@ -29,7 +30,7 @@ const App = () => {
           </AuthProvider>
         </ErrorBoundary>
       </SafeAreaProvider>
-      <Toast />
+      <Toast config={toastConfig} />
     </>
   );
 };
