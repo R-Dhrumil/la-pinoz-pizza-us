@@ -15,6 +15,7 @@ import {
   Linking,
   ScrollView,
   InteractionManager,
+  Modal,
 } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { ScreenContainer } from '../components/ScreenContainer';
@@ -38,6 +39,7 @@ import {
   Users,
   ArrowRight,
   ChevronDown,
+  X,
 } from 'lucide-react-native';
 
 import { useCart } from '../context/CartContext';
@@ -52,6 +54,7 @@ import HomeSkeleton from '../components/HomeSkeleton';
 import FloatingCart from '../components/FloatingCart';
 import PizzaSnapCarousel from '../components/PizzaSnapCarousel';
 import { getTabHeight } from '../utils/constants';
+import { DeliveryTeaserModal } from '../components/DeliveryTeaserModal';
 
 
 const { width } = Dimensions.get('window');
@@ -73,6 +76,7 @@ const HomeScreen = () => {
 
   const [refreshing, setRefreshing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [showDeliveryModal, setShowDeliveryModal] = useState(false);
 
   // ── fetchData ─────────────────────────────────────────────────────────────
   const fetchData = async (force = false) => {
@@ -232,13 +236,20 @@ const HomeScreen = () => {
           )}
           <View style={styles.greenToggleWrapper}>
             <TouchableOpacity
-              style={[styles.greenToggleBtn, orderMode === 'delivery' && styles.greenToggleActive]}
-              onPress={() => setOrderMode('delivery')}
+              style={[
+                styles.greenToggleBtn,
+                orderMode === 'delivery' && styles.greenToggleActive,
+                orderMode !== 'delivery' && { opacity: 0.6, position: 'relative' }
+              ]}
+              onPress={() => setShowDeliveryModal(true)}
               activeOpacity={0.85}
             >
               <Text style={[styles.greenToggleText, orderMode === 'delivery' && styles.greenToggleTextActive]}>
                 Delivery
               </Text>
+              <View style={styles.soonBadge}>
+                <Text style={styles.soonBadgeText}>{orderMode === 'delivery' ? 'PREVIEW' : 'SOON'}</Text>
+              </View>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.greenToggleBtn, orderMode === 'pickup' && styles.greenToggleActive]}
@@ -251,8 +262,15 @@ const HomeScreen = () => {
             </TouchableOpacity>
           </View>
 
-
-
+          {/* Delivery Teaser Modal */}
+          <DeliveryTeaserModal
+            visible={showDeliveryModal}
+            onClose={() => setShowDeliveryModal(false)}
+            onSelectPickup={() => {
+              setOrderMode('pickup');
+              setShowDeliveryModal(false);
+            }}
+          />
         </View>
 
         {/* ── SNAP CAROUSEL ── */}
@@ -1008,6 +1026,20 @@ const styles = StyleSheet.create({
   promiseDesc: {
       fontSize: 11,
       color: '#6b7280',
+  },
+  soonBadge: {
+    position: 'absolute',
+    top: 4,
+    right: 8,
+    backgroundColor: '#ffbe33',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  soonBadgeText: {
+    fontSize: 7,
+    fontWeight: '900',
+    color: '#000',
   },
 
 });

@@ -78,14 +78,12 @@ const CheckoutScreen = () => {
         }
 
         if (orderMode === 'delivery') {
-            if (!selectedAddress) {
-                Alert.alert("Address Required", "Please select a delivery address.");
-                return;
-            }
-            if (!selectedAddress.isDeliverable) {
-                Alert.alert("Invalid Address", "Selected address is not deliverable. Please choose another address.");
-                return;
-            }
+            Alert.alert(
+                "Demo Mode", 
+                "Delivery order placement is currently in Preview mode. Please select Pickup to complete your order.",
+                [{ text: "OK" }]
+            );
+            return;
         }
 
         if (!selectedStore) {
@@ -130,7 +128,7 @@ const CheckoutScreen = () => {
                     orderMode: orderMode === 'pickup' ? 'Pickup' : 'Delivery',
                 };
 
-                if (orderMode === 'delivery' && selectedAddress) {
+                if ((orderMode as string) === 'delivery' && selectedAddress) {
                     orderData.addressId = selectedAddress.id;
                 }
 
@@ -168,7 +166,7 @@ const CheckoutScreen = () => {
                     total: finalTotal,
                     specialInstructions: orderInstructions || '',
                     orderMode: orderMode === 'pickup' ? 'Pickup' : 'Delivery',
-                    ...(orderMode === 'delivery' && selectedAddress ? { addressId: selectedAddress.id } : {}),
+                    ...((orderMode as string) === 'delivery' && selectedAddress ? { addressId: selectedAddress.id } : {}),
                     items: items.map(item => ({
                         productId: item.productId,
                         productName: item.productName,
@@ -361,9 +359,6 @@ const CheckoutScreen = () => {
                                     <Text style={styles.addressType}>{selectedStore?.name || 'La Pino\'z Pizza'}</Text>
                                     <Text style={styles.addressText}>
                                         {selectedStore ? `${selectedStore.address}, ${selectedStore.city}` : 'Store address'}
-                                    </Text>
-                                    <Text style={[styles.phoneText, { color: '#3c7d48', fontWeight: '600', marginTop: 6 }]}>
-                                        Ready for pickup in ~20 mins
                                     </Text>
                                 </View>
                             </View>

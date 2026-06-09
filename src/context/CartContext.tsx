@@ -54,7 +54,7 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [orderMode, setOrderMode] = useState<'delivery' | 'pickup'>('delivery');
+  const [orderMode, setOrderMode] = useState<'delivery' | 'pickup'>('pickup');
   const [isHydrated, setIsHydrated] = useState(false);
   const { user } = useAuth();
   const { selectedStore } = useStore();
@@ -70,8 +70,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         if (savedCart) {
           setCartItems(JSON.parse(savedCart));
         }
-        if (savedMode === 'pickup' || savedMode === 'delivery') {
+        if (savedMode === 'pickup') {
           setOrderMode(savedMode);
+        } else {
+          setOrderMode('pickup');
         }
       } catch (e) {
         console.warn('Failed to load cart from storage:', e);

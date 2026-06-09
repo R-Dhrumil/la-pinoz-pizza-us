@@ -10,7 +10,8 @@ import {
   Platform,
   StatusBar,
   TextInput,
-  ActivityIndicator
+  ActivityIndicator,
+  Modal
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useState } from 'react';
@@ -19,6 +20,7 @@ import { ArrowLeft, Trash2, Plus, Minus, MoveRight, ChevronDown, ChevronUp, Penc
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { ScreenContainer } from '../components/ScreenContainer';
+import { DeliveryTeaserModal } from '../components/DeliveryTeaserModal';
 import { PRICING } from '../utils/constants';
 
 const CartScreen = () => {
@@ -34,6 +36,7 @@ const CartScreen = () => {
   const [promoCode, setPromoCode] = useState('');
   const [showAllOffers, setShowAllOffers] = useState(false);
   const [expandedOffers, setExpandedOffers] = useState<number[]>([]);
+  const [showDeliveryModal, setShowDeliveryModal] = useState(false);
 
   const toggleToppings = (id: string) => {
     setExpandedItems(prev => 
@@ -96,10 +99,17 @@ const CartScreen = () => {
           {/* Order Mode Toggle */}
           <View style={styles.modeToggleContainer}>
               <TouchableOpacity 
-                  style={[styles.modeToggleButton, orderMode === 'delivery' && styles.modeToggleActive]}
-                  onPress={() => setOrderMode('delivery')}
+                  style={[
+                      styles.modeToggleButton,
+                      orderMode === 'delivery' && styles.modeToggleActive,
+                      orderMode !== 'delivery' && { opacity: 0.5, position: 'relative' }
+                  ]}
+                  onPress={() => setShowDeliveryModal(true)}
               >
                   <Text style={[styles.modeToggleText, orderMode === 'delivery' && styles.modeToggleTextActive]}>Delivery</Text>
+                  <View style={styles.soonBadge}>
+                      <Text style={styles.soonBadgeText}>{orderMode === 'delivery' ? 'PREVIEW' : 'SOON'}</Text>
+                  </View>
               </TouchableOpacity>
               <TouchableOpacity 
                   style={[styles.modeToggleButton, orderMode === 'pickup' && styles.modeToggleActive]}
@@ -108,6 +118,16 @@ const CartScreen = () => {
                   <Text style={[styles.modeToggleText, orderMode === 'pickup' && styles.modeToggleTextActive]}>Pickup</Text>
               </TouchableOpacity>
           </View>
+
+          {/* Delivery Teaser Modal */}
+          <DeliveryTeaserModal
+            visible={showDeliveryModal}
+            onClose={() => setShowDeliveryModal(false)}
+            onSelectPickup={() => {
+              setOrderMode('pickup');
+              setShowDeliveryModal(false);
+            }}
+          />
 
           {/* Cart Items */}
           <View style={styles.itemsSection}>
@@ -1086,6 +1106,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6b7280',
     marginBottom: 8,
+  },
+  soonBadge: {
+    position: 'absolute',
+    top: 2,
+    right: 6,
+    backgroundColor: '#ffbe33',
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 8,
+  },
+  soonBadgeText: {
+    fontSize: 7,
+    fontWeight: '900',
+    color: '#000',
   },
 
 });
