@@ -6,6 +6,7 @@ test_output
 .env
 # Xcode
 #
+.agents
 build/
 *.pbxuser
 !default.pbxuser
