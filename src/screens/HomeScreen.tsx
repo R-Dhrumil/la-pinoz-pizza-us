@@ -59,6 +59,12 @@ import { DeliveryTeaserModal } from '../components/DeliveryTeaserModal';
 
 const { width } = Dimensions.get('window');
 
+const GRID_COLUMNS = 3;
+const GRID_HORIZONTAL_PADDING = 20; // section paddingHorizontal (16) + exploreGrid paddingHorizontal (4)
+const GRID_GAP = 8;
+const EXPLORE_CARD_WIDTH = Math.floor(
+  (width - GRID_HORIZONTAL_PADDING * 2 - GRID_GAP * (GRID_COLUMNS - 1)) / GRID_COLUMNS
+);
 
 const CARD_WIDTH = 240;
 const SPACING = 16;
@@ -838,15 +844,15 @@ const styles = StyleSheet.create({
   exploreGrid: {
       flexDirection: 'row',
       flexWrap: 'wrap',
-      justifyContent: 'space-between',
+      gap: GRID_GAP,
       paddingHorizontal: 4,
       marginTop: 8,
   },
   exploreGridCard: {
-      width: '31%', // roughly 1/3 minus gap
+      width: EXPLORE_CARD_WIDTH,
       backgroundColor: '#fff',
       borderRadius: 16,
-      marginBottom: 16,
+      marginBottom: 0, // gap handles spacing now
       shadowColor: '#000',
       shadowOpacity: 0.08,
       shadowRadius: 6,
