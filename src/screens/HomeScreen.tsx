@@ -236,6 +236,15 @@ const HomeScreen = () => {
           )}
           <View style={styles.greenToggleWrapper}>
             <TouchableOpacity
+              style={[styles.greenToggleBtn, orderMode === 'pickup' && styles.greenToggleActive]}
+              onPress={() => setOrderMode('pickup')}
+              activeOpacity={0.85}
+            >
+              <Text style={[styles.greenToggleText, orderMode === 'pickup' && styles.greenToggleTextActive]}>
+                Pickup 
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
               style={[
                 styles.greenToggleBtn,
                 orderMode === 'delivery' && styles.greenToggleActive,
@@ -251,15 +260,7 @@ const HomeScreen = () => {
                 <Text style={styles.soonBadgeText}>{orderMode === 'delivery' ? 'PREVIEW' : 'SOON'}</Text>
               </View>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.greenToggleBtn, orderMode === 'pickup' && styles.greenToggleActive]}
-              onPress={() => setOrderMode('pickup')}
-              activeOpacity={0.85}
-            >
-              <Text style={[styles.greenToggleText, orderMode === 'pickup' && styles.greenToggleTextActive]}>
-                Pickup 
-              </Text>
-            </TouchableOpacity>
+            
           </View>
 
           {/* Delivery Teaser Modal */}

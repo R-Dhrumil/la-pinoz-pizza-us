@@ -98,6 +98,12 @@ const CartScreen = () => {
           
           {/* Order Mode Toggle */}
           <View style={styles.modeToggleContainer}>
+            <TouchableOpacity 
+                  style={[styles.modeToggleButton, orderMode === 'pickup' && styles.modeToggleActive]}
+                  onPress={() => setOrderMode('pickup')}
+              >
+                  <Text style={[styles.modeToggleText, orderMode === 'pickup' && styles.modeToggleTextActive]}>Pickup</Text>
+              </TouchableOpacity>
               <TouchableOpacity 
                   style={[
                       styles.modeToggleButton,
@@ -111,12 +117,7 @@ const CartScreen = () => {
                       <Text style={styles.soonBadgeText}>{orderMode === 'delivery' ? 'PREVIEW' : 'SOON'}</Text>
                   </View>
               </TouchableOpacity>
-              <TouchableOpacity 
-                  style={[styles.modeToggleButton, orderMode === 'pickup' && styles.modeToggleActive]}
-                  onPress={() => setOrderMode('pickup')}
-              >
-                  <Text style={[styles.modeToggleText, orderMode === 'pickup' && styles.modeToggleTextActive]}>Pickup</Text>
-              </TouchableOpacity>
+              
           </View>
 
           {/* Delivery Teaser Modal */}
