@@ -400,73 +400,32 @@ const ExploreGridCard = ({category, tagText, tagColor, onPress}: any) => (
     </TouchableOpacity>
 );
 
-const HomeFooter = () => {
-  const SOCIAL = [
-    {
-      label: 'Facebook',
-      url: 'https://www.facebook.com/LaPinozPizzaIndia',
-      icon: <Facebook size={18} color="#1877f2" />,
-    },
-    {
-      label: 'Instagram',
-      url: 'https://www.instagram.com/lapinozpizza_usa',
-      icon: <Instagram size={18} color="#e1306c" />,
-    },
-    {
-      label: 'YouTube',
-      url: 'https://www.youtube.com/c/LaPinozPizzaIndia',
-      icon: <Youtube size={18} color="#ff0000" />,
-    },
-  ];
-
-  return (
-    <View style={styles.footer}>
-      {/* Follow Us */}
-      <View style={styles.footerSection}>
-        <Text style={styles.footerSectionLabel}>FOLLOW US</Text>
-        <View style={styles.socialRow}>
-          {SOCIAL.map(s => (
-            <TouchableOpacity
-              key={s.label}
-              style={styles.socialIconBtn}
-              onPress={() => Linking.openURL(s.url)}
-              activeOpacity={0.7}
-            >
-              {s.icon}
-              <Text style={styles.socialIconLabel}>{s.label}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-
-      {/* Divider */}
-      <View style={styles.footerDivider} />
-
-      {/* Contact */}
-      <View style={styles.footerSection}>
-        <Text style={styles.footerSectionLabel}>CONTACT</Text>
-        <TouchableOpacity
-          style={styles.contactRow}
-          onPress={() => Linking.openURL('mailto:support@lapinozpizza.in')}
-        >
-          <View style={styles.contactIconWrap}>
-            <Mail size={13} color="#3c7d48" />
-          </View>
-          <Text style={styles.contactText}>support@lapinozpizza.in</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.contactRow}
-          onPress={() => Linking.openURL('tel:2014236573')}
-        >
-          <View style={styles.contactIconWrap}>
-            <Phone size={13} color="#3c7d48" />
-          </View>
-          <Text style={styles.contactText}>(201) 423-6573</Text>
-        </TouchableOpacity>
-      </View>
+const HomeFooter = () => (
+  <View style={styles.footer}>
+    {/* Social icon row */}
+    <View style={styles.socialRow}>
+      <TouchableOpacity style={styles.socialCircle} onPress={() => Linking.openURL('https://www.facebook.com/LaPinozPizzaIndia')} activeOpacity={0.7}>
+        <Facebook size={20} color="#1877f2" />
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.socialCircle} onPress={() => Linking.openURL('https://www.instagram.com/lapinozpizza_usa')} activeOpacity={0.7}>
+        <Instagram size={20} color="#e1306c" />
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.socialCircle} onPress={() => Linking.openURL('https://www.youtube.com/c/LaPinozPizzaIndia')} activeOpacity={0.7}>
+        <Youtube size={20} color="#ff0000" />
+      </TouchableOpacity>
     </View>
-  );
-};
+
+    {/* Contact */}
+    <TouchableOpacity style={styles.contactRow} onPress={() => Linking.openURL('mailto:support@lapinozpizza.in')}>
+      <Mail size={13} color="#9ca3af" />
+      <Text style={styles.contactText}>support@lapinozpizza.in</Text>
+    </TouchableOpacity>
+    <TouchableOpacity style={styles.contactRow} onPress={() => Linking.openURL('tel:2014236573')}>
+      <Phone size={13} color="#9ca3af" />
+      <Text style={styles.contactText}>(201) 423-6573</Text>
+    </TouchableOpacity>
+  </View>
+);
 
 const PromiseItem = ({icon, title, desc, iconBgColor}: any) => (
     <View style={styles.promiseCard}>
@@ -978,126 +937,34 @@ const styles = StyleSheet.create({
   /* ─── Footer ─── */
   footer: {
     backgroundColor: '#fff',
-    marginTop: 8,
     borderTopWidth: 1,
     borderTopColor: '#f3f4f6',
     paddingHorizontal: 16,
-    paddingTop: 24,
-    paddingBottom: 28,
-  },
-  footerBrandRow: {
-    flexDirection: 'row',
+    paddingTop: 20,
+    paddingBottom: 24,
     alignItems: 'center',
-    gap: 6,
-    marginBottom: 4,
-  },
-  footerGreenDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#3c7d48',
-  },
-  footerBrand: {
-    fontSize: 16,
-    fontWeight: '900',
-    color: '#111',
-    letterSpacing: -0.3,
-  },
-  footerTagline: {
-    fontSize: 12,
-    color: '#6b7280',
-    marginBottom: 20,
-  },
-  footerSection: {
-    marginBottom: 16,
-  },
-  footerSectionLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#9ca3af',
-    letterSpacing: 1.5,
-    marginBottom: 10,
+    gap: 12,
   },
   socialRow: {
     flexDirection: 'row',
-    gap: 10,
-  },
-  socialIconBtn: {
-    flex: 1,
-    alignItems: 'center',
-    gap: 6,
-    paddingVertical: 12,
-    backgroundColor: '#f9fafb',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#f3f4f6',
-  },
-  socialIconLabel: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: '#374151',
-  },
-  footerDivider: {
-    height: 1,
-    backgroundColor: '#f3f4f6',
-    marginVertical: 16,
-  },
-  footerColumns: {
-    flexDirection: 'row',
     gap: 16,
-    marginBottom: 4,
   },
-  footerCol: {
-    flex: 1,
+  socialCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#f3f4f6',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   contactRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 10,
-  },
-  contactIconWrap: {
-    width: 26,
-    height: 26,
-    borderRadius: 8,
-    backgroundColor: 'rgba(60, 125, 72, 0.08)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    gap: 6,
   },
   contactText: {
-    fontSize: 11,
-    color: '#374151',
-    flex: 1,
-  },
-  footerLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    marginBottom: 10,
-  },
-  footerLinkText: {
     fontSize: 12,
-    color: '#374151',
-    fontWeight: '500',
-  },
-  footerBottom: {
-    alignItems: 'center',
-    gap: 4,
-    paddingTop: 4,
-  },
-  footerCopyright: {
-    fontSize: 10,
     color: '#9ca3af',
-    textAlign: 'center',
-  },
-  footerPowered: {
-    fontSize: 10,
-    color: '#9ca3af',
-    textAlign: 'center',
-  },
-  footerPoweredLink: {
-    color: '#3c7d48',
-    fontWeight: '700',
   },
 });
 
