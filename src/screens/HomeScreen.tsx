@@ -235,17 +235,24 @@ const HomeScreen = () => {
         {/* Explore Menu */}
         <View style={styles.section}>
             <Text style={[styles.sectionTitle, { textTransform: 'uppercase', textAlign: 'center', marginVertical: 8 }]}>Explore Menu</Text>
-            <View style={styles.exploreGrid}>
-                {categories.map((cat, index) => {
-                    return (
+            {/* 3-column grid: render rows of 3 */}
+            {Array.from({ length: Math.ceil(categories.length / 3) }, (_, rowIdx) => (
+                <View key={rowIdx} style={styles.exploreGridRow}>
+                    {categories.slice(rowIdx * 3, rowIdx * 3 + 3).map(cat => (
                         <ExploreGridCard
                             key={cat.id}
                             category={cat}
                             onPress={() => navigation.navigate('CategoryProducts' as any, { category: cat })}
                         />
-                    );
-                })}
-            </View>
+                    ))}
+                    {/* Fill empty cells so last row aligns left */}
+                    {categories.slice(rowIdx * 3, rowIdx * 3 + 3).length < 3 &&
+                        Array.from({ length: 3 - categories.slice(rowIdx * 3, rowIdx * 3 + 3).length }).map((_, i) => (
+                            <View key={`empty-${i}`} style={styles.exploreGridCard} />
+                        ))
+                    }
+                </View>
+            ))}
         </View>
 
         {/* Our Story */}
@@ -654,18 +661,16 @@ const styles = StyleSheet.create({
       fontSize: 10,
       fontWeight: 'bold',
   },
-  exploreGrid: {
+  exploreGridRow: {
       flexDirection: 'row',
-      flexWrap: 'wrap',
-      justifyContent: 'space-between',
-      paddingHorizontal: 4,
-      marginTop: 8,
+      gap: 8,
+      marginBottom: 8,
   },
   exploreGridCard: {
-      width: '31%', // roughly 1/3 minus gap
+      // width is set inline via GRID_COL_WIDTH
+      flex: 1,
       backgroundColor: '#fff',
       borderRadius: 16,
-      marginBottom: 16,
       shadowColor: '#000',
       shadowOpacity: 0.08,
       shadowRadius: 6,
@@ -681,7 +686,7 @@ const styles = StyleSheet.create({
   },
   exploreGridImage: {
       width: '100%',
-      aspectRatio: 1, // square image area
+      aspectRatio: 1,
       justifyContent: 'flex-start',
       alignItems: 'flex-end',
   },
