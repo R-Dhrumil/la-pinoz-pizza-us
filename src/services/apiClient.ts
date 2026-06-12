@@ -6,7 +6,8 @@ import { logger } from '../utils/logger';
 
 
 const apiClient = axios.create({
-    baseURL: BASE_URL,
+    // baseURL: BASE_URL,
+    baseURL:"http://localhost:5066/api",
     headers: {
         'Content-Type': 'application/json',
     },

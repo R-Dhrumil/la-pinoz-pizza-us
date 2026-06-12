@@ -12,9 +12,11 @@ import {
   Dimensions,
   Alert,
   Linking,
+  ActivityIndicator,
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { Pizza, User, Mail, Phone, Lock, Eye, EyeOff } from 'lucide-react-native';
+import { Pizza, User, Mail, Phone, Lock, Eye, EyeOff, CheckCircle } from 'lucide-react-native';
+import Toast from 'react-native-toast-message';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -37,6 +39,31 @@ const SignupScreen = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Email Verification State
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const [otpTimer, setOtpTimer] = useState(0);
+  const [otpError, setOtpError] = useState('');
+  const [otpSuccessMessage, setOtpSuccessMessage] = useState('');
+
+  // Cooldown countdown timer for OTP resend
+  React.useEffect(() => {
+    let interval: any = null;
+    if (otpTimer > 0) {
+      interval = setInterval(() => {
+        setOtpTimer((prev) => prev - 1);
+      }, 1000);
+    } else if (interval) {
+      clearInterval(interval);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [otpTimer]);
 
   // Auto-format phone number to US format (XXX) XXX-XXXX
   const handlePhoneChange = (text: string) => {
@@ -99,6 +126,77 @@ const SignupScreen = () => {
 
   const errors = getValidationErrors({ fullName, email, phoneNumber, password });
 
+  const handleSendOtp = async () => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email.trim() || !emailRegex.test(email)) {
+      Alert.alert('Error', 'Please enter a valid email address first.');
+      return;
+    }
+
+    setIsSendingOtp(true);
+    setOtpError('');
+    setOtpSuccessMessage('');
+
+    try {
+      await authService.sendEmailOtp(email.trim().toLowerCase());
+      setOtpSent(true);
+      setOtpTimer(60);
+      setOtpSuccessMessage('Verification code sent to your email.');
+      Toast.show({
+        type: 'success',
+        text1: 'OTP Sent',
+        text2: 'Verification code sent to your email.'
+      });
+    } catch (error: any) {
+      console.error('Error sending OTP:', error);
+      const errMsg = error.response?.data?.message || error.response?.data || error.message || 'Failed to send verification code.';
+      const errorStr = typeof errMsg === 'object' ? JSON.stringify(errMsg) : errMsg;
+      setOtpError(errorStr);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: typeof errorStr === 'string' ? errorStr : 'Failed to send code.'
+      });
+    } finally {
+      setIsSendingOtp(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!otpCode || otpCode.length !== 6) {
+      Alert.alert('Error', 'Please enter a valid 6-digit verification code.');
+      return;
+    }
+
+    setIsVerifyingOtp(true);
+    setOtpError('');
+    setOtpSuccessMessage('');
+
+    try {
+      await authService.verifyEmailOtp(email.trim().toLowerCase(), otpCode.trim());
+      setIsEmailVerified(true);
+      setOtpSent(false);
+      setOtpSuccessMessage('Email verified successfully!');
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'Email verified successfully!'
+      });
+    } catch (error: any) {
+      console.error('Error verifying OTP:', error);
+      const errMsg = error.response?.data?.message || error.response?.data || error.message || 'Invalid or expired verification code.';
+      const errorStr = typeof errMsg === 'object' ? JSON.stringify(errMsg) : errMsg;
+      setOtpError(errorStr);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: typeof errorStr === 'string' ? errorStr : 'Invalid verification code.'
+      });
+    } finally {
+      setIsVerifyingOtp(false);
+    }
+  };
+
   const handleSignup = async () => {
     // specific check: if any error exists key length > 0
     if (Object.keys(errors).length > 0) {
@@ -112,11 +210,16 @@ const SignupScreen = () => {
       return;
     }
 
+    if (!isEmailVerified) {
+      Alert.alert('Error', 'Please verify your email address first.');
+      return;
+    }
+
     try {
       setLoading(true);
       const response = await authService.register({
         fullName,
-        email,
+        email: email.trim().toLowerCase(),
         phoneNumber: phoneNumber.replace(/\D/g, ''),
         password
       });
@@ -184,22 +287,134 @@ const SignupScreen = () => {
 
             {/* Email */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>EMAIL ADDRESS</Text>
-              <View style={[styles.inputWrapper, touched.email && errors.email && styles.inputError]}>
-                <Mail size={20} color={touched.email && errors.email ? "#ef4444" : "#9ca3af"} style={styles.inputIcon} />
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <Text style={[styles.label, { marginBottom: 0 }]}>EMAIL ADDRESS</Text>
+                {isEmailVerified && (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <CheckCircle size={14} color="#16a34a" />
+                    <Text style={{ fontSize: 12, fontWeight: '700', color: '#16a34a' }}>Verified</Text>
+                  </View>
+                )}
+              </View>
+              <View style={[
+                styles.inputWrapper, 
+                touched.email && errors.email && styles.inputError,
+                isEmailVerified && { borderColor: '#bbf7d0', backgroundColor: '#f0fdf4' }
+              ]}>
+                <Mail size={20} color={touched.email && errors.email ? "#ef4444" : isEmailVerified ? "#16a34a" : "#9ca3af"} style={styles.inputIcon} />
                 <TextInput
                   placeholder="name@example.com"
                   keyboardType="email-address"
-                  style={styles.input}
+                  style={[styles.input, (isEmailVerified || otpSent) && { color: '#6b7280' }]}
                   placeholderTextColor="#9ca3af"
                   autoCapitalize="none"
                   value={email}
-                  onChangeText={setEmail}
+                  onChangeText={(text) => {
+                    setEmail(text);
+                    if (isEmailVerified) {
+                      setIsEmailVerified(false);
+                    }
+                  }}
                   onBlur={() => handleBlur('email')}
+                  editable={!isEmailVerified && !otpSent}
                 />
+                {isEmailVerified ? (
+                  <TouchableOpacity
+                    onPress={() => {
+                      setIsEmailVerified(false);
+                      setOtpSent(false);
+                      setOtpCode('');
+                      setOtpSuccessMessage('');
+                      setOtpError('');
+                    }}
+                    style={{ paddingHorizontal: 12, paddingVertical: 8, marginRight: 6 }}
+                  >
+                    <Text style={{ fontSize: 12, fontWeight: '700', color: '#3c7d48' }}>Change</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity
+                    onPress={handleSendOtp}
+                    disabled={isSendingOtp || otpTimer > 0 || !email || !!errors.email}
+                    style={{
+                      paddingHorizontal: 12,
+                      paddingVertical: 8,
+                      marginRight: 6,
+                      borderRadius: 8,
+                      backgroundColor: (isSendingOtp || otpTimer > 0 || !email || !!errors.email) ? '#f3f4f6' : '#eaf5ed',
+                    }}
+                  >
+                    {isSendingOtp ? (
+                      <ActivityIndicator size="small" color="#3c7d48" />
+                    ) : (
+                      <Text style={{
+                        fontSize: 12,
+                        fontWeight: '700',
+                        color: (isSendingOtp || otpTimer > 0 || !email || !!errors.email) ? '#9ca3af' : '#3c7d48'
+                      }}>
+                        {otpTimer > 0 ? `Resend ${otpTimer}s` : otpSent ? 'Resend' : 'Verify'}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                )}
               </View>
               {touched.email && errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+              {!isEmailVerified && otpSuccessMessage && !otpSent && (
+                <Text style={{ color: '#16a34a', fontSize: 12, marginTop: 4, marginLeft: 4, fontWeight: '600' }}>
+                  {otpSuccessMessage}
+                </Text>
+              )}
             </View>
+
+            {/* OTP Verification Field */}
+            {otpSent && !isEmailVerified && (
+              <View style={[styles.inputGroup, { backgroundColor: '#f9fafb', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: '#f3f4f6' }]}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <Text style={[styles.label, { marginBottom: 0 }]}>ENTER 6-DIGIT OTP CODE</Text>
+                  {otpTimer > 0 && (
+                    <Text style={{ fontSize: 11, color: '#6b7280' }}>Resend in {otpTimer}s</Text>
+                  )}
+                </View>
+                <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+                  <View style={[styles.inputWrapper, { flex: 1 }]}>
+                    <TextInput
+                      placeholder="••••••"
+                      keyboardType="number-pad"
+                      maxLength={6}
+                      style={[styles.input, { textAlign: 'center', fontWeight: '700', letterSpacing: 6 }]}
+                      placeholderTextColor="#9ca3af"
+                      value={otpCode}
+                      onChangeText={(val) => setOtpCode(val.replace(/[^0-9]/g, ''))}
+                    />
+                  </View>
+                  <TouchableOpacity
+                    onPress={handleVerifyOtp}
+                    disabled={isVerifyingOtp || otpCode.length !== 6}
+                    style={{
+                      height: 52,
+                      paddingHorizontal: 16,
+                      borderRadius: 12,
+                      backgroundColor: (isVerifyingOtp || otpCode.length !== 6) ? '#f3f4f6' : '#3c7d48',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    }}
+                  >
+                    {isVerifyingOtp ? (
+                      <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                      <Text style={{ fontSize: 14, fontWeight: '700', color: (isVerifyingOtp || otpCode.length !== 6) ? '#9ca3af' : '#fff' }}>
+                        Verify Code
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+                {otpError ? <Text style={styles.errorText}>{otpError}</Text> : null}
+                {otpSuccessMessage ? (
+                  <Text style={{ color: '#16a34a', fontSize: 12, marginTop: 4, marginLeft: 4, fontWeight: '600' }}>
+                    {otpSuccessMessage}
+                  </Text>
+                ) : null}
+              </View>
+            )}
 
             {/* Phone */}
             <View style={styles.inputGroup}>
@@ -248,9 +463,12 @@ const SignupScreen = () => {
 
             {/* Create Account Button */}
             <TouchableOpacity 
-              style={[styles.mainButton, loading && { opacity: 0.7 }]}
+              style={[
+                styles.mainButton, 
+                (loading || !isEmailVerified) && { opacity: 0.7, backgroundColor: '#9ca3af', shadowColor: '#9ca3af' }
+              ]}
               onPress={handleSignup}
-              disabled={loading}
+              disabled={loading || !isEmailVerified}
             >
               <Text style={styles.mainButtonText}>{loading ? 'Creating Account...' : 'Create Account'}</Text>
             </TouchableOpacity>
